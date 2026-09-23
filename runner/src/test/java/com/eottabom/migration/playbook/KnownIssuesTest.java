@@ -1,6 +1,6 @@
-package com.eottabom.migration.knowledge;
+package com.eottabom.migration.playbook;
 
-import com.eottabom.migration.knowledge.KnownIssues.Match;
+import com.eottabom.migration.playbook.KnownIssues.Match;
 import com.eottabom.migration.plan.MigrationPlanner;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class KnownIssuesTest {
 
-    private final KnownIssues issues = KnownIssues.load(Path.of("../knowledge/known-issues.yml"));
+    private final KnownIssues issues = KnownIssues.load(Path.of("../playbook/known-issues.yml"));
 
     @Test
     void 레지스트리_형식과_id_중복_단계_키_검증() {

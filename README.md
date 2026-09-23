@@ -19,8 +19,8 @@ JDK(17 / 21 / 25)와 대상 프로젝트의 Gradle wrapper 만 있으면 된다.
 대상 프로젝트는 별도 프로세스로 자기 Gradle wrapper 로 실행하고, JDK 는 대상 프로젝트가 선언한 toolchain 버전으로 고른다 (`--keep-java-home` 으로 끔).
 
 **필요한 만큼만 바꾼다.** Spring Boot 를 기준으로 삼고, Java 와 Gradle 은 목표 Boot 가 지원하면 그대로 둔다.
-지원 범위 밖이거나 사용자가 요청할 때만 별도 단계로 올린다 (`knowledge/compatibility.yml`).
-공식 가이드와 실제로 겪은 문제는 `knowledge/known-issues.yml` 에 쌓고, 단계마다 해당하는 것만 리포트에 나온다.
+지원 범위 밖이거나 사용자가 요청할 때만 별도 단계로 올린다 (`playbook/compatibility.yml`).
+공식 가이드와 실제로 겪은 문제는 `playbook/known-issues.yml` 에 쌓고, 단계마다 해당하는 것만 리포트에 나온다.
 
 ---
 
@@ -100,14 +100,14 @@ recipes/                              OpenRewrite 레시피 jar (대상 프로�
 runner/                               러너 Gradle 플러그인 (루트 빌드가 쓰는 플러그인이라 included build). migration* 태스크와 위 흐름 전체
   inspect/ProjectInspector            대상 프로젝트의 Boot / Gradle / Java 버전(version catalog 포함), git 상태
   plan/MigrationPlanner               현재 버전과 목표로 단계 목록 결정 (BOOT_STAGES + compatibility.yml)
-  knowledge/                          compatibility.yml / known-issues.yml 로딩, 알려진 이슈 매칭
+  playbook/                           compatibility.yml / known-issues.yml 로딩, 알려진 이슈 매칭
   recipe/                             대상 프로젝트의 .rewrite/ 레시피 탐색, 단계별 rewrite.generated.yml 생성
   exec/MigrationRunner                단계 루프, 게이트, 재개, 커밋
   exec/TargetGradle                   대상 프로젝트의 gradlew 를 별도 프로세스로 실행 (로그는 .rewrite-migration/)
   exec/HtmlReport                     전 단계를 한 페이지로 보는 report.html
   task/                               migrationAnalyze / Plan / Run / Verify / Help
-knowledge/compatibility.yml           Boot 단계별 Java / Gradle 범위, Spring Framework, Spring Cloud 트레인 (공식 문서 기준, 출처는 파일 상단)
-knowledge/known-issues.yml            알려진 이슈 레지스트리 (단계 / 라이브러리 버전 조건, AUTO_FIX / REVIEW_REQUIRED / REPORT_ONLY)
+playbook/compatibility.yml            Boot 단계별 Java / Gradle 범위, Spring Framework, Spring Cloud 트레인 (공식 문서 기준, 출처는 파일 상단)
+playbook/known-issues.yml             알려진 이슈 레지스트리 (단계 / 라이브러리 버전 조건, AUTO_FIX / REVIEW_REQUIRED / REPORT_ONLY)
                                       와 테스트 실패 힌트
 init/rewrite.init.gradle              대상 프로젝트에 OpenRewrite 플러그인과 레시피 jar 를 붙이는 Gradle init script
 init/verify.init.gradle               컴파일 경고 수집, 테스트 fail-fast 해제와 결과 XML 강제, 리포트 생성(migrationReport 태스크)
@@ -173,7 +173,7 @@ init/verify.init.gradle               컴파일 경고 수집, 테스트 fail-fa
 | 자동 보정 내역 | rewriteRun 로그 | 어떤 커스텀 레시피가 어떤 파일을 바꿨는지 (전체 변경은 같은 이름의 .patch) |
 | 설정 키 변경 | spring-boot-properties-migrator | 이름이 바뀌었거나 없어진 설정 키 |
 | 제거 예정 API (`[removal]`) | javac | 다음 단계에서 깨질 곳 |
-| 알려진 이슈 | `knowledge/known-issues.yml` | 컴파일/테스트가 통과해도 확인할 항목. 사람이 판단 / 레시피가 바꿨지만 확인 / 레시피가 보정 으로 나눠 보여준다 |
+| 알려진 이슈 | `playbook/known-issues.yml` | 컴파일/테스트가 통과해도 확인할 항목. 사람이 판단 / 레시피가 바꿨지만 확인 / 레시피가 보정 으로 나눠 보여준다 |
 | 수동 검토 대상 | `FindManualMigrationItems` | 자동으로 바꾸지 않은 곳의 위치 |
 
 **spring-boot-properties-migrator** 는 모든 단계 레시피가 `runtimeOnly` 로 추가한다. Spring 컨텍스트가 뜰 때 이름이 바뀌었거나
@@ -293,12 +293,12 @@ OpenRewrite 레시피는 소스를 LST(Lossless Semantic Tree, 타입 정보가 
 |---|---|
 | 누락 의존성 선언 | `common.yml` 의 `DeclareUsedTransitiveDependencies` 에 `DeclareUsedDependency` 한 줄 추가 |
 | 3rd-party 버전 정렬 | `common.yml` 에 레시피를 만들고 `spring-boot.yml` 의 해당 `SpringBootStep_X_Y` 에 추가 |
-| 새 알려진 이슈 | `knowledge/known-issues.yml` 에 항목 추가. 장애/버그 → 원인 → 재현 조건(단계 또는 라이브러리 버전) → 등록 → 가능하면 탐지/수정 레시피를 만들어 `fix` 에 연결 |
-| 호환성 변경 (새 Boot 라인, Java/Gradle 범위) | `knowledge/compatibility.yml` |
+| 새 알려진 이슈 | `playbook/known-issues.yml` 에 항목 추가. 장애/버그 → 원인 → 재현 조건(단계 또는 라이브러리 버전) → 등록 → 가능하면 탐지/수정 레시피를 만들어 `fix` 에 연결 |
+| 호환성 변경 (새 Boot 라인, Java/Gradle 범위) | `playbook/compatibility.yml` |
 | rewrite-recipe-bom 버전 올리기 | 올린 뒤 `./gradlew :recipes:syncUpstreamSteps` 로 upstream 단계 레시피를 다시 만들고 `./gradlew test` |
 | 새 Boot 단계 | `UpstreamStepsGenerator` 의 단계 목록, `spring-boot.yml` (`SpringBootStep` + `MigrateToSpringBoot`), `MigrationPlanner.BOOT_STAGES`, `compatibility.yml`, `known-issues.yml` 의 `guides` 에 추가 |
 
-`./gradlew test` 는 knowledge 파일 형식과 `fix` / `recipe` 가 가리키는 레시피가 실제로 있는지까지 검증한다.
+`./gradlew test` 는 playbook 파일 형식과 `fix` / `recipe` 가 가리키는 레시피가 실제로 있는지까지 검증한다.
 한 프로젝트에서만 나온 문제도 공용 레시피로 만든다. 해당 타입이나 의존성이 있을 때만 바뀌도록 조건을 걸어(`UsesType`, 원래 타입의 메서드 확인 등) 다른 프로젝트에는 영향이 없게 한다.
 - 추가한 뒤 `./gradlew test` (레시피 이름/옵션 검증) → `migrationRun --preview` 로 대상 프로젝트 확인
 

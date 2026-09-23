@@ -21,7 +21,7 @@ repositories {
 }
 
 dependencies {
-    // knowledge/*.yml
+    // playbook/*.yml
     implementation 'org.yaml:snakeyaml:2.4'
 
     testImplementation platform('org.junit:junit-bom:5.12.2')

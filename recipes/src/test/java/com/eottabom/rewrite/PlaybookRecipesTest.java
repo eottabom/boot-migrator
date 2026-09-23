@@ -16,19 +16,19 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * knowledge/*.yml 이 가리키는 레시피(fix, recipe)가 실제로 있는지 검증한다.
+ * playbook/*.yml 이 가리키는 레시피(fix, recipe)가 실제로 있는지 검증한다.
  * 레시피 이름을 바꾸거나 upstream 레시피가 사라지면 러너의 단계/리포트가 조용히 어긋나므로 여기서 먼저 깨진다.
  */
-class KnowledgeRecipesTest {
+class PlaybookRecipesTest {
 
     private static final Environment ENV = Environment.builder().scanRuntimeClasspath().build();
     private static final Pattern RECIPE_REF = Pattern.compile("(?m)^\\s*(?:fix|recipe):\\s*([\\w.]+)");
 
     @Test
-    void knowledgeRecipesExist() throws IOException {
+    void playbookRecipesExist() throws IOException {
         Set<String> available = ENV.listRecipes().stream().map(Recipe::getName).collect(Collectors.toSet());
         Set<String> referenced = new TreeSet<>();
-        for (String file : new String[]{"../knowledge/compatibility.yml", "../knowledge/known-issues.yml"}) {
+        for (String file : new String[]{"../playbook/compatibility.yml", "../playbook/known-issues.yml"}) {
             Matcher m = RECIPE_REF.matcher(Files.readString(Path.of(file)));
             while (m.find()) {
                 referenced.add(m.group(1));

@@ -1,4 +1,4 @@
-package com.eottabom.migration.knowledge;
+package com.eottabom.migration.playbook;
 
 import java.util.ArrayList;
 import java.util.List;

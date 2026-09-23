@@ -3,11 +3,11 @@ package com.eottabom.migration.exec;
 import com.eottabom.migration.exec.MigrationWorkspace.Resume;
 import com.eottabom.migration.inspect.JdkLocator;
 import com.eottabom.migration.inspect.ProjectInspector;
-import com.eottabom.migration.knowledge.Compatibility;
-import com.eottabom.migration.knowledge.KnownIssues;
-import com.eottabom.migration.knowledge.KnownIssues.Issue;
-import com.eottabom.migration.knowledge.KnownIssues.Match;
-import com.eottabom.migration.knowledge.KnownIssues.Mode;
+import com.eottabom.migration.playbook.Compatibility;
+import com.eottabom.migration.playbook.KnownIssues;
+import com.eottabom.migration.playbook.KnownIssues.Issue;
+import com.eottabom.migration.playbook.KnownIssues.Match;
+import com.eottabom.migration.playbook.KnownIssues.Mode;
 import com.eottabom.migration.model.MigrationPlan;
 import com.eottabom.migration.model.MigrationRequest;
 import com.eottabom.migration.model.ProjectModel;
@@ -56,9 +56,9 @@ public final class MigrationRunner {
      * @param rewriteInit  init/rewrite.init.gradle
      * @param verifyInit   init/verify.init.gradle
      * @param recipeLibs   build/recipe-libs (레시피 jar + upstream 레시피 모듈)
-     * @param knowledgeDir knowledge/ (compatibility.yml, known-issues.yml)
+     * @param playbookDir playbook/ (compatibility.yml, known-issues.yml)
      */
-    public record RunnerPaths(Path rewriteInit, Path verifyInit, Path recipeLibs, Path knowledgeDir) {
+    public record RunnerPaths(Path rewriteInit, Path verifyInit, Path recipeLibs, Path playbookDir) {
     }
 
     /** 대상 Gradle 데몬 JVM 옵션 (--gradle-jvmargs). null 이면 장비 메모리 기준 기본값 */
@@ -68,8 +68,8 @@ public final class MigrationRunner {
         this.paths = paths;
         this.gradleJvmArgs = gradleJvmArgs;
         this.logger = logger;
-        this.planner = new MigrationPlanner(Compatibility.load(paths.knowledgeDir().resolve("compatibility.yml")));
-        this.knownIssues = KnownIssues.load(paths.knowledgeDir().resolve("known-issues.yml"));
+        this.planner = new MigrationPlanner(Compatibility.load(paths.playbookDir().resolve("compatibility.yml")));
+        this.knownIssues = KnownIssues.load(paths.playbookDir().resolve("known-issues.yml"));
     }
 
     // ── migrationAnalyze ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ public final class MigrationRunner {
             logger.lifecycle("     {}  {}{}", String.format("%-11s", stage.name()), stage.recipe(), projectRecipeSuffix(projectRecipes, stage));
         }
         printProjectRecipes(request.projectDir(), projectRecipes);
-        step("알려진 이슈 미리보기 (knowledge/known-issues.yml, 의존성 조건은 실행 때 판단)");
+        step("알려진 이슈 미리보기 (playbook/known-issues.yml, 의존성 조건은 실행 때 판단)");
         Map<Mode, Integer> total = new EnumMap<>(Mode.class);
         for (Stage stage : plan.stages()) {
             List<Issue> issues = knownIssues.forStage(stage.issueKey());

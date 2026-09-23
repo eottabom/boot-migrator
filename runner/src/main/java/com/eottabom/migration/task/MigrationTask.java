@@ -48,7 +48,7 @@ public abstract class MigrationTask extends DefaultTask {
     public abstract DirectoryProperty getRecipeLibs();
 
     @Internal
-    public abstract DirectoryProperty getKnowledgeDir();
+    public abstract DirectoryProperty getPlaybookDir();
 
     protected Path projectDir() {
         if (!getProjectPath().isPresent()) {
@@ -70,6 +70,6 @@ public abstract class MigrationTask extends DefaultTask {
                 getRewriteInitScript().get().getAsFile().toPath(),
                 getVerifyInitScript().get().getAsFile().toPath(),
                 getRecipeLibs().get().getAsFile().toPath(),
-                getKnowledgeDir().get().getAsFile().toPath()), getGradleJvmArgs().getOrNull(), getLogger());
+                getPlaybookDir().get().getAsFile().toPath()), getGradleJvmArgs().getOrNull(), getLogger());
     }
 }

@@ -1,4 +1,4 @@
-package com.eottabom.migration.knowledge;
+package com.eottabom.migration.playbook;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -9,7 +9,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
-/** knowledge/*.yml 을 Map 으로 읽는 도우미. 키와 값은 문자열로 다룬다 (YAML 의 3.0 이 숫자 3 으로 읽히지 않도록 파일에서 따옴표를 쓴다). */
+/** playbook/*.yml 을 Map 으로 읽는 도우미. 키와 값은 문자열로 다룬다 (YAML 의 3.0 이 숫자 3 으로 읽히지 않도록 파일에서 따옴표를 쓴다). */
 final class Yaml {
 
     private Yaml() {

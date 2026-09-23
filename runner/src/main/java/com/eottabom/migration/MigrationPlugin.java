@@ -27,7 +27,7 @@ public class MigrationPlugin implements Plugin<Project> {
             task.getRewriteInitScript().convention(root.file("init/rewrite.init.gradle"));
             task.getVerifyInitScript().convention(root.file("init/verify.init.gradle"));
             task.getRecipeLibs().convention(root.dir("recipes/build/recipe-libs"));
-            task.getKnowledgeDir().convention(root.dir("knowledge"));
+            task.getPlaybookDir().convention(root.dir("playbook"));
         });
 
         project.getTasks().register("migrationHelp", com.eottabom.migration.task.MigrationHelpTask.class);

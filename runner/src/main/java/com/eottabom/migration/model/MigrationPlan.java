@@ -1,6 +1,6 @@
 package com.eottabom.migration.model;
 
-import com.eottabom.migration.knowledge.Compatibility.BootLine;
+import com.eottabom.migration.playbook.Compatibility.BootLine;
 
 import java.util.List;
 

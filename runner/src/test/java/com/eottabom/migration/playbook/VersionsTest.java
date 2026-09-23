@@ -1,4 +1,4 @@
-package com.eottabom.migration.knowledge;
+package com.eottabom.migration.playbook;
 
 import org.junit.jupiter.api.Test;
 

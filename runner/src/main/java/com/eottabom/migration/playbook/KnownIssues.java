@@ -1,4 +1,4 @@
-package com.eottabom.migration.knowledge;
+package com.eottabom.migration.playbook;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-/** knowledge/known-issues.yml: 알려진 이슈 레지스트리와 테스트 실패 힌트. */
+/** playbook/known-issues.yml: 알려진 이슈 레지스트리와 테스트 실패 힌트. */
 public final class KnownIssues {
 
     public enum Mode {

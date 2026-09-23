@@ -1,6 +1,6 @@
 package com.eottabom.migration.plan;
 
-import com.eottabom.migration.knowledge.Compatibility;
+import com.eottabom.migration.playbook.Compatibility;
 import com.eottabom.migration.model.MigrationPlan;
 import com.eottabom.migration.model.MigrationRequest;
 import com.eottabom.migration.model.ProjectModel;
@@ -14,9 +14,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MigrationPlannerTest {
 
-    static final Path KNOWLEDGE = Path.of("../knowledge");
+    static final Path PLAYBOOK = Path.of("../playbook");
 
-    private final MigrationPlanner planner = new MigrationPlanner(Compatibility.load(KNOWLEDGE.resolve("compatibility.yml")));
+    private final MigrationPlanner planner = new MigrationPlanner(Compatibility.load(PLAYBOOK.resolve("compatibility.yml")));
 
     @Test
     void 현재_버전의_다음_단계부터_목표까지_Java_는_지원되면_유지() {

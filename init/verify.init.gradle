@@ -10,9 +10,9 @@
  *      3. spring-boot-properties-migrator 경고             (테스트 system-out)
  *      4. 수동 검토 대상 (FindManualMigrationItems 결과)   (-PmigrationFindPatch)
  *      5. 자동 보정 내역 (어떤 레시피가 어떤 파일을 바꿨는지) (-PmigrationRewriteLog)
- *      6. 알려진 이슈: 러너가 knowledge/known-issues.yml 에서 골라 넘긴 항목 (-PmigrationIssues)
+ *      6. 알려진 이슈: 러너가 playbook/known-issues.yml 에서 골라 넘긴 항목 (-PmigrationIssues)
  *      7. 의존성 버전 변경: 단계 전후 resolve 된 버전 비교 (-PmigrationVersionsBefore / -PmigrationVersionsAfter)
- *  - 테스트 실패 힌트는 knowledge/known-issues.yml 의 failureHints (-PmigrationFailureHints)
+ *  - 테스트 실패 힌트는 playbook/known-issues.yml 의 failureHints (-PmigrationFailureHints)
  *  - migrationResolvedVersions 태스크: 전 모듈의 runtime/test classpath 에서 resolve 된 group:artifact=version 목록을 파일로 남긴다.
  */
 allprojects {
@@ -33,7 +33,7 @@ gradle.taskGraph.whenReady { graph ->
     }
 }
 
-// 테스트 실패 원인별 참고 (knowledge/known-issues.yml 의 failureHints, 러너가 -PmigrationFailureHints 로 넘긴다).
+// 테스트 실패 원인별 참고 (playbook/known-issues.yml 의 failureHints, 러너가 -PmigrationFailureHints 로 넘긴다).
 // 가장 안쪽 예외(이름: 메시지)에 맞으면 리포트의 실패한 테스트에 한 줄 붙는다.
 def FAILURE_HINTS = { ->
     String path = gradle.startParameter.projectProperties.get('migrationFailureHints')
@@ -332,10 +332,10 @@ rootProject {
                 if (removed) { L << "제거된 의존성 ${removed.take(30).collect { "`${it}`" }.join(', ')}${removed.size() > 30 ? ' …' : ''}" << '' }
             }
 
-            // 알려진 이슈: 러너가 knowledge/known-issues.yml 에서 이 단계와 의존성 변경에 맞는 것만 골라 넘긴다
+            // 알려진 이슈: 러너가 playbook/known-issues.yml 에서 이 단계와 의존성 변경에 맞는 것만 골라 넘긴다
             if (knownIssues) {
                 L << "## 알려진 이슈 (${stage})"
-                L << "컴파일/테스트가 통과해도 확인할 항목. knowledge/known-issues.yml 기준${knownGuide ? " (원문 ${knownGuide})" : ''}" << ''
+                L << "컴파일/테스트가 통과해도 확인할 항목. playbook/known-issues.yml 기준${knownGuide ? " (원문 ${knownGuide})" : ''}" << ''
                 [[m: 'REPORT_ONLY', t: '사람이 판단 (자동으로 바꾸지 않음)'],
                  [m: 'REVIEW_REQUIRED', t: '레시피가 바꿨지만 확인 필요'],
                  [m: 'AUTO_FIX', t: '레시피가 보정 (결과만 확인)']].each { sec ->

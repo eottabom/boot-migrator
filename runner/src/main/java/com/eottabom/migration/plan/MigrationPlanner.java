@@ -1,10 +1,10 @@
 package com.eottabom.migration.plan;
 
-import com.eottabom.migration.knowledge.Compatibility;
-import com.eottabom.migration.knowledge.Compatibility.BootLine;
-import com.eottabom.migration.knowledge.Compatibility.GradleSupport;
-import com.eottabom.migration.knowledge.Compatibility.JavaTarget;
-import com.eottabom.migration.knowledge.Versions;
+import com.eottabom.migration.playbook.Compatibility;
+import com.eottabom.migration.playbook.Compatibility.BootLine;
+import com.eottabom.migration.playbook.Compatibility.GradleSupport;
+import com.eottabom.migration.playbook.Compatibility.JavaTarget;
+import com.eottabom.migration.playbook.Versions;
 import com.eottabom.migration.model.MigrationPlan;
 import com.eottabom.migration.model.MigrationRequest;
 import com.eottabom.migration.model.ProjectModel;

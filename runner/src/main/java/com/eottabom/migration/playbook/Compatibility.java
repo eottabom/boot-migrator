@@ -1,4 +1,4 @@
-package com.eottabom.migration.knowledge;
+package com.eottabom.migration.playbook;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-/** knowledge/compatibility.yml: Spring Boot 단계별 Java / Gradle / Spring Cloud 호환성. */
+/** playbook/compatibility.yml: Spring Boot 단계별 Java / Gradle / Spring Cloud 호환성. */
 public final class Compatibility {
 
     /**

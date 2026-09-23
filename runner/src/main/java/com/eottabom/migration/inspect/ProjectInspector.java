@@ -1,7 +1,7 @@
 package com.eottabom.migration.inspect;
 
 import com.eottabom.migration.exec.Processes;
-import com.eottabom.migration.knowledge.Versions;
+import com.eottabom.migration.playbook.Versions;
 import com.eottabom.migration.model.ProjectModel;
 
 import java.io.IOException;
