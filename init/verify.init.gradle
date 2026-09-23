@@ -1,0 +1,393 @@
+/*
+ * 마이그레이션 검증용 Gradle init script (migration 태스크가 compile / test / report 단계에서 사용).
+ * 별도 도구(python 등) 없이 Gradle 만으로 동작한다.
+ *
+ *  - javac 에 -Xlint:deprecation,removal 을 켜서 "다음 버전에서 제거될 API" 사용처를 경고로 남긴다.
+ *  - 테스트가 실패해도 리포트를 끝까지 만들 수 있도록 ignoreFailures 를 켠다. (실패 목록은 리포트에 따로 모은다)
+ *  - migrationReport 태스크가 아래를 모아 markdown 리포트를 만든다.
+ *      1. 컴파일 경고 [removal] / [deprecation]          (-PmigrationCompileLog)
+ *      2. 테스트 실패                                     (build/test-results/**.xml)
+ *      3. spring-boot-properties-migrator 경고             (테스트 system-out)
+ *      4. 수동 검토 대상 (FindManualMigrationItems 결과)   (-PmigrationFindPatch)
+ *      5. 자동 보정 내역 (어떤 레시피가 어떤 파일을 바꿨는지) (-PmigrationRewriteLog)
+ *      6. 알려진 이슈: 러너가 knowledge/known-issues.yml 에서 골라 넘긴 항목 (-PmigrationIssues)
+ *      7. 의존성 버전 변경: 단계 전후 resolve 된 버전 비교 (-PmigrationVersionsBefore / -PmigrationVersionsAfter)
+ *  - 테스트 실패 힌트는 knowledge/known-issues.yml 의 failureHints (-PmigrationFailureHints)
+ *  - migrationResolvedVersions 태스크: 전 모듈의 runtime/test classpath 에서 resolve 된 group:artifact=version 목록을 파일로 남긴다.
+ */
+allprojects {
+    tasks.withType(JavaCompile).configureEach {
+        options.deprecation = true
+        options.compilerArgs.addAll(['-Xlint:deprecation', '-Xlint:removal', '-Xmaxwarns', '10000'])
+    }
+}
+
+// 프로젝트의 test { } 블록이 init 스크립트 설정을 덮어쓰지 않도록 모든 설정이 끝난 뒤에 적용한다
+gradle.taskGraph.whenReady { graph ->
+    graph.allTasks.findAll { it instanceof Test }.each { Test t ->
+        t.ignoreFailures = true
+        // 프로젝트가 failFast 를 켜 두면 첫 실패 뒤의 테스트가 안 돌아서 숨은 문제를 못 찾는다
+        t.failFast = false
+        // 리포트는 테스트 결과 XML 을 읽는다. 프로젝트가 junitXml 을 꺼 두면 테스트 결과가 "실행 안 함" 으로 나온다
+        t.reports.junitXml.required = true
+    }
+}
+
+// 테스트 실패 원인별 참고 (knowledge/known-issues.yml 의 failureHints, 러너가 -PmigrationFailureHints 로 넘긴다).
+// 가장 안쪽 예외(이름: 메시지)에 맞으면 리포트의 실패한 테스트에 한 줄 붙는다.
+def FAILURE_HINTS = { ->
+    String path = gradle.startParameter.projectProperties.get('migrationFailureHints')
+    File f = path ? new File(path) : null
+    f?.exists() ? new groovy.json.JsonSlurper().parse(f, 'UTF-8').collect { [pattern: java.util.regex.Pattern.compile(it.pattern), text: it.text] } : []
+}()
+
+// JUnit XML 의 testcase 하나를 { cls, test, exception, message, location, hint } 로 정리한다
+def testFailure = { String classname, String name, String message, String stack ->
+    String cls = classname.contains('$') ? classname.substring(0, classname.indexOf('$')) : classname
+    // 중첩 클래스(@Nested)는 경로로 보여준다: Describe_x$Context_y#name → Describe_x > Context_y > name
+    String nested = classname.contains('$') ? classname.substring(classname.indexOf('$') + 1).replace('$', ' > ') + ' > ' : ''
+    // 가장 안쪽 예외: 마지막 "Caused by:" 줄, 없으면 첫 줄
+    def lines = (stack ?: message ?: '').readLines()
+    String root = lines.findAll { it.startsWith('Caused by: ') }.collect { it.substring(11) }.with { it ? it.last() : null } ?: (lines.find() ?: message ?: '')
+    int colon = root.indexOf(': ')
+    String exception = (colon > 0 ? root.substring(0, colon) : root).trim()
+    String msg = colon > 0 ? root.substring(colon + 2).trim() : ''
+    // 위치: 프로젝트 코드(테스트 클래스와 같은 최상위 두 패키지)가 처음 나오는 프레임
+    String base = cls.tokenize('.').take(2).join('.') + '.'
+    def frame = lines.collect { it.trim() }.find { it.startsWith("at ${base}") }
+    def loc = frame ? (frame =~ /\(([^()]+\.(?:java|kt|groovy):\d+)\)/) : null
+    String location = loc?.find() ? loc.group(1) : null
+    String simpleException = exception.tokenize('.').last()
+    def hint = FAILURE_HINTS.find { (("${exception}: ${msg}") =~ it.pattern).find() }?.text
+    [cls: cls, test: nested + name, exception: simpleException, message: msg.take(200), location: location, hint: hint]
+}
+
+def ver = { String v -> (v ?: '0').tokenize('.-').collect { it.isInteger() ? it.toInteger() : 0 } }
+def cmp = { String a, String b ->
+    def x = ver(a), y = ver(b)
+    for (int i = 0; i < Math.max(x.size(), y.size()); i++) {
+        int d = (i < x.size() ? x[i] : 0) <=> (i < y.size() ? y[i] : 0)
+        if (d != 0) return d
+    }
+    return 0
+}
+
+rootProject {
+    tasks.register('migrationResolvedVersions') {
+        group = 'migration'
+        description = '전 모듈의 resolve 된 의존성 버전 목록'
+        doLast {
+            def versions = new TreeMap<String, String>()
+            rootProject.allprojects.each { p ->
+                ['runtimeClasspath', 'testRuntimeClasspath'].each { name ->
+                    def c = p.configurations.findByName(name)
+                    if (c == null || !c.canBeResolved) return
+                    try {
+                        c.incoming.resolutionResult.allComponents.each { comp ->
+                            def id = comp.moduleVersion
+                            if (id == null || !(comp.id instanceof org.gradle.api.artifacts.component.ModuleComponentIdentifier)) return
+                            String key = "${id.group}:${id.name}"
+                            if (!versions[key] || cmp(id.version, versions[key]) > 0) versions[key] = id.version
+                        }
+                    } catch (ignored) { }
+                }
+            }
+            File out = file(findProperty('migrationVersionsOut') ?: "${rootDir}/build/resolved-versions.txt")
+            out.parentFile.mkdirs()
+            out.text = versions.collect { k, v -> "${k}=${v}" }.join('\n')
+            println "RESOLVED_VERSIONS=${out.absolutePath} (${versions.size()})"
+        }
+    }
+
+    tasks.register('migrationReport') {
+        group = 'migration'
+        description = '마이그레이션 검증 리포트 생성'
+        doLast {
+            String stage = findProperty('migrationStage') ?: '?'
+            File compileLog = findProperty('migrationCompileLog') ? file(findProperty('migrationCompileLog')) : null
+            File findPatch = findProperty('migrationFindPatch') ? file(findProperty('migrationFindPatch')) : null
+            File rewriteLog = findProperty('migrationRewriteLog') ? file(findProperty('migrationRewriteLog')) : null
+            def readVersions = { String prop ->
+                File f = findProperty(prop) ? file(findProperty(prop)) : null
+                def m = [:]
+                if (f?.exists()) f.eachLine { l -> def kv = l.split('=', 2); if (kv.size() == 2) m[kv[0]] = kv[1] }
+                m
+            }
+            def issuesJson = findProperty('migrationIssues') && file(findProperty('migrationIssues')).exists()
+                ? new groovy.json.JsonSlurper().parse(file(findProperty('migrationIssues')), 'UTF-8') : null
+            List knownIssues = issuesJson?.issues ?: []
+            String knownGuide = issuesJson?.guide
+            Map before = readVersions('migrationVersionsBefore')
+            Map after = readVersions('migrationVersionsAfter')
+            File out = file(findProperty('migrationReportOut') ?: "${rootDir}/build/rewrite-migration/report-${stage}.md")
+            String root = rootDir.absolutePath + '/'
+            def rel = { String p -> p.startsWith(root) ? p.substring(root.length()) : p }
+
+            // 1. 컴파일 경고
+            def warnings = [removal: [:], deprecation: [:]].withDefault { [:] }
+            // 러너가 판단한 결과(-PmigrationCompileOk=1|0|skip)를 우선한다. 없으면 로그로 판단
+            String compileOk = findProperty('migrationCompileOk')
+            boolean compileFailed = compileOk == '0'
+            if (compileLog?.exists()) {
+                compileLog.eachLine('UTF-8') { line ->
+                    def m = line =~ /^(\/\S+\.java):(\d+): warning: \[(removal|deprecation)\] (.*)$/
+                    if (m.find()) {
+                        warnings[m.group(3)].computeIfAbsent(m.group(4)) { new LinkedHashSet() } << "${rel(m.group(1))}:${m.group(2)}"
+                    }
+                    if (compileOk == null && (line.contains('Compilation failed') || line.contains('FAILED'))) compileFailed = true
+                }
+            }
+
+            // 2/3. 테스트 결과 + properties-migrator
+            int total = 0
+            def failures = []
+            def migrations = [renamed: new LinkedHashSet(), unsupported: new LinkedHashSet()]
+            // HTML 리포트용 구조화 데이터 (bucket -> "key|source" -> [key, replacement, source])
+            def migrationData = [renamed: new LinkedHashMap(), unsupported: new LinkedHashMap()]
+            fileTree(rootDir) { include '**/build/test-results/**/TEST-*.xml' }.each { xml ->
+                def suite
+                try { suite = new groovy.xml.XmlSlurper().parse(xml) } catch (ignored) { return }
+                total += (suite.@tests.text() ?: '0') as int
+                suite.testcase.each { tc ->
+                    def f = tc.failure.size() ? tc.failure : tc.error
+                    if (f.size()) failures << testFailure(tc.@classname.text(), tc.@name.text(), f.@message.text(), f.text())
+                }
+                // PropertiesMigrationListener 출력:
+                //   The use of configuration keys that have been renamed was found in the environment:
+                //   Property source 'Config resource ...':
+                //       Key: spring.redis.host
+                //           Line: 3
+                //           Replacement: spring.data.redis.host
+                String so = suite.'system-out'.text()
+                def blocks = so =~ /(?s)The use of configuration keys that (have been renamed|are no longer supported) was found in the environment:(.*?)(?:\n\s*\n|\z)/
+                blocks.each { all, kind, body ->
+                    String bucket = kind.contains('renamed') ? 'renamed' : 'unsupported'
+                    String source = ''
+                    String key = null
+                    body.eachLine { l ->
+                        def s = l =~ /Property source '([^']+)'/
+                        if (s.find()) source = s.group(1)
+                        def k = l =~ /Key: (\S+)/
+                        if (k.find()) {
+                            key = k.group(1); migrations[bucket] << "`${key}` (${source})"
+                            migrationData[bucket]["${key}|${source}".toString()] = [key: key, replacement: null, source: source]
+                        }
+                        def r = l =~ /Replacement: (\S+)/
+                        if (r.find() && key) {
+                            migrations[bucket].remove("`${key}` (${source})")
+                            migrations[bucket] << "`${key}` → `${r.group(1)}` (${source})"
+                            migrationData[bucket]["${key}|${source}".toString()]?.replacement = r.group(1)
+                        }
+                    }
+                }
+            }
+
+            // 4. 수동 검토 대상
+            def manual = new LinkedHashSet()
+            def manualData = new LinkedHashSet()
+            if (findPatch?.exists()) {
+                String current = null
+                findPatch.eachLine('UTF-8') { line ->
+                    if (line.startsWith('+++ b/')) current = line.substring(6).trim()
+                    else if (line.startsWith('+') && line.contains('~~>') && current) {
+                        String code = line.substring(1).replaceAll(/\/\*~~(\([^)]*\))?>\*\//, '').trim().take(160)
+                        manual << "`${current}` 의 `${code.take(120)}`"
+                        manualData << [file: current, code: code]
+                    }
+                }
+            }
+
+            // 5. 자동 보정 내역. rewriteRun 로그의 "Changes have been made to <파일> by:" 아래 레시피 트리
+            //    커스텀 보정(com.eottabom.* 와 프로젝트 레시피)은 레시피별로 파일을, upstream 은 파일 수만 남긴다
+            def fixes = new TreeMap<String, Set<String>>()
+            def allChanged = new LinkedHashSet<String>()
+            if (rewriteLog?.exists()) {
+                // 파일별 레시피 트리를 모은 뒤, 말단(실제로 바꾼) 레시피를 가장 가까운 커스텀 레시피에 귀속시킨다
+                def blocks = [:]
+                String current = null
+                rewriteLog.eachLine('UTF-8') { line ->
+                    def m = line =~ /^(?:Changes have been made to|These recipes would make changes to) (.+?)(?: by)?:$/
+                    if (m.find()) { current = m.group(1); allChanged << current; blocks[current] = []; return }
+                    if (current && line.startsWith('    ')) {
+                        blocks[current] << [indent: line.length() - line.stripLeading().length(), name: line.trim().replaceAll(/:\s*\{.*$/, '')]
+                    } else {
+                        current = null
+                    }
+                }
+                // 대상 프로젝트의 .rewrite/ 레시피(러너가 -PmigrationProjectRecipes 로 넘긴다)도 보정 레시피로 본다
+                def projectRecipes = ((findProperty('migrationProjectRecipes') ?: '') as String).tokenize(',') as Set
+                def isCustomFix = { String n ->
+                    // 단계 레시피(SpringBootStep / MigrateToSpringBoot)와 upstream 단계 레시피는 묶음이라 보정으로 세지 않는다
+                    projectRecipes.contains(n) || (n.startsWith('com.eottabom.rewrite.') && !n.contains('.spring.upstream.') &&
+                        !n.contains('.MigrateToSpringBoot_') && !n.contains('.SpringBootStep_') && n != 'com.eottabom.rewrite.CommonMigrationFixes')
+                }
+                boolean isBuildFile
+                blocks.each { String f, List nodes ->
+                    isBuildFile = f.endsWith('.gradle') || f.endsWith('.gradle.kts') || f.endsWith('.properties') || f.endsWith('pom.xml')
+                    def stack = []
+                    nodes.eachWithIndex { node, i ->
+                        while (stack && stack.last().indent >= node.indent) stack.removeLast()
+                        stack << node
+                        boolean leaf = i == nodes.size() - 1 || nodes[i + 1].indent <= node.indent
+                        if (!leaf) return
+                        // 의존성 레시피가 빌드 파일이 아닌 곳에 남긴 기록은 메타데이터 갱신이라 텍스트 변경이 없다
+                        if (!isBuildFile && (node.name.startsWith('org.openrewrite.java.dependencies.') || node.name.startsWith('org.openrewrite.gradle.'))) return
+                        def owner = stack.reverse().find { isCustomFix(it.name) }
+                        if (owner) fixes.computeIfAbsent(owner.name) { new TreeSet<String>() } << f
+                    }
+                }
+            }
+
+            def L = []
+            L << "# Spring Boot ${stage} 마이그레이션 검증 리포트" << ''
+            L << '| 항목 | 결과 |' << '|---|---|'
+            L << "| 컴파일 | ${compileOk == 'skip' ? '실행 안 함' : (compileFailed ? '❌ 실패' : '✅ 통과')} |"
+            L << "| 테스트 | ${total == 0 ? '실행 안 함' : (failures ? "❌ ${failures.size()} / ${total} 실패" : "✅ ${total}개 통과")} |"
+            String buildOk = findProperty('migrationBuildOk')
+            String baselineOk = findProperty('migrationBaselineBuildOk')
+            String buildFail = baselineOk == '0' ? '❌ 실패 (원본에서도 실패하는 기존 문제, 00-baseline-assemble.log)' : '❌ 실패 (테스트 외: 패키징/asciidoctor/checkstyle 등, test.log 참고)'
+            L << "| 빌드 | ${buildOk == '1' ? '✅ 통과' : (buildOk == '0' ? buildFail : '실행 안 함')} |"
+            L << "| 제거 예정 API 사용 ([removal]) | ${warnings.removal.size()} 종류 |"
+            L << "| deprecated API 사용 | ${warnings.deprecation.size()} 종류 |"
+            L << "| 설정 키 변경 (properties-migrator) | 이름 변경 ${migrations.renamed.size()} / 지원 중단 ${migrations.unsupported.size()} |"
+            L << "| 수동 검토 대상 | ${manual.size()} 곳 |"
+            if (knownIssues) {
+                def byMode = knownIssues.countBy { it.mode }
+                L << "| 알려진 이슈 | 판단 ${byMode.REPORT_ONLY ?: 0} / 확인 ${byMode.REVIEW_REQUIRED ?: 0} / 자동 보정 ${byMode.AUTO_FIX ?: 0} |"
+            }
+            L << "| 자동 변경 파일 | ${allChanged.size()} 개 (커스텀 보정 레시피 ${fixes.size()} 종) |" << ''
+
+            if (fixes) {
+                L << '## 자동 보정 내역 (커스텀 레시피)'
+                L << '이 단계에서 커스텀 보정 레시피가 바꾼 파일. 전체 변경은 같은 이름의 .patch 파일 참고.' << ''
+                fixes.each { name, files ->
+                    L << "- **${name}** 로 바뀐 파일 ${files.take(5).collect { "`${it}`" }.join(', ')}${files.size() > 5 ? " 외 ${files.size() - 5}개" : ''}"
+                }
+                L << ''
+            }
+
+            if (failures) {
+                def byClass = failures.groupBy { it.cls }
+                L << "## 실패한 테스트 (${failures.size()}건, ${byClass.size()}개 클래스)"
+                L << '원인은 스택트레이스의 가장 안쪽 예외(Caused by) 기준. 전체 스택은 각 모듈의 build/test-results 참고.' << ''
+                byClass.sort { -it.value.size() }.each { cls, list ->
+                    L << "### ${cls.tokenize('.').last()} (${list.size()}건)" << "`${cls}`" << ''
+                    list.groupBy { [it.exception, it.message] }.sort { -it.value.size() }.each { cause, same ->
+                        def first = same.first()
+                        L << "- **`${first.exception}`** ${first.message} (${same.size()}건)"
+                        if (first.location) L << "  - 위치: `${first.location}`"
+                        if (first.hint) L << "  - ${first.hint}"
+                        L << "  - 해당 테스트 ${same.take(5).collect { it.test }.join(' / ')}${same.size() > 5 ? " 외 ${same.size() - 5}건" : ''}"
+                    }
+                    L << ''
+                }
+            }
+
+            L << '## 설정 키 변경 (spring-boot-properties-migrator)'
+            if (migrations.renamed || migrations.unsupported) {
+                L << '테스트 중 로딩된 설정에서 발견됨. 저장소 밖(외부 설정 저장소)의 키가 나오면 그쪽을 고쳐야 한다.' << ''
+                if (migrations.renamed) { L << '### 이름 변경됨 (지금은 임시로 자동 매핑 중)'; migrations.renamed.each { L << "- ${it}" }; L << '' }
+                if (migrations.unsupported) { L << '### 지원 중단됨 (값이 무시됨)'; migrations.unsupported.each { L << "- ${it}" }; L << '' }
+            } else {
+                L << '테스트 로그에서 발견된 것 없음. 테스트 프로파일은 외부 설정 저장소를 끄는 경우가 많으니 개발/스테이징 배포 후'
+                L << '기동 로그에서 `The use of configuration keys that` 를 검색해서 다시 확인한다.' << ''
+            }
+
+            [[k: 'removal', t: '제거 예정 API 사용 ([removal])', h: '다음 단계로 올리면 컴파일이 깨질 수 있는 곳. 다음 단계 전에 먼저 정리한다.'],
+             [k: 'deprecation', t: 'deprecated API 사용', h: '당장 문제는 없지만 이후 버전에서 제거될 수 있다.']].each { sec ->
+                Map w = warnings[sec.k]
+                if (w) {
+                    L << "## ${sec.t}" << sec.h << ''
+                    w.sort { -it.value.size() }.each { msg, locs ->
+                        L << "- **${msg}** ${locs.size()}곳 (${locs.take(3).join(', ')}${locs.size() > 3 ? ' …' : ''})"
+                    }
+                    L << ''
+                }
+            }
+
+            // 7. 의존성 버전 변경 + 라이브러리 알려진 이슈
+            def depsData = [changed: [], added: [], removed: []]
+            if (before && after) {
+                def changed = after.findAll { k, v -> before[k] && before[k] != v }
+                def added = after.keySet() - before.keySet()
+                def removed = before.keySet() - after.keySet()
+                def level = { String a, String b ->
+                    def x = ver(a), y = ver(b)
+                    x[0] != y[0] ? 'major' : ((x.size() > 1 && y.size() > 1 && x[1] != y[1]) ? 'minor' : 'patch')
+                }
+                L << "## 의존성 버전 변경 (transitive 포함, 전 모듈)"
+                L << "변경 ${changed.size()}개 / 추가 ${added.size()}개 / 제거 ${removed.size()}개. 라이브러리 버그는 여기서 나오므로 major/minor 변경을 먼저 확인한다." << ''
+                def rows = changed.collect { k, v -> [k, before[k], v, level(before[k], v)] }
+                    .sort { a, b -> (['major', 'minor', 'patch'].indexOf(a[3]) <=> ['major', 'minor', 'patch'].indexOf(b[3])) ?: a[0] <=> b[0] }
+                def important = rows.findAll { it[3] != 'patch' }
+                depsData = [changed: rows.collect { [name: it[0], before: it[1], after: it[2], level: it[3]] },
+                            added: (added as List).sort(), removed: (removed as List).sort()]
+                if (important) {
+                    L << '### major / minor 변경'
+                    L << '| 라이브러리 | 이전 | 이후 | 구분 |' << '|---|---|---|---|'
+                    important.each { L << "| `${it[0]}` | ${it[1]} | ${it[2]} | ${it[3]} |" }
+                    L << ''
+                }
+                if (added) { L << "추가된 의존성 ${added.take(30).collect { "`${it}`" }.join(', ')}${added.size() > 30 ? ' …' : ''}" << '' }
+                if (removed) { L << "제거된 의존성 ${removed.take(30).collect { "`${it}`" }.join(', ')}${removed.size() > 30 ? ' …' : ''}" << '' }
+            }
+
+            // 알려진 이슈: 러너가 knowledge/known-issues.yml 에서 이 단계와 의존성 변경에 맞는 것만 골라 넘긴다
+            if (knownIssues) {
+                L << "## 알려진 이슈 (${stage})"
+                L << "컴파일/테스트가 통과해도 확인할 항목. knowledge/known-issues.yml 기준${knownGuide ? " (원문 ${knownGuide})" : ''}" << ''
+                [[m: 'REPORT_ONLY', t: '사람이 판단 (자동으로 바꾸지 않음)'],
+                 [m: 'REVIEW_REQUIRED', t: '레시피가 바꿨지만 확인 필요'],
+                 [m: 'AUTO_FIX', t: '레시피가 보정 (결과만 확인)']].each { sec ->
+                    def items = knownIssues.findAll { it.mode == sec.m }
+                    if (items) {
+                        L << "### ${sec.t}"
+                        items.each { i ->
+                            String box = sec.m == 'AUTO_FIX' ? '-' : '- [ ]'
+                            String trigger = i.trigger ? " (${i.trigger})" : ''
+                            String link = i.source ? " [원문](${i.source})" : ''
+                            L << "${box} **${i.title}**${trigger}"
+                            if (i.detail || link) L << "  ${i.detail ?: ''}${link}"
+                        }
+                        L << ''
+                    }
+                }
+            }
+
+            if (manual) {
+                L << '## 수동 검토 대상 (FindManualMigrationItems)'
+                L << '레시피가 자동으로 바꾸지 않는 것. 항목별 이유는 find-manual.yml 주석 참고.' << ''
+                manual.each { L << "- ${it}" }
+                L << ''
+            }
+
+            // HTML 리포트용 구조화 데이터 (-PmigrationReportJson). 러너가 전 단계를 모아 report.html 을 만든다
+            String jsonPath = findProperty('migrationReportJson')
+            if (jsonPath) {
+                def warn = { String k -> warnings[k].sort { -it.value.size() }.collect { msg, locs -> [message: msg, locations: locs as List] } }
+                def data = [
+                    stage: stage,
+                    compile: compileOk == 'skip' ? 'skip' : (compileFailed ? 'fail' : 'ok'),
+                    build: findProperty('migrationBuildOk') ?: 'skip',
+                    baselineBuild: findProperty('migrationBaselineBuildOk') ?: 'skip',
+                    tests: [total: total, failures: failures],
+                    warnings: [removal: warn('removal'), deprecation: warn('deprecation')],
+                    properties: [renamed: migrationData.renamed.values() as List, unsupported: migrationData.unsupported.values() as List],
+                    manual: manualData as List,
+                    fixes: fixes.collect { name, files -> [recipe: name, files: files as List] },
+                    changedFiles: allChanged as List,
+                    deps: depsData,
+                    knownIssues: knownIssues,
+                    guide: knownGuide,
+                ]
+                File jf = file(jsonPath)
+                jf.parentFile.mkdirs()
+                jf.setText(new groovy.json.JsonGenerator.Options().disableUnicodeEscaping().build().toJson(data), 'UTF-8')
+            }
+
+            out.parentFile.mkdirs()
+            out.setText(L.join('\n'), 'UTF-8')
+            println "MIGRATION_REPORT=${out.absolutePath}"
+        }
+    }
+}

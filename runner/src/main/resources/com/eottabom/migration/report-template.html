@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>마이그레이션 리포트</title>
+<style>
+:root {
+  --bg: #f7f7f5; --panel: #ffffff; --text: #1d1d1b; --muted: #6b6b66; --line: #e4e4df;
+  --ok: #1f7a4d; --ok-bg: #e6f4ec; --fail: #b3261e; --fail-bg: #fbe9e7; --warn: #8a5a00; --warn-bg: #fdf3dc;
+  --info: #2b5c9e; --info-bg: #e8eff9; --code-bg: #f1f1ed; --add: #e6f4ec; --del: #fbe9e7; --accent: #2b5c9e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161615; --panel: #1f1f1d; --text: #ecece8; --muted: #a3a39c; --line: #34342f;
+    --ok: #6fcf97; --ok-bg: #1d3a2a; --fail: #f28b82; --fail-bg: #43211e; --warn: #f2c166; --warn-bg: #3f3219;
+    --info: #8ab4f8; --info-bg: #1e2c42; --code-bg: #262623; --add: #1d3a2a; --del: #43211e; --accent: #8ab4f8;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+  font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", sans-serif; }
+.body code, .meta code, .title code { background: var(--code-bg); padding: 0 4px; border-radius: 4px; }
+code, pre, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 24px 16px 64px; }
+header h1 { font-size: 20px; margin: 0 0 4px; }
+header .sub { color: var(--muted); }
+.timeline { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0 8px; }
+.chip { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 6px 14px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px; color: var(--text); font: inherit; }
+.chip[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.dot.ok { background: var(--ok); } .dot.fail { background: var(--fail); } .dot.warn { background: var(--warn); }
+.toolbar { display: flex; gap: 12px; align-items: center; margin: 16px 0; flex-wrap: wrap; }
+.toolbar input { flex: 1; min-width: 220px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--panel); color: var(--text); font: inherit; }
+.pills { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 16px; }
+.pill { border-radius: 6px; padding: 3px 10px; font-weight: 600; font-size: 13px; background: var(--code-bg); }
+.pill.ok { background: var(--ok-bg); color: var(--ok); } .pill.fail { background: var(--fail-bg); color: var(--fail); }
+.pill.warn { background: var(--warn-bg); color: var(--warn); } .pill.info { background: var(--info-bg); color: var(--info); }
+section.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; margin: 16px 0; }
+section.card.blocker { border-color: var(--fail); box-shadow: 0 0 0 1px var(--fail) inset; }
+section.card.blocker > h2 { color: var(--fail); }
+section.card > h2 { font-size: 16px; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
+section.card > .desc { color: var(--muted); margin: 0 0 12px; }
+.count { color: var(--muted); font-weight: 400; font-size: 13px; }
+.empty { color: var(--ok); }
+.item { padding: 10px 0; border-top: 1px solid var(--line); }
+.item:first-of-type { border-top: 0; }
+.item .title { font-weight: 600; }
+.item .meta { color: var(--muted); font-size: 13px; }
+.entry > summary { align-items: center; }
+.entry .body { padding: 0 0 12px 20px; overflow-wrap: anywhere; }
+.entry .body > * + * { margin-top: 6px; }
+.body, .meta, .title { min-width: 0; overflow-wrap: anywhere; }
+.tag { font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-right: 6px; vertical-align: 1px; }
+.tag.REPORT_ONLY { background: var(--warn-bg); color: var(--warn); }
+.tag.REVIEW_REQUIRED { background: var(--info-bg); color: var(--info); }
+.tag.AUTO_FIX { background: var(--ok-bg); color: var(--ok); }
+.tag.FAIL { background: var(--fail-bg); color: var(--fail); }
+details { border-top: 1px solid var(--line); }
+details:first-of-type { border-top: 0; }
+summary { cursor: pointer; padding: 8px 0; list-style: none; display: flex; gap: 8px; align-items: baseline; }
+summary::-webkit-details-marker { display: none; }
+summary::before { content: "▸"; color: var(--muted); width: 12px; flex: none; }
+details[open] > summary::before { content: "▾"; }
+summary .grow { flex: 1; overflow-wrap: anywhere; }
+.locs { margin: 0 0 8px 20px; padding: 0; list-style: none; color: var(--muted); }
+.locs li { overflow-wrap: anywhere; }
+table { border-collapse: collapse; width: 100%; }
+th, td { text-align: left; padding: 6px 8px; border-top: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; font-size: 12.5px; border-top: 0; }
+.diff { overflow-x: auto; background: var(--code-bg); border-radius: 8px; margin: 0 0 12px; }
+.diff pre { margin: 0; padding: 8px 0; min-width: max-content; }
+.diff .l { display: block; padding: 0 12px; white-space: pre; }
+.diff .add { background: var(--add); } .diff .del { background: var(--del); } .diff .hunk { color: var(--info); }
+.stat { font-size: 12px; } .stat .a { color: var(--ok); } .stat .d { color: var(--fail); }
+a { color: var(--accent); }
+.hidden { display: none !important; }
+footer { color: var(--muted); font-size: 12.5px; margin-top: 32px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="title">마이그레이션 리포트</h1>
+    <div class="sub" id="subtitle"></div>
+  </header>
+  <nav class="timeline" id="timeline" aria-label="단계"></nav>
+  <div class="toolbar">
+    <input id="search" type="search" placeholder="파일, 클래스, 메시지 검색" aria-label="검색">
+  </div>
+  <main id="stage"></main>
+  <footer id="footer"></footer>
+</div>
+<script id="data" type="application/json">/*__DATA__*/</script>
+<script>
+(function () {
+  const DATA = JSON.parse(document.getElementById('data').textContent);
+  const $ = (tag, attrs, ...children) => {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (v == null || v === false) continue;
+      if (k === 'class') el.className = v; else if (k.startsWith('on')) el.addEventListener(k.slice(2), v); else el.setAttribute(k, v === true ? '' : v);
+    }
+    for (const c of children.flat()) if (c != null && c !== false) el.append(c instanceof Node ? c : document.createTextNode(String(c)));
+    return el;
+  };
+  const code = (t) => $('code', null, t);
+  // 지식 파일 문장 안의 `코드` 를 코드 표기로
+  const rich = (t) => {
+    if (t == null) return null;
+    const span = $('span');
+    String(t).split('`').forEach((part, i) => span.append(i % 2 ? code(part) : document.createTextNode(part)));
+    return span;
+  };
+
+  function status(r) {
+    if (!r) return 'warn';
+    if (r.compile === 'fail') return 'fail';
+    if ((r.tests.failures || []).length) return 'fail';
+    if (r.build === '0' && r.baselineBuild !== '0') return 'fail';
+    return 'ok';
+  }
+
+  document.getElementById('title').textContent = DATA.project + ' 마이그레이션 리포트';
+  document.getElementById('subtitle').textContent =
+    'Spring Boot ' + DATA.startBoot + ' → ' + DATA.currentBoot + ', ' + DATA.stages.length + '단계, ' + DATA.generatedAt;
+  document.getElementById('footer').textContent =
+    '같은 폴더의 NN-*.md(단계별 리포트), NN-*.patch(누적 변경), *.log(원본 로그)와 같은 내용이다.';
+
+  const timeline = document.getElementById('timeline');
+  let current = DATA.stages.length - 1;
+  DATA.stages.forEach((s, i) => {
+    timeline.append($('button', { class: 'chip', 'aria-pressed': String(i === current), onclick: () => select(i) },
+      $('span', { class: 'dot ' + status(s.report) }), s.name));
+  });
+
+  function select(i) {
+    current = i;
+    [...timeline.children].forEach((c, j) => c.setAttribute('aria-pressed', String(j === i)));
+    render(DATA.stages[i]);
+    applySearch();
+  }
+
+  function card(title, count, desc, ...body) {
+    return $('section', { class: 'card' },
+      $('h2', null, title, count != null ? $('span', { class: 'count' }, count) : null),
+      desc ? $('p', { class: 'desc' }, desc) : null, ...body);
+  }
+
+  // 제목만 한 줄로 보이고, 펼치면 설명과 위치가 나온다. open 이면 처음부터 펼쳐 둔다
+  function entry(tag, title, body, meta, open) {
+    return $('details', { class: 'entry search', open: open || null },
+      $('summary', null, $('span', { class: 'grow title' }, tag ? $('span', { class: 'tag ' + tag }, tagLabel(tag)) : null, typeof title === 'string' ? rich(title) : title)),
+      $('div', { class: 'body' },
+        body ? $('div', null, typeof body === 'string' ? rich(body) : body) : null,
+        meta ? $('div', { class: 'meta' }, typeof meta === 'string' ? rich(meta) : meta) : null));
+  }
+  const tagLabel = (t) => ({ REPORT_ONLY: '판단', REVIEW_REQUIRED: '확인', AUTO_FIX: '자동 보정', FAIL: '실패' }[t] || t);
+
+  function parsePatch(text) {
+    const files = [];
+    let cur = null;
+    for (const line of (text || '').split('\n')) {
+      if (line.startsWith('diff --git ')) {
+        const m = line.match(/ b\/(.*)$/);
+        cur = { path: m ? m[1] : line, lines: [], add: 0, del: 0 };
+        files.push(cur);
+      } else if (cur) {
+        if (line.startsWith('+++') || line.startsWith('---') || line.startsWith('index ') || line.startsWith('new file') || line.startsWith('deleted file') || line.startsWith('similarity') || line.startsWith('rename')) continue;
+        if (line.startsWith('+')) cur.add++; else if (line.startsWith('-')) cur.del++;
+        cur.lines.push(line);
+      }
+    }
+    return files;
+  }
+
+  function diffView(f) {
+    const pre = $('pre');
+    for (const l of f.lines) {
+      const cls = l.startsWith('@@') ? 'hunk' : l.startsWith('+') ? 'add' : l.startsWith('-') ? 'del' : '';
+      pre.append($('span', { class: 'l ' + cls }, l || ' '));
+    }
+    return $('div', { class: 'diff' }, pre);
+  }
+
+  function render(s) {
+    const main = document.getElementById('stage');
+    main.replaceChildren();
+    const r = s.report;
+    if (!r) {
+      main.append(card(s.name, null, '이 단계의 구조화된 리포트가 없다. ' + s.tag + '.md 를 본다.'));
+      return;
+    }
+    const failures = r.tests.failures || [];
+    const pills = $('div', { class: 'pills' },
+      $('span', { class: 'pill ' + (r.compile === 'fail' ? 'fail' : r.compile === 'ok' ? 'ok' : '') }, '컴파일 ' + ({ ok: '통과', fail: '실패', skip: '실행 안 함' }[r.compile])),
+      $('span', { class: 'pill ' + (failures.length ? 'fail' : r.tests.total ? 'ok' : '') }, r.tests.total ? ('테스트 ' + (r.tests.total - failures.length) + '/' + r.tests.total + ' 통과') : '테스트 실행 안 함'),
+      $('span', { class: 'pill ' + (r.build === '1' ? 'ok' : r.build === '0' ? (r.baselineBuild === '0' ? 'warn' : 'fail') : '') },
+        '빌드 ' + (r.build === '1' ? '통과' : r.build === '0' ? (r.baselineBuild === '0' ? '실패 (원본에서도 실패)' : '실패') : '실행 안 함')),
+      $('span', { class: 'pill info' }, '바뀐 파일 ' + (r.changedFiles || []).length));
+    main.append($('h2', null, 'Spring Boot ' + s.name), pills);
+
+    // 1. 실패 (고쳐야 다음 단계로 간다) / 확인할 것 (체크리스트)
+    const blockers = [];
+    const actions = blockers;
+    if (r.compile === 'fail') actions.push(entry('FAIL', '컴파일 실패', '에러는 ' + s.tag + '.compile.log 에 있다. 고친 뒤 같은 명령을 다시 실행하면 이어서 진행한다.', null, true));
+    if (r.build === '0' && r.baselineBuild !== '0') actions.push(entry('FAIL', '빌드 실패 (테스트 외의 패키징, 플러그인, 검사)', '로그는 ' + s.tag + '.test.log 에 있다.', null, true));
+    const byCause = {};
+    for (const f of failures) (byCause[f.cls + '|' + f.exception + '|' + f.message] ||= []).push(f);
+    for (const [key, list] of Object.entries(byCause)) {
+      const f = list[0];
+      actions.push(entry('FAIL', f.cls.split('.').pop() + ' 에서 ' + f.exception,
+        $('div', null, f.message ? $('div', { class: 'mono' }, f.message) : null, f.hint ? $('div', null, f.hint) : null),
+        list.length + '건 (' + list.slice(0, 5).map(x => x.test).join(' / ') + (list.length > 5 ? ' …' : '') + ')' + (f.location ? ', 위치 ' + f.location : ''), true));
+    }
+    const checks = [];
+    for (const i of (r.knownIssues || []).filter(i => i.mode !== 'AUTO_FIX')) {
+      checks.push(entry(i.mode, i.title,
+        $('div', null, rich(i.detail || ''), i.trigger ? $('div', { class: 'meta' }, rich(i.trigger)) : null),
+        i.source ? $('a', { href: i.source, target: '_blank', rel: 'noopener' }, '원문 보기') : null));
+    }
+    for (const w of r.warnings.removal || []) {
+      checks.push(entry('REVIEW_REQUIRED', '제거 예정 API 사용 (' + w.message + ')',
+        '다음 단계로 올리면 컴파일이 깨질 수 있다. ' + w.locations.length + '곳', w.locations.slice(0, 5).join(', ') + (w.locations.length > 5 ? ' …' : '')));
+    }
+    for (const kind of ['renamed', 'unsupported']) {
+      for (const p of r.properties[kind] || []) {
+        checks.push(entry('REVIEW_REQUIRED',
+          '설정 키 ' + (kind === 'renamed' ? '이름 변경 ' : '지원 중단 ') + p.key + (p.replacement ? ' → ' + p.replacement : ''), p.source));
+      }
+    }
+    if (blockers.length) {
+      const c = card('실패', blockers.length + '건', '고친 뒤 같은 명령을 다시 실행하면 이 단계 검증부터 다시 하고, 통과하면 다음 단계로 간다.', ...blockers);
+      c.classList.add('blocker');
+      main.append(c);
+    }
+    main.append(card('확인할 것', checks.length ? checks.length + '건' : null,
+      '컴파일/테스트가 통과해도 동작이 바뀌는 것, 설정 키 변경, 다음 단계에서 깨질 API. 제목을 누르면 설명이 나온다.',
+      checks.length ? null : $('p', { class: 'empty' }, '확인할 항목이 없다.'), ...checks));
+
+    // 2. 이 단계에서 바뀐 것
+    const files = parsePatch(s.patch);
+    const changes = [];
+    if ((r.fixes || []).length) {
+      changes.push($('h3', null, '커스텀 보정 레시피'));
+      for (const f of r.fixes) {
+        changes.push($('details', { class: 'search' }, $('summary', null, $('span', { class: 'grow mono' }, f.recipe), $('span', { class: 'count' }, f.files.length + '개 파일')),
+          $('ul', { class: 'locs' }, f.files.map(x => $('li', { class: 'mono' }, x)))));
+      }
+    }
+    const auto = (r.knownIssues || []).filter(i => i.mode === 'AUTO_FIX');
+    if (auto.length) {
+      changes.push($('h3', null, '레시피가 보정한 알려진 이슈'));
+      for (const i of auto) changes.push($('div', { class: 'item search' }, $('div', { class: 'title' }, $('span', { class: 'tag AUTO_FIX' }, '자동 보정'), rich(i.title)), $('div', { class: 'meta' }, rich(i.detail || ''))));
+    }
+    changes.push($('h3', null, '파일별 변경'));
+    if (!files.length) changes.push($('p', { class: 'desc' }, s.patch == null ? '이 단계의 diff 가 없다 (git 저장소가 아니거나 이전 버전의 실행). 누적 변경은 ' + s.tag + '.patch' : '바뀐 파일이 없다.'));
+    for (const f of files) {
+      changes.push($('details', { class: 'search' },
+        $('summary', null, $('span', { class: 'grow mono' }, f.path), $('span', { class: 'stat' }, $('span', { class: 'a' }, '+' + f.add), ' ', $('span', { class: 'd' }, '-' + f.del))),
+        diffView(f)));
+    }
+    if (s.patchTruncated) changes.push($('p', { class: 'desc' }, 'diff 가 커서 앞부분만 보여준다. 전체는 ' + s.tag + '.stage.patch'));
+    main.append(card('이 단계에서 바뀐 것', files.length + '개 파일', null, ...changes));
+
+    // 3. 참고
+    const refs = [];
+    const dep = r.deps || { changed: [] };
+    const important = dep.changed.filter(d => d.level !== 'patch');
+    if (dep.changed.length || dep.added.length || dep.removed.length) {
+      refs.push($('h3', null, '의존성 버전 변경 (transitive 포함)'),
+        $('p', { class: 'desc' }, '변경 ' + dep.changed.length + ', 추가 ' + dep.added.length + ', 제거 ' + dep.removed.length + '. 라이브러리 버그는 major/minor 변경에서 나온다.'));
+      if (important.length) {
+        refs.push($('table', null, $('thead', null, $('tr', null, $('th', null, '라이브러리'), $('th', null, '이전'), $('th', null, '이후'), $('th', null, '구분'))),
+          $('tbody', null, important.map(d => $('tr', { class: 'search' }, $('td', { class: 'mono' }, d.name), $('td', null, d.before), $('td', null, d.after),
+            $('td', null, $('span', { class: 'pill ' + (d.level === 'major' ? 'warn' : 'info') }, d.level)))))));
+      }
+      const rest = dep.changed.filter(d => d.level === 'patch');
+      if (rest.length) refs.push($('details', { class: 'search' }, $('summary', null, $('span', { class: 'grow' }, 'patch 버전 변경'), $('span', { class: 'count' }, rest.length + '개')),
+        $('ul', { class: 'locs' }, rest.map(d => $('li', { class: 'mono' }, d.name + ' ' + d.before + ' → ' + d.after)))));
+      for (const [label, list] of [['추가', dep.added], ['제거', dep.removed]]) {
+        if (list.length) refs.push($('details', { class: 'search' }, $('summary', null, $('span', { class: 'grow' }, label + '된 의존성'), $('span', { class: 'count' }, list.length + '개')),
+          $('ul', { class: 'locs' }, list.map(x => $('li', { class: 'mono' }, x)))));
+      }
+    }
+    const manual = r.manual || [];
+    if (manual.length) {
+      const byFile = {};
+      for (const m of manual) (byFile[m.file] ||= []).push(m.code);
+      refs.push($('h3', null, '수동 검토 대상'), $('p', { class: 'desc' }, '레시피가 자동으로 바꾸지 않는 사용처 ' + manual.length + '곳 (' + Object.keys(byFile).length + '개 파일). 이유는 find-manual.yml 주석 참고.'));
+      for (const [file, lines] of Object.entries(byFile)) {
+        refs.push($('details', { class: 'search' }, $('summary', null, $('span', { class: 'grow mono' }, file), $('span', { class: 'count' }, lines.length + '곳')),
+          $('ul', { class: 'locs' }, lines.map(x => $('li', { class: 'mono' }, x)))));
+      }
+    }
+    const dep2 = r.warnings.deprecation || [];
+    if (dep2.length) {
+      refs.push($('h3', null, 'deprecated API 사용'), $('p', { class: 'desc' }, '당장 문제는 없지만 이후 버전에서 제거될 수 있다.'));
+      for (const w of dep2) {
+        refs.push($('details', { class: 'search' }, $('summary', null, $('span', { class: 'grow' }, w.message), $('span', { class: 'count' }, w.locations.length + '곳')),
+          $('ul', { class: 'locs' }, w.locations.map(x => $('li', { class: 'mono' }, x)))));
+      }
+    }
+    if (r.guide) refs.push($('p', null, '공식 가이드 ', $('a', { href: r.guide, target: '_blank', rel: 'noopener' }, r.guide)));
+    main.append(card('참고', null, null, ...(refs.length ? refs : [$('p', { class: 'desc' }, '없음')])));
+  }
+
+  const search = document.getElementById('search');
+  function applySearch() {
+    const q = search.value.trim().toLowerCase();
+    for (const el of document.querySelectorAll('#stage .search')) {
+      const hit = !q || el.textContent.toLowerCase().includes(q);
+      el.classList.toggle('hidden', !hit);
+      if (q && hit && el.tagName === 'DETAILS') el.open = true;
+    }
+  }
+  search.addEventListener('input', applySearch);
+  if (DATA.stages.length) select(current);
+  else document.getElementById('stage').append(card('아직 실행한 단계가 없다', null, 'migrationRun 을 실행하면 단계마다 이 페이지가 갱신된다.'));
+})();
+</script>
+</body>
+</html>

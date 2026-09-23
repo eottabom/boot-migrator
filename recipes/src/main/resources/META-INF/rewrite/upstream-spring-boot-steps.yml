@@ -1,0 +1,362 @@
+# 생성 파일: ./gradlew syncUpstreamSteps (UpstreamStepsGenerator). 직접 고치지 않는다.
+# 출처: rewrite-spring-6.37.0.jar
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.upstream.UpgradeSpringBootStep_3_1
+displayName: upstream Spring Boot 3.1 단계 (직전 단계 체인 제외)
+description: org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_1 에서 첫 항목(org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_0)만 뺀 것.
+preconditions:
+- org.openrewrite.Singleton
+recipeList:
+- org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+    groupId: org.springframework.boot
+    artifactId: '*'
+    newVersion: 3.1.x
+    overrideManagedVersion: false
+- org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+    groupId: org.springframework.boot
+    artifactId: spring-boot-dependencies
+    newVersion: 3.1.x
+    overrideManagedVersion: true
+- org.openrewrite.maven.UpgradePluginVersion:
+    groupId: org.springframework.boot
+    artifactId: spring-boot-maven-plugin
+    newVersion: 3.1.x
+- org.openrewrite.maven.UpgradeParentVersion:
+    groupId: org.springframework.boot
+    artifactId: spring-boot-starter-parent
+    newVersion: 3.1.x
+- org.openrewrite.gradle.plugins.UpgradePluginVersion:
+    pluginIdPattern: org.springframework.boot
+    newVersion: 3.1.x
+- org.openrewrite.java.spring.security6.UpgradeSpringSecurity_6_1
+- org.openrewrite.java.spring.boot3.SpringBootProperties_3_1
+- org.openrewrite.java.spring.data.MigrateRepositoryRestConfigurerAdapter
+- org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+    groupId: org.springdoc
+    artifactId: '*'
+    newVersion: 2.2.x
+- org.openrewrite.hibernate.MigrateToHibernate62
+- org.openrewrite.java.testing.mockito.Mockito4to5Only
+- org.openrewrite.java.springdoc.UpgradeSpringDoc_2_2
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.upstream.UpgradeSpringBootStep_3_2
+displayName: upstream Spring Boot 3.2 단계 (직전 단계 체인 제외)
+description: org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_2 에서 첫 항목(org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_1)만 뺀 것.
+preconditions:
+- org.openrewrite.Singleton
+recipeList:
+- org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+    groupId: org.springframework.boot
+    artifactId: '*'
+    newVersion: 3.2.x
+    overrideManagedVersion: false
+- org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+    groupId: org.springframework.boot
+    artifactId: spring-boot-dependencies
+    newVersion: 3.2.x
+    overrideManagedVersion: true
+- org.openrewrite.maven.UpgradePluginVersion:
+    groupId: org.springframework.boot
+    artifactId: spring-boot-maven-plugin
+    newVersion: 3.2.x
+- org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+    groupId: org.springframework
+    artifactId: '*'
+    newVersion: 6.1.x
+- org.openrewrite.maven.UpgradeParentVersion:
+    groupId: org.springframework.boot
+    artifactId: spring-boot-starter-parent
+    newVersion: 3.2.x
+- org.openrewrite.gradle.plugins.UpgradePluginVersion:
+    pluginIdPattern: org.springframework.boot
+    newVersion: 3.2.x
+- org.openrewrite.java.dependencies.AddDependency:
+    groupId: commons-codec
+    artifactId: commons-codec
+    version: 1.7.x
+    onlyIfUsing: org.apache.commons.codec..*
+    acceptTransitive: true
+- org.openrewrite.java.spring.security6.UpgradeSpringSecurity_6_2
+- org.openrewrite.java.spring.boot3.SpringBootProperties_3_2
+- org.openrewrite.java.spring.framework.UpgradeSpringFramework_6_1
+- org.openrewrite.java.spring.cloud2023.UpgradeSpringCloud_2023
+- org.openrewrite.java.ChangeType:
+    oldFullyQualifiedTypeName: org.springframework.boot.task.TaskSchedulerBuilder
+    newFullyQualifiedTypeName: org.springframework.boot.task.ThreadPoolTaskExecutorBuilder
+- org.openrewrite.java.ChangeType:
+    oldFullyQualifiedTypeName: org.springframework.boot.task.TaskSchedulerCustomizer
+    newFullyQualifiedTypeName: org.springframework.boot.task.ThreadPoolTaskSchedulerCustomizer
+- org.openrewrite.java.ChangeType:
+    oldFullyQualifiedTypeName: org.springframework.boot.task.TaskExecutorBuilder
+    newFullyQualifiedTypeName: org.springframework.boot.task.ThreadPoolTaskExecutorBuilder
+- org.openrewrite.java.ChangeType:
+    oldFullyQualifiedTypeName: org.springframework.boot.task.TaskExecutorCustomizer
+    newFullyQualifiedTypeName: org.springframework.boot.task.ThreadPoolTaskExecutorCustomizer
+- org.openrewrite.java.ChangeType:
+    oldFullyQualifiedTypeName: org.springframework.boot.autoconfigure.transaction.PlatformTransactionManagerCustomizer
+    newFullyQualifiedTypeName: org.springframework.boot.autoconfigure.transaction.TransactionManagerCustomizer
+- org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+    groupId: org.springdoc
+    artifactId: '*'
+    newVersion: 2.5.x
+- org.openrewrite.hibernate.MigrateToHibernate64
+- org.openrewrite.java.spring.boot3.MigrateHooksToReactorContextProperty
+- org.openrewrite.java.spring.boot3.RelocateLauncherClasses
+- org.openrewrite.java.spring.boot3.UpgradeMyBatisToSpringBoot_3_2
+- org.openrewrite.java.springdoc.UpgradeSpringDoc_2_5
+- org.openrewrite.maven.RemoveProperty:
+    propertyName: jakarta-servlet.version
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.upstream.UpgradeSpringBootStep_3_3
+displayName: upstream Spring Boot 3.3 단계 (직전 단계 체인 제외)
+description: org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_3 에서 첫 항목(org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_2)만 뺀 것.
+preconditions:
+- org.openrewrite.Singleton
+recipeList:
+- org.openrewrite.java.spring.security6.UpgradeSpringSecurity_6_3
+- org.openrewrite.java.spring.boot3.SpringBootProperties_3_3
+- org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+    groupId: org.springframework.boot
+    artifactId: '*'
+    newVersion: 3.3.x
+    overrideManagedVersion: false
+- org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+    groupId: org.springframework.boot
+    artifactId: spring-boot-dependencies
+    newVersion: 3.3.x
+    overrideManagedVersion: true
+- org.openrewrite.maven.UpgradePluginVersion:
+    groupId: org.springframework.boot
+    artifactId: spring-boot-maven-plugin
+    newVersion: 3.3.x
+- org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+    groupId: org.springframework
+    artifactId: '*'
+    newVersion: 6.1.x
+- org.openrewrite.maven.UpgradeParentVersion:
+    groupId: org.springframework.boot
+    artifactId: spring-boot-starter-parent
+    newVersion: 3.3.x
+- org.openrewrite.gradle.plugins.UpgradePluginVersion:
+    pluginIdPattern: org.springframework.boot
+    newVersion: 3.3.x
+- org.openrewrite.micrometer.UpgradeMicrometer_1_13
+- org.openrewrite.gradle.plugins.UpgradePluginVersion:
+    pluginIdPattern: org.graalvm.buildtools.native
+    newVersion: 0.10.x
+- org.openrewrite.java.spring.boot3.ChangeCassandraGroupId
+- org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+    groupId: org.springdoc
+    artifactId: '*'
+    newVersion: 2.6.x
+- org.openrewrite.hibernate.MigrateToHibernate65
+- org.openrewrite.java.flyway.MigrateToFlyway10
+- org.openrewrite.java.springdoc.UpgradeSpringDoc_2_6
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.upstream.UpgradeSpringBootStep_3_4
+displayName: upstream Spring Boot 3.4 단계 (직전 단계 체인 제외)
+description: org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_4 에서 첫 항목(org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_3)만 뺀 것.
+preconditions:
+- org.openrewrite.Singleton
+recipeList:
+- org.openrewrite.java.spring.framework.UpgradeSpringFramework_6_2
+- org.openrewrite.java.spring.cloud2024.UpgradeSpringCloud_2024
+- org.openrewrite.java.spring.data.UpgradeSpringData_3_4
+- org.openrewrite.java.spring.security6.UpgradeSpringSecurity_6_4
+- org.openrewrite.java.spring.boot3.SpringBootProperties_3_4
+- org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+    groupId: org.springframework.boot
+    artifactId: '*'
+    newVersion: 3.4.x
+    overrideManagedVersion: false
+- org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+    groupId: org.springframework.boot
+    artifactId: spring-boot-dependencies
+    newVersion: 3.4.x
+    overrideManagedVersion: true
+- org.openrewrite.maven.UpgradePluginVersion:
+    groupId: org.springframework.boot
+    artifactId: spring-boot-maven-plugin
+    newVersion: 3.4.x
+- org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+    groupId: org.springframework
+    artifactId: '*'
+    newVersion: 6.2.x
+- org.openrewrite.maven.UpgradeParentVersion:
+    groupId: org.springframework.boot
+    artifactId: spring-boot-starter-parent
+    newVersion: 3.4.x
+- org.openrewrite.gradle.plugins.UpgradePluginVersion:
+    pluginIdPattern: org.springframework.boot
+    newVersion: 3.4.x
+- org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+    groupId: org.springdoc
+    artifactId: '*'
+    newVersion: 2.8.x
+- org.openrewrite.java.dependencies.ChangeDependency:
+    oldGroupId: org.webjars
+    oldArtifactId: webjars-locator-core
+    newGroupId: org.webjars
+    newArtifactId: webjars-locator-lite
+    newVersion: 1.0.x
+- org.openrewrite.java.spring.boot3.ReplaceRestTemplateBuilderMethods
+- org.openrewrite.java.spring.boot3.AddValidToNestedConfigProperties
+- org.openrewrite.java.springdoc.UpgradeSpringDoc_2_8
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.upstream.UpgradeSpringBootStep_3_5
+displayName: upstream Spring Boot 3.5 단계 (직전 단계 체인 제외)
+description: org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_5 에서 첫 항목(org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_4)만 뺀 것.
+preconditions:
+- org.openrewrite.Singleton
+recipeList:
+- org.openrewrite.java.spring.boot3.SpringBootProperties_3_5
+- org.openrewrite.java.spring.cloud2025.UpgradeSpringCloud_2025
+- org.openrewrite.java.spring.boot3.UpdatePrometheusPushgateway
+- org.openrewrite.java.spring.security6.UpgradeSpringSecurity_6_5
+- org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+    groupId: org.springframework.boot
+    artifactId: '*'
+    newVersion: 3.5.x
+    overrideManagedVersion: false
+- org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+    groupId: org.springframework.boot
+    artifactId: spring-boot-dependencies
+    newVersion: 3.5.x
+    overrideManagedVersion: true
+- org.openrewrite.maven.UpgradePluginVersion:
+    groupId: org.springframework.boot
+    artifactId: spring-boot-maven-plugin
+    newVersion: 3.5.x
+- org.openrewrite.maven.UpgradeParentVersion:
+    groupId: org.springframework.boot
+    artifactId: spring-boot-starter-parent
+    newVersion: 3.5.x
+- org.openrewrite.gradle.plugins.UpgradePluginVersion:
+    pluginIdPattern: org.springframework.boot
+    newVersion: 3.5.x
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.upstream.UpgradeSpringBootStep_4_0
+displayName: upstream Spring Boot 4.0 단계 (직전 단계 체인 제외)
+description: org.openrewrite.java.spring.boot4.UpgradeSpringBoot_4_0 에서 첫 항목(org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_5)만 뺀 것.
+preconditions:
+- org.openrewrite.Singleton
+recipeList:
+- org.openrewrite.java.spring.cloud2025.UpgradeSpringCloud_2025_1
+- org.openrewrite.java.spring.framework.UpgradeSpringFramework_7_0
+- org.openrewrite.java.spring.security7.UpgradeSpringSecurity_7_0
+- org.openrewrite.java.spring.batch.SpringBatch5To6Migration
+- org.openrewrite.java.spring.boot4.SpringBootProperties_4_0
+- org.openrewrite.java.spring.boot4.ReplaceMockBeanAndSpyBean
+- org.openrewrite.java.spring.boot4.RelocateWebServerClasses
+- org.openrewrite.hibernate.MigrateToHibernate71
+- org.openrewrite.java.testing.testcontainers.Testcontainers2Migration
+- org.openrewrite.java.springdoc.UpgradeSpringDoc_3_0
+- org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+    groupId: org.springframework.boot
+    artifactId: '*'
+    newVersion: 4.0.x
+    overrideManagedVersion: false
+- org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+    groupId: org.springframework.boot
+    artifactId: spring-boot-dependencies
+    newVersion: 4.0.x
+    overrideManagedVersion: true
+- org.openrewrite.maven.UpgradePluginVersion:
+    groupId: org.springframework.boot
+    artifactId: spring-boot-maven-plugin
+    newVersion: 4.0.x
+- org.openrewrite.java.spring.boot4.MigrateJacksonBomProperty
+- org.openrewrite.maven.UpgradeParentVersion:
+    groupId: org.springframework.boot
+    artifactId: spring-boot-starter-parent
+    newVersion: 4.0.x
+- org.openrewrite.maven.RemoveRedundantDependencyVersions:
+    groupPattern: tools.jackson*
+    onlyIfManagedVersionIs: ANY
+- org.openrewrite.maven.RemoveRedundantDependencyVersions:
+    onlyIfManagedVersionIs: GTE
+- org.openrewrite.gradle.plugins.UpgradePluginVersion:
+    pluginIdPattern: org.springframework.boot
+    newVersion: 4.0.x
+- org.openrewrite.gradle.UpdateGradleWrapper:
+    version: ^8.14
+    addIfMissing: false
+- org.openrewrite.gradle.plugins.UpgradePluginVersion:
+    pluginIdPattern: org.jetbrains.kotlin.*
+    newVersion: 2.2.x
+- org.openrewrite.maven.UpgradePluginVersion:
+    groupId: org.jetbrains.kotlin
+    artifactId: kotlin-maven-plugin
+    newVersion: 2.2.x
+- org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+    groupId: org.jetbrains.kotlin
+    artifactId: '*'
+    newVersion: 2.2.x
+    overrideManagedVersion: true
+- org.openrewrite.java.spring.boot4.MigrateToModularStarters
+- org.openrewrite.java.spring.boot4.RenameDeprecatedStartersManagedVersions
+- org.openrewrite.java.dependencies.ChangeDependency:
+    oldGroupId: org.springframework.boot
+    oldArtifactId: spring-boot-starter-oauth2-authorization-server
+    newArtifactId: spring-boot-starter-security-oauth2-authorization-server
+    newVersion: 4.0.x
+- org.openrewrite.java.dependencies.ChangeDependency:
+    oldGroupId: org.springframework.boot
+    oldArtifactId: spring-boot-starter-oauth2-client
+    newArtifactId: spring-boot-starter-security-oauth2-client
+    newVersion: 4.0.x
+- org.openrewrite.java.dependencies.ChangeDependency:
+    oldGroupId: org.springframework.boot
+    oldArtifactId: spring-boot-starter-oauth2-resource-server
+    newArtifactId: spring-boot-starter-security-oauth2-resource-server
+    newVersion: 4.0.x
+- org.openrewrite.java.dependencies.ChangeDependency:
+    oldGroupId: org.springframework.boot
+    oldArtifactId: spring-boot-starter-web
+    newArtifactId: spring-boot-starter-webmvc
+    newVersion: 4.0.x
+- org.openrewrite.java.dependencies.ChangeDependency:
+    oldGroupId: org.springframework.boot
+    oldArtifactId: spring-boot-starter-web-services
+    newArtifactId: spring-boot-starter-webservices
+    newVersion: 4.0.x
+- org.openrewrite.java.dependencies.RemoveDependency:
+    groupId: org.springframework.boot
+    artifactId: spring-boot-starter-aop
+    unlessUsing: org.aspectj.lang.annotation.*
+- org.openrewrite.java.dependencies.ChangeDependency:
+    oldGroupId: org.springframework.boot
+    oldArtifactId: spring-boot-starter-aop
+    newArtifactId: spring-boot-starter-aspectj
+    newVersion: 4.0.x
+- org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+    groupId: eu.michael-simons.neo4j
+    artifactId: neo4j-migrations-spring-boot-starter
+    newVersion: 3.0.x
+    overrideManagedVersion: true
+- org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+    groupId: io.github.wimdeblauwe
+    artifactId: error-handling-spring-boot-starter
+    newVersion: 5.0.x
+    overrideManagedVersion: true
+- org.openrewrite.java.dependencies.ChangeDependency:
+    oldGroupId: org.jobrunr
+    oldArtifactId: jobrunr-spring-boot-3-starter
+    newArtifactId: jobrunr-spring-boot-4-starter
+    newVersion: 8.x
+- org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+    groupId: org.jobrunr
+    artifactId: '*'
+    newVersion: 8.x
+    overrideManagedVersion: true
+- org.openrewrite.java.spring.boot4.AddAutoConfigureTestRestTemplate
+- org.openrewrite.java.spring.boot4.AddAutoConfigureWebTestClient
+- org.openrewrite.java.spring.boot4.AddAutoConfigureMockMvc
+- org.openrewrite.java.spring.boot4.MigrateOpenApiGeneratorToSpringBoot4
+- org.openrewrite.java.spring.boot4.MigrateJsonschema2PojoToSpringBoot4

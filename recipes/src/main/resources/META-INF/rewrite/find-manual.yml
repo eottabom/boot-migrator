@@ -1,0 +1,80 @@
+# =====================================================================================================================
+# 자동 전환이 위험하거나 불가능해서 사람이 판단해야 하는 항목 탐지 (검색 전용 - 코드를 바꾸지 않는다)
+#  dryRun 결과 patch 에 ~~> 마커로 위치가 표시되고, build/reports/rewrite/datatables 에 CSV 로 남는다.
+# =====================================================================================================================
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.FindManualMigrationItems
+displayName: "수동 검토 필요 항목 탐지"
+description: 레시피로 자동 전환하지 않는 의존성/코드 사용처를 찾아서 표시한다.
+recipeList:
+  # 2.x 는 자동으로 올리지 않는다. 3.x 는 jdbc:mariadb:aurora 스킴이 없어지고 failover 설정이 바뀌어 JDBC URL 검토가 필요하다
+  - org.openrewrite.java.dependencies.DependencyInsight:
+      groupIdPattern: org.mariadb.jdbc
+      artifactIdPattern: mariadb-java-client
+  # redisson-spring-data-XX 는 Spring Data 버전과 1:1 로 맞춰야 한다 (Boot 3.4=34, 3.5=35, 4.0=redisson 4.x)
+  - org.openrewrite.java.dependencies.DependencyInsight:
+      groupIdPattern: org.redisson
+      artifactIdPattern: "*"
+  # Sentry 는 Boot 3 = sentry-spring-boot-starter-jakarta, Boot 4 = sentry-spring-boot-4 로 artifact 가 다르다
+  - org.openrewrite.java.dependencies.DependencyInsight:
+      groupIdPattern: io.sentry
+      artifactIdPattern: "*"
+  # playtika embedded-* 는 Spring Cloud / Boot 버전에 강하게 묶여 있다 -> Testcontainers + @ServiceConnection 전환 권장
+  - org.openrewrite.java.dependencies.DependencyInsight:
+      groupIdPattern: com.playtika.testcontainers
+      artifactIdPattern: "*"
+  # springdoc 1.x(springdoc-openapi-ui) 는 Boot 3 에서 동작하지 않는다
+  - org.openrewrite.java.dependencies.DependencyInsight:
+      groupIdPattern: org.springdoc
+      artifactIdPattern: springdoc-openapi-ui
+  # Hibernate 버전별 artifact 가 다르다 (hibernate-types-52 / hypersistence-utils-hibernate-6x / -71)
+  - org.openrewrite.java.dependencies.DependencyInsight:
+      groupIdPattern: com.vladmihalcea
+      artifactIdPattern: "*"
+  - org.openrewrite.java.dependencies.DependencyInsight:
+      groupIdPattern: io.hypersistence
+      artifactIdPattern: "*"
+  # Apache HttpClient 4 기반 feign client. Boot 3 부터 HttpClient 4 는 관리 대상이 아니다 -> feign-hc5 권장
+  - org.openrewrite.java.dependencies.DependencyInsight:
+      groupIdPattern: io.github.openfeign
+      artifactIdPattern: feign-httpclient
+  # Boot 4 에서 Jackson 3 로 자동 구성이 바뀜 -> ObjectMapper(Jackson 2) 주입 지점 확인
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: com.fasterxml.jackson.databind.ObjectMapper
+  # Hibernate 버전 버그 회귀 테스트 대상 (HHH-17294 JSON dirty checking / HHH-18378 EntityGraph 조인 재사용)
+  - org.openrewrite.java.search.FindAnnotations:
+      annotationPattern: "@org.springframework.data.jpa.repository.EntityGraph"
+  - org.openrewrite.java.search.FindAnnotations:
+      annotationPattern: "@org.hibernate.annotations.JdbcTypeCode"
+  - org.openrewrite.java.search.FindAnnotations:
+      annotationPattern: "@org.hibernate.annotations.Type"
+  # Jackson 3 의 ObjectMapper 는 불변이라 enable/disable/configure/registerModule 이 없다 (JsonMapper.builder() 로 옮겨야 함)
+  # Boot 4 에서 upstream 이 import 만 tools.jackson 으로 바꾸면 여기서 컴파일이 깨진다
+  - org.openrewrite.java.search.FindMethods:
+      methodPattern: com.fasterxml.jackson.databind.ObjectMapper enable(..)
+  - org.openrewrite.java.search.FindMethods:
+      methodPattern: com.fasterxml.jackson.databind.ObjectMapper disable(..)
+  - org.openrewrite.java.search.FindMethods:
+      methodPattern: com.fasterxml.jackson.databind.ObjectMapper configure(..)
+  - org.openrewrite.java.search.FindMethods:
+      methodPattern: com.fasterxml.jackson.databind.ObjectMapper registerModule(..)
+  # 마이그레이션 이후에도 남아있는 javax (Jakarta EE) 사용처
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: javax.persistence..*
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: javax.servlet..*
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: javax.validation..*
+  # spring-retry 사용처. 4.0 에서는 선언만 추가해 유지하고, Spring Framework 7 core retry 전환은 사람이 판단한다
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: org.springframework.retry..*
+  # Elasticsearch / OpenSearch 클라이언트. elasticsearch-java 는 Boot BOM 버전을 따라 올라가고(4.0 에서 9.x),
+  # opensearch-java 는 3.0 단계에서 3.x 로 올라간다. 둘 다 서버 버전 호환을 확인한다
+  - org.openrewrite.java.dependencies.DependencyInsight:
+      groupIdPattern: co.elastic.clients
+      artifactIdPattern: "*"
+  - org.openrewrite.java.dependencies.DependencyInsight:
+      groupIdPattern: org.opensearch.client
+      artifactIdPattern: "*"
+  - org.openrewrite.java.search.FindTypes:
+      fullyQualifiedTypeName: co.elastic.clients.elasticsearch.ElasticsearchClient

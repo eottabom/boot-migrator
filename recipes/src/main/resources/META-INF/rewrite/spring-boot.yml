@@ -1,0 +1,408 @@
+# =====================================================================================================================
+# Spring Boot 단계별 마이그레이션
+#
+#   com.eottabom.rewrite.spring.MigrateToSpringBoot_3_0   (2.7 -> 3.0 : javax -> jakarta, Hibernate 6, Cloud 2022, AWS 3.0)
+#   com.eottabom.rewrite.spring.MigrateToSpringBoot_3_1
+#   com.eottabom.rewrite.spring.MigrateToSpringBoot_3_2   (Cloud 2023.0, AWS 3.1)
+#   com.eottabom.rewrite.spring.MigrateToSpringBoot_3_3   (AWS 3.2, logstash 8)
+#   com.eottabom.rewrite.spring.MigrateToSpringBoot_3_4   (Cloud 2024.0, AWS 3.3, Gradle 8.14)
+#   com.eottabom.rewrite.spring.MigrateToSpringBoot_3_5   (Cloud 2025.0, AWS 3.4)
+#   com.eottabom.rewrite.spring.MigrateToSpringBoot_4_0   (Cloud 2025.1, AWS 4.0, Framework 7, Hibernate 7.1, Testcontainers 2)
+#   com.eottabom.rewrite.spring.MigrateToSpringBoot_4_1   (AWS 4.1, 4.1 프로퍼티 변경)
+#
+# 단계마다 두 레시피가 있다.
+#   SpringBootStep_X_Y      이 단계의 변경만: upstream 단계 레시피(직전 단계 체인 제외) + 이 단계의 커스텀 보정.
+#                           러너(migrationRun)가 현재 버전의 다음 단계부터 하나씩 실행한다. 이미 지난 단계(예: Boot 2.x 의
+#                           best practice 레시피)는 다시 돌지 않는다. 3.0 은 2.x 에서 올라오는 입구라 upstream 전체 체인을 쓴다.
+#   MigrateToSpringBoot_X_Y 직전 MigrateToSpringBoot + SpringBootStep_X_Y. 어떤 버전에서 시작하든 하나로 목표까지 간다
+#                           (--one-shot, 레시피 단독 실행). Singleton precondition 으로 중복 실행은 방지된다.
+# upstream 이 큰 틀을 맡고, 커스텀 보정은 upstream 만으로 컴파일/테스트가 깨지거나 수동으로 고쳐야 하는 틈을 메운다.
+#
+# 모든 단계에 spring-boot-properties-migrator(runtimeOnly) 가 추가된다.
+# 배포 환경 기동 로그의 WARN 을 확인해 외부 설정 저장소의 키를 정리한 뒤 의존성을 제거한다.
+# =====================================================================================================================
+# 러너가 단계별로 실행하는 레시피. upstream UpgradeSpringBoot_3_0 전체 체인(2.x -> 3.0)을 쓴다
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.SpringBootStep_3_0
+displayName: "Spring Boot 3.0 단계 (이 단계의 변경만)"
+description: Spring Boot 2.7 -> 3.0. javax -> jakarta, Hibernate 6.1, Spring Cloud 2022.0, Spring Cloud AWS 3.0.
+preconditions:
+  - org.openrewrite.Singleton
+recipeList:
+  # "2.x 에서 올라오는지" 를 원본 의존성으로 판단해야 해서 upstream 보다 먼저 둔다
+  - com.eottabom.rewrite.hibernate.KeepLegacyIdGeneratorNaming
+  - org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_0
+  # upstream UpgradeApacheHttpClient_5 가 Elasticsearch 저수준 RestClient(HttpClient 4 기반) 코드까지 HttpClient 5 로 바꾸는 것을 되돌린다.
+  # elasticsearch-java 8.x (Boot 3.x BOM) 의 RestClient 는 HttpClient 4 를 쓴다. 아래 인터셉터 보정보다 먼저 되돌려야 ES 코드가 HttpClient 5 형태로 바뀌지 않는다
+  - com.eottabom.rewrite.httpclient.RevertHttpClient5ForElasticsearchRestClient
+  # opensearch-java / rest-client 3.x (HttpClient 5). upstream UpgradeApacheHttpClient_5 (위 체인 안) 와 같은 단계에서 맞춘다
+  - com.eottabom.rewrite.search.UpgradeOpenSearchJava_3
+  # upstream UpgradeSpringBoot_3_0 이 BOM 관리 중이던 restdocs 에 2.0.6.RELEASE 를 명시 고정하는 문제 보정
+  - com.eottabom.rewrite.spring.UnpinSpringRestDocs
+  - com.eottabom.rewrite.aws.MigrateSpringCloudAws_2_to_3
+  - com.eottabom.rewrite.querydsl.MigrateQuerydslToJakarta
+  - com.eottabom.rewrite.logging.UpgradeLogstashEncoder_7
+  - com.eottabom.rewrite.spring.Boot3Extras
+  # Boot 3.0 은 Mockito 4 라서 final/static mock 에 mockito-inline 이 아직 필요하다. 구버전 고정만 4.x 로 맞춘다 (제거는 3.1)
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: org.mockito
+      artifactId: mockito-inline
+      newVersion: 4.x
+  # 외부 설정 저장소의 설정 키 변경을 기동 로그로 확인하기 위해 임시 추가 (검증 후 제거)
+  - com.eottabom.rewrite.spring.AddPropertiesMigrator
+  - com.eottabom.rewrite.CommonMigrationFixes
+---
+# 직전 단계까지 체이닝한 전체 레시피 (--one-shot, 단독 실행용)
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.MigrateToSpringBoot_3_0
+displayName: "Spring Boot 3.0 마이그레이션"
+description: Spring Boot 2.7 -> 3.0. javax -> jakarta, Hibernate 6.1, Spring Cloud 2022.0, Spring Cloud AWS 3.0.
+preconditions:
+  - org.openrewrite.Singleton
+recipeList:
+  - com.eottabom.rewrite.spring.SpringBootStep_3_0
+---
+# 러너가 단계별로 실행하는 레시피. upstream 은 직전 단계 체인을 뺀 UpgradeSpringBootStep_3_1 (upstream-spring-boot-steps.yml)
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.SpringBootStep_3_1
+displayName: "Spring Boot 3.1 단계 (이 단계의 변경만)"
+description: Spring Boot 3.0 -> 3.1. Hibernate 6.2, Mockito 5.
+preconditions:
+  - org.openrewrite.Singleton
+recipeList:
+  - com.eottabom.rewrite.spring.upstream.UpgradeSpringBootStep_3_1
+  # Mockito 5 부터 inline mock maker 가 기본값이라 mockito-inline 은 불필요
+  - org.openrewrite.java.dependencies.RemoveDependency:
+      groupId: org.mockito
+      artifactId: mockito-inline
+  - com.eottabom.rewrite.aws.UpgradeSpringCloudAws_3_0
+  # 이 단계의 설정 키 변경을 기동 로그로 확인하기 위해 (이미 있으면 그대로)
+  - com.eottabom.rewrite.spring.AddPropertiesMigrator
+  - com.eottabom.rewrite.CommonMigrationFixes
+---
+# 직전 단계까지 체이닝한 전체 레시피 (--one-shot, 단독 실행용)
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.MigrateToSpringBoot_3_1
+displayName: "Spring Boot 3.1 마이그레이션"
+description: Spring Boot 3.0 -> 3.1. Hibernate 6.2, Mockito 5.
+preconditions:
+  - org.openrewrite.Singleton
+recipeList:
+  - com.eottabom.rewrite.spring.MigrateToSpringBoot_3_0
+  - com.eottabom.rewrite.spring.SpringBootStep_3_1
+---
+# 러너가 단계별로 실행하는 레시피. upstream 은 직전 단계 체인을 뺀 UpgradeSpringBootStep_3_2 (upstream-spring-boot-steps.yml)
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.SpringBootStep_3_2
+displayName: "Spring Boot 3.2 단계 (이 단계의 변경만)"
+description: Spring Boot 3.1 -> 3.2. Spring Cloud 2023.0, Spring Cloud AWS 3.1, Hibernate 6.4.
+preconditions:
+  - org.openrewrite.Singleton
+recipeList:
+  - com.eottabom.rewrite.spring.upstream.UpgradeSpringBootStep_3_2
+  - com.eottabom.rewrite.hibernate.MigrateWhereToSQLRestriction
+  # Feign 12.2+ (Spring Cloud 2023) 에서 RetryableException 에 Long 생성자가 생긴다. 그 전 단계에서 바꾸면 컴파일이 깨진다
+  - com.eottabom.rewrite.feign.DisambiguateRetryableExceptionNull
+  - com.eottabom.rewrite.aws.UpgradeSpringCloudAws_3_1
+  # 이 단계의 설정 키 변경을 기동 로그로 확인하기 위해 (이미 있으면 그대로)
+  - com.eottabom.rewrite.spring.AddPropertiesMigrator
+  - com.eottabom.rewrite.CommonMigrationFixes
+---
+# 직전 단계까지 체이닝한 전체 레시피 (--one-shot, 단독 실행용)
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.MigrateToSpringBoot_3_2
+displayName: "Spring Boot 3.2 마이그레이션"
+description: Spring Boot 3.1 -> 3.2. Spring Cloud 2023.0, Spring Cloud AWS 3.1, Hibernate 6.4.
+preconditions:
+  - org.openrewrite.Singleton
+recipeList:
+  - com.eottabom.rewrite.spring.MigrateToSpringBoot_3_1
+  - com.eottabom.rewrite.spring.SpringBootStep_3_2
+---
+# 러너가 단계별로 실행하는 레시피. upstream 은 직전 단계 체인을 뺀 UpgradeSpringBootStep_3_3 (upstream-spring-boot-steps.yml)
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.SpringBootStep_3_3
+displayName: "Spring Boot 3.3 단계 (이 단계의 변경만)"
+description: Spring Boot 3.2 -> 3.3. Spring Cloud AWS 3.2, logback 1.5 대응(logstash-logback-encoder 8).
+preconditions:
+  - org.openrewrite.Singleton
+recipeList:
+  - com.eottabom.rewrite.spring.upstream.UpgradeSpringBootStep_3_3
+  - com.eottabom.rewrite.aws.UpgradeSpringCloudAws_3_2
+  - com.eottabom.rewrite.logging.UpgradeLogstashEncoder_8
+  # 이 단계의 설정 키 변경을 기동 로그로 확인하기 위해 (이미 있으면 그대로)
+  - com.eottabom.rewrite.spring.AddPropertiesMigrator
+  - com.eottabom.rewrite.CommonMigrationFixes
+---
+# 직전 단계까지 체이닝한 전체 레시피 (--one-shot, 단독 실행용)
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.MigrateToSpringBoot_3_3
+displayName: "Spring Boot 3.3 마이그레이션"
+description: Spring Boot 3.2 -> 3.3. Spring Cloud AWS 3.2, logback 1.5 대응(logstash-logback-encoder 8).
+preconditions:
+  - org.openrewrite.Singleton
+recipeList:
+  - com.eottabom.rewrite.spring.MigrateToSpringBoot_3_2
+  - com.eottabom.rewrite.spring.SpringBootStep_3_3
+---
+# 러너가 단계별로 실행하는 레시피. upstream 은 직전 단계 체인을 뺀 UpgradeSpringBootStep_3_4 (upstream-spring-boot-steps.yml)
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.SpringBootStep_3_4
+displayName: "Spring Boot 3.4 단계 (이 단계의 변경만)"
+description: Spring Boot 3.3 -> 3.4. Spring Cloud 2024.0, Spring Cloud AWS 3.3.
+preconditions:
+  - org.openrewrite.Singleton
+recipeList:
+  - com.eottabom.rewrite.spring.upstream.UpgradeSpringBootStep_3_4
+  # @MockBean/@SpyBean 은 3.4 에서 deprecated, 4.0 에서 제거. @MockitoBean 은 Framework 6.2(Boot 3.4)부터 있으므로 여기서 미리 전환
+  - org.openrewrite.java.spring.boot4.ReplaceMockBeanAndSpyBean
+  - com.eottabom.rewrite.aws.UpgradeSpringCloudAws_3_3
+  # Boot 3.4 BOM 이 elasticsearch-java 를 8.15 로 올린다. 8.15 에서 RangeQuery 의 field/gte/lte 가 UntypedRangeQuery 로 옮겨졌다
+  - com.eottabom.rewrite.elasticsearch.MigrateRangeQueryToUntyped
+  # 이 단계의 설정 키 변경을 기동 로그로 확인하기 위해 (이미 있으면 그대로)
+  - com.eottabom.rewrite.spring.AddPropertiesMigrator
+  - com.eottabom.rewrite.CommonMigrationFixes
+---
+# 직전 단계까지 체이닝한 전체 레시피 (--one-shot, 단독 실행용)
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.MigrateToSpringBoot_3_4
+displayName: "Spring Boot 3.4 마이그레이션"
+description: Spring Boot 3.3 -> 3.4. Spring Cloud 2024.0, Spring Cloud AWS 3.3.
+preconditions:
+  - org.openrewrite.Singleton
+recipeList:
+  - com.eottabom.rewrite.spring.MigrateToSpringBoot_3_3
+  - com.eottabom.rewrite.spring.SpringBootStep_3_4
+---
+# 러너가 단계별로 실행하는 레시피. upstream 은 직전 단계 체인을 뺀 UpgradeSpringBootStep_3_5 (upstream-spring-boot-steps.yml)
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.SpringBootStep_3_5
+displayName: "Spring Boot 3.5 단계 (이 단계의 변경만)"
+description: Spring Boot 3.4 -> 3.5. Spring Cloud 2025.0, Spring Cloud AWS 3.4.
+preconditions:
+  - org.openrewrite.Singleton
+recipeList:
+  - com.eottabom.rewrite.spring.upstream.UpgradeSpringBootStep_3_5
+  - com.eottabom.rewrite.aws.UpgradeSpringCloudAws_3_4
+  # 이 단계의 설정 키 변경을 기동 로그로 확인하기 위해 (이미 있으면 그대로)
+  - com.eottabom.rewrite.spring.AddPropertiesMigrator
+  - com.eottabom.rewrite.CommonMigrationFixes
+---
+# 직전 단계까지 체이닝한 전체 레시피 (--one-shot, 단독 실행용)
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.MigrateToSpringBoot_3_5
+displayName: "Spring Boot 3.5 마이그레이션"
+description: Spring Boot 3.4 -> 3.5. Spring Cloud 2025.0, Spring Cloud AWS 3.4.
+preconditions:
+  - org.openrewrite.Singleton
+recipeList:
+  - com.eottabom.rewrite.spring.MigrateToSpringBoot_3_4
+  - com.eottabom.rewrite.spring.SpringBootStep_3_5
+---
+# 러너가 단계별로 실행하는 레시피. upstream 은 직전 단계 체인을 뺀 UpgradeSpringBootStep_4_0 (upstream-spring-boot-steps.yml)
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.SpringBootStep_4_0
+displayName: "Spring Boot 4.0 단계 (이 단계의 변경만)"
+description: >-
+  Spring Boot 3.5 -> 4.0. Spring Framework 7, Spring Cloud 2025.1, Spring Cloud AWS 4.0, Hibernate 7.1, Gradle 8.14+,
+  Testcontainers 2, 모듈형 starter, logstash-logback-encoder 9.
+  Jackson 2 -> 3 코드 전환은 upstream UpgradeSpringFramework_7_0 이 UpgradeJackson_2_3 을 포함해서 이 단계에서 함께 된다.
+preconditions:
+  - org.openrewrite.Singleton
+recipeList:
+  # Boot 4.0 은 Gradle 8.14+ 가 필요하다. 러너는 compatibility.yml 을 보고 이 단계 전에 Gradle 단계를 따로 돌리므로
+  # 보통은 이미 맞춰져 있고, 레시피를 단독으로 실행할 때를 위해 남겨 둔다 (이미 8.14 이상이면 바뀌지 않는다)
+  - com.eottabom.rewrite.gradle.UpgradeGradleToolchain_8_14
+  - com.eottabom.rewrite.spring.upstream.UpgradeSpringBootStep_4_0
+  - com.eottabom.rewrite.spring.Boot4JpaRelocations
+  # Hibernate 7 에서 org.hibernate.annotations.QueryHints 제거
+  - com.eottabom.rewrite.hibernate.ReplaceAnnotationsQueryHints
+  # Boot 4 BOM 이 spring-retry 를 관리하지 않아 transitive 로 받던 프로젝트에서 사라진다 (Framework 7 에 core retry 가 생김)
+  - com.eottabom.rewrite.gradle.DeclareUsedDependency:
+      packageName: org.springframework.retry
+      groupId: org.springframework.retry
+      artifactId: spring-retry
+      version: 2.0.x
+  - com.eottabom.rewrite.spring.Boot4RestDocsModule
+  - com.eottabom.rewrite.spring.Boot4TestStartersForMainSources
+  # Boot 4 에서 MockitoTestExecutionListener 가 제거돼 Spring 테스트(@DataJpaTest 등) 안의 @Mock/@InjectMocks 가 더 이상 자동 초기화되지 않는다
+  # (upstream AddMockitoExtensionIfAnnotationsUsed 는 strict 모드라 기존 테스트가 UnnecessaryStubbingException 으로 깨진다)
+  - com.eottabom.rewrite.testing.AddLenientMockitoExtension
+  - com.eottabom.rewrite.logging.FixLogstashDecoratorForJackson3
+  # upstream Jackson 3 전환이 catch (IOException) 를 catch (JacksonException) 로 바꿀 때 Files.readString 같은 진짜 IOException 을 놓치는 경우
+  - com.eottabom.rewrite.jackson.FixJacksonIOExceptionCatch
+  # Boot 4 BOM 이 elasticsearch-java 를 9.x 로 올린다. HttpClient 5 기반 Rest5Client 로 옮기고, 매퍼를 Jackson 3 용으로 맞춘다
+  - com.eottabom.rewrite.elasticsearch.MigrateToRest5Client
+  - com.eottabom.rewrite.elasticsearch.ElasticsearchJava9ApiChanges
+  # Spring Kafka 4 의 JacksonJsonSerializer 는 JsonMapper 만 받는다
+  - com.eottabom.rewrite.kafka.UseJsonMapperForJacksonJsonSerializer
+  - com.eottabom.rewrite.aws.UpgradeSpringCloudAws_4_0
+  - com.eottabom.rewrite.logging.UpgradeLogstashEncoder_9
+  - com.eottabom.rewrite.spring.UnpinSpringRestDocs
+  # 이 단계의 설정 키 변경을 기동 로그로 확인하기 위해 (이미 있으면 그대로)
+  - com.eottabom.rewrite.spring.AddPropertiesMigrator
+  - com.eottabom.rewrite.CommonMigrationFixes
+---
+# 직전 단계까지 체이닝한 전체 레시피 (--one-shot, 단독 실행용)
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.MigrateToSpringBoot_4_0
+displayName: "Spring Boot 4.0 마이그레이션"
+description: >-
+  Spring Boot 3.5 -> 4.0. Spring Framework 7, Spring Cloud 2025.1, Spring Cloud AWS 4.0, Hibernate 7.1, Gradle 8.14+,
+  Testcontainers 2, 모듈형 starter, logstash-logback-encoder 9.
+  Jackson 2 -> 3 코드 전환은 upstream UpgradeSpringFramework_7_0 이 UpgradeJackson_2_3 을 포함해서 이 단계에서 함께 된다.
+preconditions:
+  - org.openrewrite.Singleton
+recipeList:
+  - com.eottabom.rewrite.spring.MigrateToSpringBoot_3_5
+  - com.eottabom.rewrite.spring.SpringBootStep_4_0
+---
+# 러너가 단계별로 실행하는 레시피. rewrite-spring 에 UpgradeSpringBoot_4_1 이 없어서 4.1 프로퍼티 변경 + 버전 업그레이드로 직접 구성한다
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.SpringBootStep_4_1
+displayName: "Spring Boot 4.1 단계 (이 단계의 변경만)"
+description: >-
+  Spring Boot 4.0 -> 4.1. rewrite-spring 에 UpgradeSpringBoot_4_1 이 아직 없어서 4.1 프로퍼티 변경 + 버전 업그레이드로 구성한다.
+  Spring Cloud 는 2025.1.2 부터 Boot 4.1 을 지원하므로 2025.1.x 최신으로 올린다.
+  Spring Cloud 는 기동 시 Boot 버전 호환성을 검사하므로(CompatibilityVerifier) 그보다 낮게 고정돼 있으면 기동이 실패한다.
+preconditions:
+  - org.openrewrite.Singleton
+recipeList:
+  - org.openrewrite.java.spring.boot4.SpringBootProperties_4_1
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: org.springframework.boot
+      artifactId: "*"
+      newVersion: 4.1.x
+      overrideManagedVersion: false
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: org.springframework.boot
+      artifactId: spring-boot-dependencies
+      newVersion: 4.1.x
+      overrideManagedVersion: true
+  - org.openrewrite.gradle.plugins.UpgradePluginVersion:
+      pluginIdPattern: org.springframework.boot
+      newVersion: 4.1.x
+  - org.openrewrite.maven.UpgradeParentVersion:
+      groupId: org.springframework.boot
+      artifactId: spring-boot-starter-parent
+      newVersion: 4.1.x
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: org.springframework.cloud
+      artifactId: spring-cloud-dependencies
+      newVersion: 2025.1.x
+  - com.eottabom.rewrite.aws.UpgradeSpringCloudAws_4_1
+  # 이 단계의 설정 키 변경을 기동 로그로 확인하기 위해 (이미 있으면 그대로)
+  - com.eottabom.rewrite.spring.AddPropertiesMigrator
+  - com.eottabom.rewrite.CommonMigrationFixes
+---
+# 직전 단계까지 체이닝한 전체 레시피 (--one-shot, 단독 실행용)
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.MigrateToSpringBoot_4_1
+displayName: "Spring Boot 4.1 마이그레이션"
+description: >-
+  Spring Boot 4.0 -> 4.1. rewrite-spring 에 UpgradeSpringBoot_4_1 이 아직 없어서 4.1 프로퍼티 변경 + 버전 업그레이드로 구성한다.
+  Spring Cloud 는 2025.1.2 부터 Boot 4.1 을 지원하므로 2025.1.x 최신으로 올린다.
+  Spring Cloud 는 기동 시 Boot 버전 호환성을 검사하므로(CompatibilityVerifier) 그보다 낮게 고정돼 있으면 기동이 실패한다.
+preconditions:
+  - org.openrewrite.Singleton
+recipeList:
+  - com.eottabom.rewrite.spring.MigrateToSpringBoot_4_0
+  - com.eottabom.rewrite.spring.SpringBootStep_4_1
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.AddPropertiesMigrator
+displayName: "spring-boot-properties-migrator 임시 추가"
+description: >-
+  OpenRewrite 는 저장소 안의 application*.yml 만 바꿀 수 있고, 외부 설정 저장소(Spring Cloud Config, Vault, Secrets Manager 등) 에 있는 설정은 보지 못한다.
+  properties-migrator 는 기동 시 실제로 로딩된 설정 중 이름이 바뀌거나 제거된 키를 WARN 로그로 알려주고 가능한 건 임시로 매핑해준다.
+  업그레이드 PR 에 포함해서 개발/스테이징 환경에서 로그를 확인한 뒤, 정리되면 제거한다.
+  (@SpringBootApplication 이 있는 모듈에만 추가된다)
+recipeList:
+  - org.openrewrite.gradle.AddDependency:
+      groupId: org.springframework.boot
+      artifactId: spring-boot-properties-migrator
+      configuration: runtimeOnly
+      onlyIfUsing: org.springframework.boot.autoconfigure.SpringBootApplication
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.UnpinSpringRestDocs
+displayName: Spring REST Docs 버전을 BOM 관리로 복원
+description: spring-restdocs-* 에 명시된 버전을 지워 BOM 관리 버전을 따르게 한다.
+recipeList:
+  - com.eottabom.rewrite.gradle.RemoveDependencyVersion:
+      groupId: org.springframework.restdocs
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.RemoveSpuriousJaxbApi
+displayName: 잘못 추가된 javax.xml.bind:jaxb-api 제거
+description: >-
+  upstream RetainJaxbApiForJackson 은 jackson-module-jaxb-annotations 가 "어느 configuration 에든" 있으면 jaxb-api 를 추가한다.
+  init script 로 붙인 `rewrite` configuration(OpenRewrite 자신의 classpath)에 이 모듈이 있어서 모든 프로젝트가 오탐된다.
+  javax.xml.bind 타입을 코드에서 직접 쓰지 않으면 runtimeOnly 로 추가된 jaxb-api 를 제거한다.
+recipeList:
+  - org.openrewrite.java.dependencies.RemoveDependency:
+      groupId: javax.xml.bind
+      artifactId: jaxb-api
+      configuration: runtimeOnly
+      unlessUsing: javax.xml.bind..*
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.Boot3Extras
+displayName: Boot 3.0 전환 시 upstream 이 빠뜨리는 것들
+description: >-
+  REST Docs 3 API 변경, Spring Cloud 2022 설정 키 이동, Boot 3 용으로 artifact 이름이 바뀐 라이브러리.
+recipeList:
+  - com.eottabom.rewrite.spring.UpgradeSpringRestDocs_3
+  - com.eottabom.rewrite.spring.SpringCloud2022PropertyKeys
+  # Boot 2 용 스타터를 그대로 두면 전이 의존성만 2.x 로 올라가 깨진 조합이 된다
+  - org.openrewrite.java.dependencies.ChangeDependency:
+      oldGroupId: io.github.resilience4j
+      oldArtifactId: resilience4j-spring-boot2
+      newArtifactId: resilience4j-spring-boot3
+      newVersion: 2.2.x
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.UpgradeSpringRestDocs_3
+displayName: Spring REST Docs 2.0 -> 3.0 API
+description: >-
+  REST Docs 3.0 에서 requestParameters 가 제거되고 queryParameters / formParameters 로 나뉘었다.
+  전부 queryParameters 로 바꾸므로, POST 폼 파라미터를 문서화하는 곳이 있으면 formParameters 로 직접 고친다.
+recipeList:
+  - org.openrewrite.java.ChangeMethodName:
+      methodPattern: org.springframework.restdocs.request.RequestDocumentation requestParameters(..)
+      newMethodName: queryParameters
+      matchOverrides: true
+  - org.openrewrite.java.ChangeType:
+      oldFullyQualifiedTypeName: org.springframework.restdocs.request.RequestParametersSnippet
+      newFullyQualifiedTypeName: org.springframework.restdocs.request.QueryParametersSnippet
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.SpringCloud2022PropertyKeys
+displayName: Spring Cloud 2022 에서 이동/제거된 설정 키
+description: >-
+  spring-cloud-openfeign 4.x 는 feign.* 를 spring.cloud.openfeign.* 로 옮겼고, Sleuth 는 Micrometer Tracing 으로 대체됐다.
+  upstream 은 artifact 이름만 바꾸고 yml 키는 옮기지 않는다. (저장소 밖 설정은 properties-migrator 로 확인)
+recipeList:
+  - org.openrewrite.java.spring.ChangeSpringPropertyKey:
+      oldPropertyKey: feign.client
+      newPropertyKey: spring.cloud.openfeign.client
+  - org.openrewrite.java.spring.ChangeSpringPropertyKey:
+      oldPropertyKey: feign.httpclient
+      newPropertyKey: spring.cloud.openfeign.httpclient
+  - org.openrewrite.java.spring.ChangeSpringPropertyKey:
+      oldPropertyKey: feign.compression
+      newPropertyKey: spring.cloud.openfeign.compression
+  - org.openrewrite.java.spring.ChangeSpringPropertyKey:
+      oldPropertyKey: feign.circuitbreaker
+      newPropertyKey: spring.cloud.openfeign.circuitbreaker
+  - org.openrewrite.java.spring.ChangeSpringPropertyKey:
+      oldPropertyKey: spring.sleuth.enabled
+      newPropertyKey: management.tracing.enabled
+  - org.openrewrite.java.spring.ChangeSpringPropertyKey:
+      oldPropertyKey: spring.sleuth.sampler.probability
+      newPropertyKey: management.tracing.sampling.probability
+  - org.openrewrite.java.spring.DeleteSpringProperty:
+      propertyKey: spring.zipkin.enabled
+  - org.openrewrite.java.spring.ChangeSpringPropertyKey:
+      oldPropertyKey: spring.zipkin.base-url
+      newPropertyKey: management.zipkin.tracing.endpoint

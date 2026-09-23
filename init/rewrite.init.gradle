@@ -1,0 +1,47 @@
+/*
+ * 대상 프로젝트의 build.gradle 을 수정하지 않고 OpenRewrite 를 적용하기 위한 Gradle init script.
+ *
+ *   ./gradlew --init-script rewrite.init.gradle rewriteDryRun \
+ *       -Drewrite.activeRecipe=com.eottabom.rewrite.spring.MigrateToSpringBoot_3_4
+ *
+ * -PrewriteRecipeLibs=<이 저장소>/build/recipe-libs : 레시피 jar 와 의존 jar 폴더 (./gradlew recipeLibs 로 생성)
+ * -PrewritePluginVersion=7.39.0   : OpenRewrite Gradle 플러그인 버전
+ * -PrewriteConfigFile=<파일>      : 선언형 레시피 파일 (migrationRun 이 만든 .rewrite/rewrite.generated.yml). 없으면 플러그인 기본값(rewrite.yml)
+ */
+initscript {
+    repositories {
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath("org.openrewrite:plugin:${startParameter.projectProperties.get('rewritePluginVersion') ?: '7.39.0'}")
+    }
+}
+
+rootProject {
+    plugins.apply(org.openrewrite.gradle.RewritePlugin)
+
+    // OpenRewrite 플러그인은 자기 내부 라이브러리(rewrite-core 등)를 루트 프로젝트의 저장소에서 받는다.
+    // 루트에 repositories 가 없는 프로젝트(서브프로젝트에만 선언)가 있어서 항상 추가한다
+    repositories { mavenCentral() }
+
+    // 레시피는 저장소에서 빌드한 jar 폴더를 그대로 쓴다 (maven 저장소에 배포하지 않는다)
+    def libs = findProperty('rewriteRecipeLibs')
+    if (!libs) {
+        throw new GradleException("-PrewriteRecipeLibs=<레시피 저장소>/build/recipe-libs 가 필요하다 (migration 태스크가 넘긴다)")
+    }
+    dependencies {
+        rewrite(files(fileTree(dir: libs, include: '*.jar')))
+    }
+
+    rewrite {
+        // 생성 코드 / 빌드 산출물은 파싱하지 않는다 (querydsl Q-class 등)
+        exclusion('**/build/**', '**/generated/**', '**/src/main/generated/**', '**/node_modules/**')
+        // rewriteDryRun 에서 변경 사항이 있어도 빌드를 실패로 처리하지 않는다 (patch 만 만든다)
+        failOnDryRunResults = false
+        // 러너가 단계마다 만든 생성 레시피 (단계 레시피 + 프로젝트 레시피). 프로젝트 레시피 문서도 이 파일에 함께 들어 있다
+        def configFile = findProperty('rewriteConfigFile')
+        if (configFile) {
+            setConfigFile(file(configFile))
+        }
+    }
+}

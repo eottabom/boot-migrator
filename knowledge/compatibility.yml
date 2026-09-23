@@ -1,0 +1,81 @@
+# =====================================================================================================================
+# Spring Boot 단계별 플랫폼 호환성. MigrationPlanner 가 Java / Gradle 을 올릴지 판단하는 기준이다.
+#
+# 원칙: 필요한 만큼만 바꾼다. 현재 Java / Gradle 이 목표 Boot 에서 지원되면 그대로 둔다.
+#
+# 출처
+#   Spring Boot 시스템 요구사항  https://docs.spring.io/spring-boot/<버전>/system-requirements.html
+#                                (3.0 ~ 3.2 는 https://docs.spring.io/spring-boot/docs/<버전>.x/reference/html/getting-started.html)
+#   Spring Cloud 릴리즈 트레인   https://spring.io/projects/spring-cloud (Release Trains 표)
+#   Spring Cloud AWS             spring-boot.yml 의 단계 레시피가 맞추는 버전 (awspring 호환표 기준)
+#   Gradle 의 JDK 지원           https://docs.gradle.org/current/userguide/compatibility.html
+#
+# 형식
+#   java.min / java.max  목표 Boot 가 지원하는 Java 범위 (max 는 "compatible up to and including")
+#   gradle               지원하는 Gradle major 별 최소 버전. 목록에 없는 major 는 공식 지원 밖
+#   framework            필요한 Spring Framework 라인
+#   springCloud          호환 Spring Cloud 릴리즈 트레인 (since 는 그 트레인에서 이 Boot 를 지원하기 시작한 버전)
+# =====================================================================================================================
+
+springBoot:
+  "3.0":
+    java: { min: 17, max: 21 }
+    gradle: { "7": "7.5", "8": "8.0" }
+    framework: "6.0"
+    springCloud: { train: "2022.0.x", since: "2022.0.0" }
+    springCloudAws: "3.0.x"
+  "3.1":
+    java: { min: 17, max: 21 }
+    gradle: { "7": "7.5", "8": "8.0" }
+    framework: "6.0"
+    springCloud: { train: "2022.0.x", since: "2022.0.3" }
+    springCloudAws: "3.0.x"
+  "3.2":
+    java: { min: 17, max: 23 }
+    gradle: { "7": "7.5", "8": "8.0" }
+    framework: "6.1"
+    springCloud: { train: "2023.0.x", since: "2023.0.0" }
+    springCloudAws: "3.1.x"
+  "3.3":
+    java: { min: 17, max: 23 }
+    gradle: { "7": "7.5", "8": "8.0" }
+    framework: "6.1"
+    springCloud: { train: "2023.0.x", since: "2023.0.2" }
+    springCloudAws: "3.2.x"
+  "3.4":
+    java: { min: 17, max: 24 }
+    gradle: { "7": "7.6.4", "8": "8.4" }
+    framework: "6.2"
+    springCloud: { train: "2024.0.x", since: "2024.0.0" }
+    springCloudAws: "3.3.x"
+  "3.5":
+    java: { min: 17, max: 25 }
+    gradle: { "7": "7.6.4", "8": "8.4" }
+    framework: "6.2"
+    springCloud: { train: "2025.0.x", since: "2025.0.0" }
+    springCloudAws: "3.4.x"
+  "4.0":
+    java: { min: 17, max: 26 }
+    gradle: { "8": "8.14", "9": "9.0" }
+    framework: "7.0"
+    springCloud: { train: "2025.1.x", since: "2025.1.0" }
+    springCloudAws: "4.0.x"
+  "4.1":
+    java: { min: 17, max: 26 }
+    gradle: { "8": "8.14", "9": "9.0" }
+    framework: "7.0"
+    springCloud: { train: "2025.1.x", since: "2025.1.2" }
+    springCloudAws: "4.1.x"
+
+# Java 버전업 단계. gradleMin 은 그 JDK 위에서 Gradle 을 띄울 수 있는 최소 버전이다.
+# 25 는 upstream UpgradeToJava25 가 Gradle 9.1 로 올리므로 따로 Gradle 단계를 넣지 않는다.
+java:
+  lts: [17, 21, 25]
+  "17": { gradleMin: "7.3", recipe: org.openrewrite.java.migrate.UpgradeToJava17 }
+  "21": { gradleMin: "8.5", recipe: com.eottabom.rewrite.java.UpgradeToJava21 }
+  "25": { gradleMin: "9.1", recipe: com.eottabom.rewrite.java.UpgradeToJava25, upgradesGradle: true }
+
+# 목표 Boot (또는 Java) 가 요구하는 것보다 Gradle 이 낮을 때 넣는 단계
+gradleUpgrade:
+  version: "8.14"
+  recipe: com.eottabom.rewrite.gradle.UpgradeGradleToolchain_8_14
