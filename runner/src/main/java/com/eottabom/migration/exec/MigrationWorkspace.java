@@ -57,9 +57,6 @@ public record MigrationWorkspace(Path dir) {
 		}
 	}
 
-	// ── 실행 기록
-	// ─────────────────────────────────────────────────────────────────────────────────────────────────────
-
 	public void appendSummary(String projectName, String text) {
 		Path summary = file("SUMMARY.md");
 		try {
@@ -134,9 +131,6 @@ public record MigrationWorkspace(Path dir) {
 		}
 	}
 
-	// ── 레시피가 새로 만든 파일 (patch / 커밋에 담을 추적 안 된 파일)
-	// ─────────────────────────────────────────────────────
-
 	public Set<String> createdFiles() {
 		return new LinkedHashSet<>(read(file("created-files.txt")).lines().filter((l) -> !l.isBlank()).toList());
 	}
@@ -151,9 +145,6 @@ public record MigrationWorkspace(Path dir) {
 			throw new UncheckedIOException(ex);
 		}
 	}
-
-	// ── 처음 실행 때 정한 값 (재개해도 바뀌지 않는다)
-	// ─────────────────────────────────────────────────────────────────
 
 	/** 원본 빌드(테스트 제외)에서 실패한 태스크. 저장된 적이 없으면 빈 집합 (원본 빌드가 통과했다고 본다) */
 	public Set<String> baselineFailedTasks() {
@@ -209,9 +200,6 @@ public record MigrationWorkspace(Path dir) {
 		}
 	}
 
-	// ── 파일 도우미
-	// ──────────────────────────────────────────────────────────────────────────────────────────────────
-
 	public static String read(Path file) {
 		try {
 			return Files.exists(file) ? Files.readString(file) : "";
@@ -250,8 +238,7 @@ public record MigrationWorkspace(Path dir) {
 		}
 	}
 
-	// ── 재개 정보: 컴파일 실패로 멈춘 단계
-	// ───────────────────────────────────────────────────────────────────────────────
+	// 컴파일 실패로 멈춘 단계
 
 	/**
 	 * @param reason compile(컴파일 실패) | build(테스트/빌드 실패)

@@ -73,9 +73,6 @@ public final class MigrationRunner {
 		this.knownIssues = KnownIssues.load(paths.playbookDir().resolve("known-issues.yml"));
 	}
 
-	// ── migrationAnalyze
-	// ─────────────────────────────────────────────────────────────────────────────────────────────
-
 	/** 현재 상태, resolve 된 의존성, 수동 검토 대상 위치. 소스는 바꾸지 않는다. */
 	public void analyze(Path projectDir, boolean keepJavaHome) {
 		ProjectModel project = this.inspector.inspect(projectDir);
@@ -103,9 +100,6 @@ public final class MigrationRunner {
 			fail("스캔 실패 → " + ws.file("analyze.scan.log"));
 		}
 	}
-
-	// ── migrationPlan
-	// ────────────────────────────────────────────────────────────────────────────────────────────────
 
 	/** 실행할 단계만 보여준다. 대상 프로젝트의 Gradle 을 띄우지 않는다. */
 	public MigrationPlan plan(MigrationRequest request) {
@@ -154,9 +148,6 @@ public final class MigrationRunner {
 		return plan;
 	}
 
-	// ── migrationVerify
-	// ──────────────────────────────────────────────────────────────────────────────────────────────
-
 	/** 현재 소스의 컴파일(+제거 예정 API 경고)과 build(전체 테스트 + 패키징). 소스는 바꾸지 않는다. */
 	public void verify(Path projectDir, String gate, boolean keepJavaHome) {
 		checkGate(gate);
@@ -190,9 +181,6 @@ public final class MigrationRunner {
 		}
 	}
 
-	// ── migrationRun
-	// ─────────────────────────────────────────────────────────────────────────────────────────────────
-
 	public void run(MigrationRequest request) {
 		checkGate(request.gate());
 		Path projectDir = request.projectDir();
@@ -202,7 +190,7 @@ public final class MigrationRunner {
 		BuildTool gradle = targetGradle(this.inspector.inspect(projectDir), request.keepJavaHome());
 		ProjectRecipes projectRecipes = projectRecipes(request);
 
-		// ── 재개: 지난 실행이 게이트(컴파일, 테스트, 빌드) 실패로 멈춘 경우 ──
+		// 지난 실행이 게이트(컴파일, 테스트, 빌드) 실패로 멈춘 경우
 		Resumed resumed = request.dryRun() ? Resumed.NONE
 				: resume(request, ws, git, gradle, projectName, projectRecipes);
 
@@ -273,7 +261,6 @@ public final class MigrationRunner {
 		}
 		ws.appendSummary(projectName, header.toString());
 
-		// ── 스캔 ──
 		step("[스캔] 의존성 버전 / 수동 검토 대상 탐지");
 		Path previousVersions = (resumed.lastTag() != null
 				&& Files.exists(ws.file(resumed.lastTag() + ".versions.txt")))
@@ -301,7 +288,7 @@ public final class MigrationRunner {
 		ws.appendSummary(projectName,
 				"\n| 단계 | 컴파일 | 테스트 | 빌드 | 자동 보정 | 수동 검토 | 알려진 이슈 | 리포트 |\n|---|---|---|---|---|---|---|---|\n");
 
-		// ── 단계 루프 ── 단계 번호는 지난 기록 뒤에 이어서 붙인다 (재개 시에는 다시 시도하는 단계 번호부터)
+		// 단계 번호는 지난 기록 뒤에 이어서 붙인다 (재개 시에는 다시 시도하는 단계 번호부터)
 		int order = (resumed.retryFrom() != null) ? resumed.retryFrom() : ws.stageReportCount();
 		String lastTag = resumed.lastTag();
 		for (Stage stage : plan.stages()) {
@@ -393,7 +380,6 @@ public final class MigrationRunner {
 			}
 		}
 
-		// ── 요약 ──
 		String finalBoot = this.inspector.bootVersion(projectDir);
 		ws.appendSummary(projectName, "\n결과: 완료, Boot " + project.bootVersion() + " → " + finalBoot + "\n\n");
 		step("완료: Boot " + project.bootVersion() + " → " + finalBoot);
@@ -789,9 +775,6 @@ public final class MigrationRunner {
 	public record RunnerPaths(Path rewriteInit, Path verifyInit, Path recipeLibs, Path playbookDir) {
 	}
 
-	// ── 재개
-	// ─────────────────────────────────────────────────────────────────────────────────────────────────────────
-
 	/**
 	 * 재개 결과.
 	 *
@@ -803,9 +786,6 @@ public final class MigrationRunner {
 		static final Resumed NONE = new Resumed(false, null, null, null);
 
 	}
-
-	// ── 게이트
-	// ───────────────────────────────────────────────────────────────────────────────────────────────────────
 
 	/**
 	 * 게이트 결과.

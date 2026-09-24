@@ -1,10 +1,9 @@
 package com.eottabom.migration.model;
 
 /**
- * 마이그레이션 한 단계. 단계마다 rewriteRun 과 게이트(compile / build)를 한 번씩 돈다.
+ * 마이그레이션 한 단계. 단계마다 rewriteRun 과 게이트를 한 번씩 돈다.
  *
  * @param name Boot 단계는 "3.4", Java 단계는 "java21", Gradle 단계는 "gradle8.14"
- * @param recipe 이 단계에서 실행할 레시피 이름
  */
 public record Stage(Kind kind, String name, String recipe) {
 

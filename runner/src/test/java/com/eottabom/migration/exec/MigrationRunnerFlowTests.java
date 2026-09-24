@@ -172,8 +172,6 @@ class MigrationRunnerFlowTests {
 		assertThat(read("out.patch")).contains("App.java", "build.gradle");
 	}
 
-	// ── 도우미 ──
-
 	private MigrationRequest request(String target, boolean commit) {
 		return new MigrationRequest(this.project, target, "none", "build", commit, false, false, false, false, true,
 				true);
