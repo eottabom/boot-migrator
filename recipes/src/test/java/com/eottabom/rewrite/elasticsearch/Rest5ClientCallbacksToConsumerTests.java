@@ -1,6 +1,10 @@
 package com.eottabom.rewrite.elasticsearch;
 
-import org.junit.jupiter.api.Test;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
@@ -30,9 +34,18 @@ class Rest5ClientCallbacksToConsumerTests implements RewriteTest {
 						"package org.elasticsearch.client; public class RestClient { public static RestClientBuilder builder(Object... h) { return null; } }"));
 	}
 
-	@Test
-	void removesTrailingReturnOfBuilder() {
-		rewriteRun(java("""
+	@ParameterizedTest(name = "[{index}] {0}")
+	@MethodSource("scenarios")
+	void rewrites(String scenario, String before, String after) {
+		rewriteRun((after != null) ? java(before, after) : java(before));
+	}
+
+	// @formatter:off
+	static Stream<Arguments> scenarios() {
+		return Stream.of(
+			Arguments.of(
+				"removes trailing return of builder",
+				"""
 				import org.elasticsearch.client.RestClient;
 
 				class Config {
@@ -45,7 +58,8 @@ class Rest5ClientCallbacksToConsumerTests implements RewriteTest {
 				            .build();
 				    }
 				}
-				""", """
+				""",
+				"""
 				import org.elasticsearch.client.RestClient;
 
 				class Config {
@@ -57,12 +71,11 @@ class Rest5ClientCallbacksToConsumerTests implements RewriteTest {
 				            .build();
 				    }
 				}
-				"""));
-	}
-
-	@Test
-	void keepsCallWhenReturningInvocation() {
-		rewriteRun(java("""
+				"""
+			),
+			Arguments.of(
+				"keeps call when returning invocation",
+				"""
 				import org.elasticsearch.client.RestClient;
 
 				class Config {
@@ -74,7 +87,8 @@ class Rest5ClientCallbacksToConsumerTests implements RewriteTest {
 				            .build();
 				    }
 				}
-				""", """
+				""",
+				"""
 				import org.elasticsearch.client.RestClient;
 
 				class Config {
@@ -86,12 +100,11 @@ class Rest5ClientCallbacksToConsumerTests implements RewriteTest {
 				            .build();
 				    }
 				}
-				"""));
-	}
-
-	@Test
-	void leavesExpressionLambda() {
-		rewriteRun(java("""
+				"""
+			),
+			Arguments.of(
+				"leaves expression lambda",
+				"""
 				import org.elasticsearch.client.RestClient;
 
 				class Config {
@@ -101,7 +114,11 @@ class Rest5ClientCallbacksToConsumerTests implements RewriteTest {
 				            .build();
 				    }
 				}
-				"""));
+				""",
+				null
+			)
+		);
 	}
+	// @formatter:on
 
 }

@@ -1,6 +1,10 @@
 package com.eottabom.rewrite.logging;
 
-import org.junit.jupiter.api.Test;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
@@ -20,9 +24,18 @@ class FixLogstashDecoratorForJackson3Tests implements RewriteTest {
 						"package net.logstash.logback.decorate; public interface JsonGeneratorDecorator { tools.jackson.core.JsonGenerator decorate(tools.jackson.core.JsonGenerator g); }"));
 	}
 
-	@Test
-	void removesMutationAndCastInDecorator() {
-		rewriteRun(java("""
+	@ParameterizedTest(name = "[{index}] {0}")
+	@MethodSource("scenarios")
+	void rewrites(String scenario, String before, String after) {
+		rewriteRun((after != null) ? java(before, after) : java(before));
+	}
+
+	// @formatter:off
+	static Stream<Arguments> scenarios() {
+		return Stream.of(
+			Arguments.of(
+				"removes mutation and cast in decorator",
+				"""
 				import tools.jackson.core.JsonGenerator;
 				import tools.jackson.databind.DeserializationFeature;
 				import tools.jackson.databind.ObjectMapper;
@@ -36,7 +49,8 @@ class FixLogstashDecoratorForJackson3Tests implements RewriteTest {
 				        return generator;
 				    }
 				}
-				""", """
+				""",
+				"""
 				import tools.jackson.core.JsonGenerator;
 				import net.logstash.logback.decorate.JsonGeneratorDecorator;
 
@@ -46,12 +60,11 @@ class FixLogstashDecoratorForJackson3Tests implements RewriteTest {
 				        return generator;
 				    }
 				}
-				"""));
-	}
-
-	@Test
-	void leavesOtherClassesAlone() {
-		rewriteRun(java("""
+				"""
+			),
+			Arguments.of(
+				"leaves other classes alone",
+				"""
 				import tools.jackson.databind.DeserializationFeature;
 				import tools.jackson.databind.ObjectMapper;
 
@@ -62,7 +75,11 @@ class FixLogstashDecoratorForJackson3Tests implements RewriteTest {
 				        return m;
 				    }
 				}
-				"""));
+				""",
+				null
+			)
+		);
 	}
+	// @formatter:on
 
 }

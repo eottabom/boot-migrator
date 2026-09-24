@@ -1,6 +1,11 @@
 package com.eottabom.rewrite.httpclient;
 
+import java.util.stream.Stream;
+
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.openrewrite.java.ChangeType;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.java.ReorderMethodArguments;
@@ -33,9 +38,17 @@ class RevertHttpClient5ForElasticsearchRestClientTests implements RewriteTest {
 						"package org.elasticsearch.client; public class RestClient { public static Object builder(org.apache.http.HttpHost... h) { return null; } }"));
 	}
 
-	@Test
-	void revertsRestClientSetup() {
-		rewriteRun(java(
+	@ParameterizedTest(name = "[{index}] {0}")
+	@MethodSource("scenarios")
+	void rewrites(String scenario, String before, String after) {
+		rewriteRun((after != null) ? java(before, after) : java(before));
+	}
+
+	// @formatter:off
+	static Stream<Arguments> scenarios() {
+		return Stream.of(
+			Arguments.of(
+				"reverts rest client setup",
 				"""
 						import org.apache.hc.client5.http.auth.AuthScope;
 						import org.apache.hc.client5.http.auth.CredentialsStore;
@@ -67,8 +80,24 @@ class RevertHttpClient5ForElasticsearchRestClientTests implements RewriteTest {
 						        return RestClient.builder(new HttpHost(host, port, scheme));
 						    }
 						}
-						"""));
+						"""
+			),
+			Arguments.of(
+				"leaves files without rest client alone",
+				"""
+				import org.apache.hc.core5.http.HttpHost;
+
+				class Other {
+				    Object host(String scheme, String host, int port) {
+				        return new HttpHost(scheme, host, port);
+				    }
+				}
+				""",
+				null
+			)
+		);
 	}
+	// @formatter:on
 
 	@Test
 	void upstreamCanConvertHttpHostAgainAfterRevert() {
@@ -110,19 +139,6 @@ class RevertHttpClient5ForElasticsearchRestClientTests implements RewriteTest {
 							    }
 							}
 							"""));
-	}
-
-	@Test
-	void leavesFilesWithoutRestClientAlone() {
-		rewriteRun(java("""
-				import org.apache.hc.core5.http.HttpHost;
-
-				class Other {
-				    Object host(String scheme, String host, int port) {
-				        return new HttpHost(scheme, host, port);
-				    }
-				}
-				"""));
 	}
 
 }

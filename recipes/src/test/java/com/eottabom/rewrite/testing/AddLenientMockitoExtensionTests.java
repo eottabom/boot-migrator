@@ -1,6 +1,10 @@
 package com.eottabom.rewrite.testing;
 
-import org.junit.jupiter.api.Test;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
@@ -22,9 +26,18 @@ class AddLenientMockitoExtensionTests implements RewriteTest {
 						"package org.mockito.junit.jupiter; public class MockitoExtension {}"));
 	}
 
-	@Test
-	void addsLenientExtensionWhenMissing() {
-		rewriteRun(java("""
+	@ParameterizedTest(name = "[{index}] {0}")
+	@MethodSource("scenarios")
+	void rewrites(String scenario, String before, String after) {
+		rewriteRun((after != null) ? java(before, after) : java(before));
+	}
+
+	// @formatter:off
+	static Stream<Arguments> scenarios() {
+		return Stream.of(
+			Arguments.of(
+				"adds lenient extension when missing",
+				"""
 				import org.junit.jupiter.api.Test;
 				import org.mockito.InjectMocks;
 				import org.mockito.Mock;
@@ -39,7 +52,8 @@ class AddLenientMockitoExtensionTests implements RewriteTest {
 				    @Test
 				    void test() {}
 				}
-				""", """
+				""",
+				"""
 				import org.junit.jupiter.api.Test;
 				import org.junit.jupiter.api.extension.ExtendWith;
 				import org.mockito.InjectMocks;
@@ -60,12 +74,11 @@ class AddLenientMockitoExtensionTests implements RewriteTest {
 				    @Test
 				    void test() {}
 				}
-				"""));
-	}
-
-	@Test
-	void leavesExistingExtendWithAlone() {
-		rewriteRun(java("""
+				"""
+			),
+			Arguments.of(
+				"leaves existing extend with alone",
+				"""
 				import org.junit.jupiter.api.Test;
 				import org.junit.jupiter.api.extension.ExtendWith;
 				import org.mockito.Mock;
@@ -79,7 +92,11 @@ class AddLenientMockitoExtensionTests implements RewriteTest {
 				    @Test
 				    void test() {}
 				}
-				"""));
+				""",
+				null
+			)
+		);
 	}
+	// @formatter:on
 
 }
