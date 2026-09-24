@@ -17,7 +17,7 @@ class KnownIssuesTest {
     private final KnownIssues issues = KnownIssues.load(Path.of("../playbook/known-issues.yml"));
 
     @Test
-    void 레지스트리_형식과_id_중복_단계_키_검증() {
+    void validatesRegistryFormatIdsAndStageKeys() {
         Set<String> ids = new HashSet<>();
         Set<String> stageKeys = new HashSet<>(MigrationPlanner.BOOT_STAGES);
         stageKeys.addAll(List.of("java21", "java25", "gradle"));
@@ -32,7 +32,7 @@ class KnownIssuesTest {
     }
 
     @Test
-    void requires_가_있는_단계_이슈는_해당_의존성이_있을_때만() {
+    void stageIssueWithRequiresMatchesOnlyWhenDependencyPresent() {
         Map<String, String> withoutMongo = Map.of("org.springframework.boot:spring-boot", "4.0.0");
         Map<String, String> withMongo = Map.of("org.mongodb:mongodb-driver-sync", "5.5.0");
 
@@ -42,7 +42,7 @@ class KnownIssuesTest {
     }
 
     @Test
-    void 라이브러리_이슈는_crosses_와_affected_로_판단() {
+    void libraryIssuesMatchByCrossesAndAffected() {
         Map<String, String> before = Map.of("org.hibernate.orm:hibernate-core", "6.5.2.Final");
         Map<String, String> after = Map.of("org.hibernate.orm:hibernate-core", "6.6.4.Final");
 
@@ -56,7 +56,7 @@ class KnownIssuesTest {
     }
 
     @Test
-    void 의존성_정보가_없으면_단계_이슈는_모두_보인다() {
+    void showsAllStageIssuesWithoutDependencyInfo() {
         assertThat(issues.forStage("3.5")).extracting(KnownIssues.Issue::id).contains("boot35-task-executor-name", "boot35-heapdump");
         assertThat(ids(issues.match("3.5", Map.of(), Map.of()))).contains("boot35-heapdump");
     }

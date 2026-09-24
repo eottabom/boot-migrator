@@ -21,7 +21,7 @@ class HtmlReportTest {
     Path project;
 
     @Test
-    void 단계_JSON_과_단계_diff_를_한_페이지_데이터로_넣는다() throws IOException {
+    void embedsStageReportsAndDiffsIntoOnePage() throws IOException {
         MigrationWorkspace ws = new MigrationWorkspace(project);
         // 백슬래시, 한글, </script> 가 그대로 살아남아야 한다
         Files.writeString(ws.file("01-boot-3.4.report.json"),
