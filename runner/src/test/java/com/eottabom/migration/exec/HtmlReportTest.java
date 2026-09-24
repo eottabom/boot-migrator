@@ -22,7 +22,7 @@ class HtmlReportTest {
 
     @Test
     void embedsStageReportsAndDiffsIntoOnePage() throws IOException {
-        MigrationWorkspace ws = new MigrationWorkspace(project);
+        MigrationWorkspace ws = MigrationWorkspace.in(project);
         // 백슬래시, 한글, </script> 가 그대로 살아남아야 한다
         Files.writeString(ws.file("01-boot-3.4.report.json"),
                 "{\"stage\":\"3.4\",\"compile\":\"ok\",\"tests\":{\"total\":1,\"failures\":[]},"

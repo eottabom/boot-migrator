@@ -21,7 +21,7 @@ class KnownIssuesTest {
         Set<String> ids = new HashSet<>();
         Set<String> stageKeys = new HashSet<>(MigrationPlanner.BOOT_STAGES);
         stageKeys.addAll(List.of("java21", "java25", "gradle"));
-        for (KnownIssues.Issue issue : issues.all()) {
+        for (KnownIssues.Issue issue : issues.issues()) {
             assertThat(ids.add(issue.id())).as("중복 id " + issue.id()).isTrue();
             if (issue.stage() != null) {
                 assertThat(stageKeys).as(issue.id()).contains(issue.stage());

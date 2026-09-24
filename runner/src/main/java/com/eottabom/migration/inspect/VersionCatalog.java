@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
  * spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
  * </pre>
  */
-final class VersionCatalog {
+record VersionCatalog(Map<String, String> versions, Map<String, String> plugins) {
 
     private static final Pattern SECTION = Pattern.compile("^\\s*\\[([\\w.-]+)]\\s*$");
     private static final Pattern STRING_ENTRY = Pattern.compile("^\\s*([\\w.-]+)\\s*=\\s*\"([^\"]*)\"");
@@ -29,16 +29,12 @@ final class VersionCatalog {
     private static final Pattern VERSION_REF = Pattern.compile("\\bversion\\.ref\\s*=\\s*\"([^\"]+)\"");
     private static final Pattern VERSION = Pattern.compile("\\bversion\\s*=\\s*\"([^\"]+)\"");
 
-    /** 정규화한 키(-, _, . 를 구분하지 않음) → 버전 */
-    private final Map<String, String> versions = new HashMap<>();
-    /** 플러그인 id → 버전 */
-    private final Map<String, String> plugins = new HashMap<>();
-
     static VersionCatalog read(Path projectDir) {
-        VersionCatalog catalog = new VersionCatalog();
+        Map<String, String> versions = new HashMap<>();
+        Map<String, String> plugins = new HashMap<>();
         Path file = projectDir.resolve("gradle/libs.versions.toml");
         if (!Files.isRegularFile(file)) {
-            return catalog;
+            return new VersionCatalog(versions, plugins);
         }
         try {
             String section = "";
@@ -53,7 +49,7 @@ final class VersionCatalog {
                 if (section.equals("versions")) {
                     Matcher m = STRING_ENTRY.matcher(content);
                     if (m.find()) {
-                        catalog.versions.put(normalize(m.group(1)), m.group(2));
+                        versions.put(normalize(m.group(1)), m.group(2));
                     }
                 } else if (section.equals("plugins")) {
                     Matcher m = TABLE_ENTRY.matcher(content);
@@ -68,15 +64,15 @@ final class VersionCatalog {
                 }
             }
             pluginRefs.forEach((id, ref) -> {
-                String version = ref[0] != null ? catalog.versions.get(normalize(ref[0])) : ref[1];
+                String version = ref[0] != null ? versions.get(normalize(ref[0])) : ref[1];
                 if (version != null) {
-                    catalog.plugins.put(id, version);
+                    plugins.put(id, version);
                 }
             });
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        return catalog;
+        return new VersionCatalog(versions, plugins);
     }
 
     Optional<String> plugin(String id) {

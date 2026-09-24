@@ -11,13 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 /** 대상 프로젝트의 git 조작. */
-public final class Git {
-
-    private final Path dir;
-
-    public Git(Path dir) {
-        this.dir = dir;
-    }
+public record Git(Path dir) {
 
     public String head() {
         String out = Processes.capture(dir, "git", "rev-parse", "HEAD");

@@ -101,13 +101,12 @@ public class DeclareUsedDependency extends ScanningRecipe<DeclareUsedDependency.
         return "import 하는 패키지의 의존성이 build.gradle 에 직접 선언돼 있지 않으면 implementation(테스트 전용이면 testImplementation)으로 추가한다.";
     }
 
-    public static class Accumulator {
-        final Map<JavaProject, Set<String>> sourceSetsUsing = new HashMap<>();
+    public record Accumulator(Map<JavaProject, Set<String>> sourceSetsUsing) {
     }
 
     @Override
     public Accumulator getInitialValue(ExecutionContext ctx) {
-        return new Accumulator();
+        return new Accumulator(new HashMap<>());
     }
 
     @Override
@@ -134,7 +133,7 @@ public class DeclareUsedDependency extends ScanningRecipe<DeclareUsedDependency.
                     // "org.apache.commons.lang" 이 "org.apache.commons.lang3" 에 매칭되지 않도록 '.' 까지 비교
                     String pkg = imp.getPackageName() + ".";
                     if (prefixes.stream().anyMatch(pkg::startsWith)) {
-                        acc.sourceSetsUsing.computeIfAbsent(project, p -> new HashSet<>()).add(sourceSet.getName());
+                        acc.sourceSetsUsing().computeIfAbsent(project, p -> new HashSet<>()).add(sourceSet.getName());
                         break;
                     }
                 }
@@ -154,7 +153,7 @@ public class DeclareUsedDependency extends ScanningRecipe<DeclareUsedDependency.
                 SourceFile s = (SourceFile) tree;
                 JavaProject project = s.getMarkers().findFirst(JavaProject.class).orElse(null);
                 GradleProject gp = s.getMarkers().findFirst(GradleProject.class).orElse(null);
-                Set<String> using = project == null ? null : acc.sourceSetsUsing.get(project);
+                Set<String> using = project == null ? null : acc.sourceSetsUsing().get(project);
                 if (gp == null || using == null) {
                     return (J) tree;
                 }

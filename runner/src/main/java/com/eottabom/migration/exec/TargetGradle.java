@@ -21,22 +21,14 @@ import java.util.concurrent.atomic.AtomicReference;
  * 대상 프로젝트의 Gradle wrapper 를 별도 프로세스로 실행한다.
  * 대상 프로젝트는 자기 Gradle 버전, 플러그인, JDK 로 돌아야 하므로 이 빌드 안에서 직접 실행하지 않는다.
  */
-public final class TargetGradle implements BuildTool {
+public record TargetGradle(Path projectDir, String javaHome, String jvmArgs, Logger logger) implements BuildTool {
 
     private static final long PROGRESS_INTERVAL_MS = 20_000;
     private static final boolean WINDOWS = System.getProperty("os.name", "").toLowerCase().startsWith("windows");
 
-    private final Path projectDir;
-    private final String javaHome;
-    private final String jvmArgs;
-    private final Logger logger;
-
     /** @param jvmArgs 대상 Gradle 데몬 JVM 옵션. null 이면 {@link #defaultJvmArgs()} */
-    public TargetGradle(Path projectDir, String javaHome, String jvmArgs, Logger logger) {
-        this.projectDir = projectDir;
-        this.javaHome = javaHome;
-        this.jvmArgs = jvmArgs != null ? jvmArgs : defaultJvmArgs();
-        this.logger = logger;
+    public TargetGradle {
+        jvmArgs = jvmArgs != null ? jvmArgs : defaultJvmArgs();
     }
 
     /**
@@ -50,11 +42,6 @@ public final class TargetGradle implements BuildTool {
         }
         long heapMb = Math.max(1024, Math.min(6144, totalMb / 2));
         return "-Xmx" + heapMb + "m -XX:MaxMetaspaceSize=1g";
-    }
-
-    @Override
-    public String javaHome() {
-        return javaHome;
     }
 
     /**

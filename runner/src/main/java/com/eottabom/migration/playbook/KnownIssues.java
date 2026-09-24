@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /** playbook/known-issues.yml: 알려진 이슈 레지스트리와 테스트 실패 힌트. */
-public final class KnownIssues {
+public record KnownIssues(List<Issue> issues, Map<String, String> guides, List<FailureHint> failureHints) {
 
     public enum Mode {
         /** 레시피가 고친다. 결과 확인용 */
@@ -32,16 +32,6 @@ public final class KnownIssues {
     }
 
     public record FailureHint(String pattern, String text) {
-    }
-
-    private final List<Issue> issues;
-    private final Map<String, String> guides;
-    private final List<FailureHint> failureHints;
-
-    private KnownIssues(List<Issue> issues, Map<String, String> guides, List<FailureHint> failureHints) {
-        this.issues = issues;
-        this.guides = guides;
-        this.failureHints = failureHints;
     }
 
     public static KnownIssues load(Path file) {
@@ -97,16 +87,8 @@ public final class KnownIssues {
         }
     }
 
-    public List<Issue> all() {
-        return issues;
-    }
-
     public String guide(String stageKey) {
         return guides.get(stageKey);
-    }
-
-    public List<FailureHint> failureHints() {
-        return failureHints;
     }
 
     /**

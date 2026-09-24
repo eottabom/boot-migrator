@@ -19,18 +19,12 @@ import java.util.List;
  * 필요한 만큼만 바꾼다: Java 와 Gradle 은 목표 Boot 가 지원하면 그대로 두고, 지원하지 않거나 사용자가 요청할 때만
  * 별도 단계로 올린다 (compatibility.yml). 단계마다 그 단계의 변경만 실행하고, --one-shot 은 체이닝한 목표 레시피 하나로 간다.
  */
-public final class MigrationPlanner {
+public record MigrationPlanner(Compatibility compatibility) {
 
     /** spring-boot.yml 의 MigrateToSpringBoot_X_Y 와 맞춘다. 새 단계는 여기, yml, compatibility.yml 에 함께 추가한다. */
     public static final List<String> BOOT_STAGES = List.of("3.0", "3.1", "3.2", "3.3", "3.4", "3.5", "4.0", "4.1");
     /** upstream(rewrite-spring) 에 UpgradeSpringBoot_X_Y 가 있는 단계. */
     public static final List<String> UPSTREAM_BOOT_STAGES = List.of("3.0", "3.1", "3.2", "3.3", "3.4", "3.5", "4.0");
-
-    private final Compatibility compatibility;
-
-    public MigrationPlanner(Compatibility compatibility) {
-        this.compatibility = compatibility;
-    }
 
     public MigrationPlan plan(ProjectModel project, MigrationRequest request) {
         if (project.bootVersion() == null) {

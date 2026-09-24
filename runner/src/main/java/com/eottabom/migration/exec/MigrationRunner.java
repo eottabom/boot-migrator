@@ -83,7 +83,7 @@ public final class MigrationRunner {
     public void analyze(Path projectDir, boolean keepJavaHome) {
         ProjectModel project = inspector.inspect(projectDir);
         BuildTool gradle = targetGradle(project, keepJavaHome);
-        MigrationWorkspace ws = new MigrationWorkspace(projectDir);
+        MigrationWorkspace ws = MigrationWorkspace.in(projectDir);
         printProject(project, gradle);
 
         printProjectRecipes(projectDir, ProjectRecipes.discover(projectDir));
@@ -156,7 +156,7 @@ public final class MigrationRunner {
         checkGate(gate);
         ProjectModel project = inspector.inspect(projectDir);
         BuildTool gradle = targetGradle(project, keepJavaHome);
-        MigrationWorkspace ws = new MigrationWorkspace(projectDir);
+        MigrationWorkspace ws = MigrationWorkspace.in(projectDir);
         printProject(project, gradle);
         if (gate.equals("none")) {
             return;
@@ -190,7 +190,7 @@ public final class MigrationRunner {
         checkGate(request.gate());
         Path projectDir = request.projectDir();
         String projectName = projectDir.getFileName().toString();
-        MigrationWorkspace ws = new MigrationWorkspace(projectDir);
+        MigrationWorkspace ws = MigrationWorkspace.in(projectDir);
         Git git = new Git(projectDir);
         BuildTool gradle = targetGradle(inspector.inspect(projectDir), request.keepJavaHome());
         ProjectRecipes projectRecipes = projectRecipes(request);

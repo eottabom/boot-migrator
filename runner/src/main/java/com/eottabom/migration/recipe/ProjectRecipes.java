@@ -34,7 +34,7 @@ import java.util.stream.Stream;
  * </pre>
  * 태그가 없는 레시피는 부품으로 보고, 다른 레시피가 참조할 때만 쓰인다.
  */
-public final class ProjectRecipes {
+public record ProjectRecipes(List<Path> files, List<Map<String, Object>> documents, List<ProjectRecipe> recipes) {
 
     static final String RECIPE_TYPE = "specs.openrewrite.org/v1beta/recipe";
     private static final String STAGE_TAG = "migration-stage:";
@@ -48,17 +48,6 @@ public final class ProjectRecipes {
         public boolean appliesTo(String stageKey) {
             return stages.contains("*") || stages.contains(stageKey);
         }
-    }
-
-    private final List<Path> files;
-    /** 모든 파일의 YAML 문서 (생성 파일에 함께 넣어 대상 프로젝트의 OpenRewrite 가 찾을 수 있게 한다) */
-    private final List<Map<String, Object>> documents;
-    private final List<ProjectRecipe> recipes;
-
-    private ProjectRecipes(List<Path> files, List<Map<String, Object>> documents, List<ProjectRecipe> recipes) {
-        this.files = files;
-        this.documents = documents;
-        this.recipes = recipes;
     }
 
     public static ProjectRecipes none() {
@@ -89,18 +78,6 @@ public final class ProjectRecipes {
             }
         }
         return new ProjectRecipes(List.copyOf(files), List.copyOf(documents), List.copyOf(recipes));
-    }
-
-    public List<Path> files() {
-        return files;
-    }
-
-    public List<Map<String, Object>> documents() {
-        return documents;
-    }
-
-    public List<ProjectRecipe> recipes() {
-        return recipes;
     }
 
     public List<String> names(String stageKey, Phase phase) {

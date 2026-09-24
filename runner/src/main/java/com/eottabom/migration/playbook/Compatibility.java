@@ -8,7 +8,8 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /** playbook/compatibility.yml: Spring Boot 단계별 Java / Gradle / Spring Cloud 호환성. */
-public final class Compatibility {
+public record Compatibility(Map<String, BootLine> boot, List<Integer> lts, Map<Integer, JavaTarget> java,
+                            String gradleUpgradeVersion, String gradleUpgradeRecipe) {
 
     /**
      * @param gradle Gradle major → 그 major 에서 지원하는 최소 버전
@@ -38,21 +39,6 @@ public final class Compatibility {
      * @param upgradesGradle 레시피가 Gradle 도 함께 올린다 (따로 Gradle 단계를 넣지 않는다)
      */
     public record JavaTarget(int version, String gradleMin, String recipe, boolean upgradesGradle) {
-    }
-
-    private final Map<String, BootLine> boot;
-    private final List<Integer> lts;
-    private final Map<Integer, JavaTarget> java;
-    private final String gradleUpgradeVersion;
-    private final String gradleUpgradeRecipe;
-
-    private Compatibility(Map<String, BootLine> boot, List<Integer> lts, Map<Integer, JavaTarget> java,
-                          String gradleUpgradeVersion, String gradleUpgradeRecipe) {
-        this.boot = boot;
-        this.lts = lts;
-        this.java = java;
-        this.gradleUpgradeVersion = gradleUpgradeVersion;
-        this.gradleUpgradeRecipe = gradleUpgradeRecipe;
     }
 
     public static Compatibility load(Path file) {
@@ -107,13 +93,5 @@ public final class Compatibility {
             throw new IllegalArgumentException("--java 는 " + String.join(" | ", java.keySet().stream().map(String::valueOf).toList()) + " | latest | auto | none");
         }
         return target;
-    }
-
-    public String gradleUpgradeVersion() {
-        return gradleUpgradeVersion;
-    }
-
-    public String gradleUpgradeRecipe() {
-        return gradleUpgradeRecipe;
     }
 }

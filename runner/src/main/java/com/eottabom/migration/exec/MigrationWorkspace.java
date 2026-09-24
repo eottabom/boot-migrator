@@ -23,15 +23,12 @@ import java.util.stream.Stream;
  * 대상 프로젝트의 .rewrite-migration 디렉토리. 리포트, 패치, 로그, 실행 기록(SUMMARY.md), 재개 정보를 둔다.
  * clean 에 지워지지 않도록 build 밖에 두고, git 이면 .git/info/exclude 로 커밋 대상에서 뺀다.
  */
-public final class MigrationWorkspace {
+public record MigrationWorkspace(Path dir) {
 
     public static final String DIR_NAME = ".rewrite-migration";
     private static final Pattern STAGE_REPORT = Pattern.compile("^\\d{2}-.*\\.md$");
 
-    private final Path dir;
-
-    public MigrationWorkspace(Path projectDir) {
-        this.dir = projectDir.resolve(DIR_NAME);
+    public MigrationWorkspace {
         try {
             Files.createDirectories(dir);
         } catch (IOException e) {
@@ -39,8 +36,9 @@ public final class MigrationWorkspace {
         }
     }
 
-    public Path dir() {
-        return dir;
+    /** 대상 프로젝트의 .rewrite-migration */
+    public static MigrationWorkspace in(Path projectDir) {
+        return new MigrationWorkspace(projectDir.resolve(DIR_NAME));
     }
 
     public Path file(String name) {
