@@ -1,34 +1,25 @@
 package com.eottabom.migration.playbook;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class VersionsTests {
 
-	@Test
-	void comparesNumbersThenQualifiers() {
-		assertThat(Versions.compare("3.0.0-RC1", "3.0.0")).isNegative();
-		assertThat(Versions.compare("7.0.0.Beta2", "7.0.0.CR1")).isNegative();
-		assertThat(Versions.compare("7.0.0.CR1", "7.0.0.Final")).isNegative();
-		assertThat(Versions.compare("3.2.0-M1", "3.2.0-M2")).isNegative();
-		assertThat(Versions.compare("3.2.0-RC2", "3.2.0-SNAPSHOT")).isNegative();
-		assertThat(Versions.compare("3.2.0-SNAPSHOT", "3.2.0")).isNegative();
+	@ParameterizedTest
+	@CsvSource({ "3.0.0-RC1, 3.0.0, -1", "7.0.0.Beta2, 7.0.0.CR1, -1", "7.0.0.CR1, 7.0.0.Final, -1",
+			"3.2.0-M1, 3.2.0-M2, -1", "3.2.0-RC2, 3.2.0-SNAPSHOT, -1", "3.2.0-SNAPSHOT, 3.2.0, -1",
+			"6.5.3.Final, 6.6.0.Alpha1, -1", "8.14.3, 8.4, 1", "6.6.2.Final, 6.6.2, 0", "2.0.6.RELEASE, 2.0.6, 0",
+			"33.4.8-jre, 33.4.8, 0", "8.14, 8.14.0, 0" })
+	void comparesVersions(String a, String b, int expectedSign) {
+		assertThat(Integer.signum(Versions.compare(a, b))).isEqualTo(expectedSign);
 	}
 
-	@Test
-	void treatsReleaseQualifiersAsEqual() {
-		assertThat(Versions.compare("6.6.2.Final", "6.6.2")).isZero();
-		assertThat(Versions.compare("2.0.6.RELEASE", "2.0.6")).isZero();
-		assertThat(Versions.compare("33.4.8-jre", "33.4.8")).isZero();
-		assertThat(Versions.compare("8.14", "8.14.0")).isZero();
-	}
-
-	@Test
-	void numbersTakePrecedence() {
-		assertThat(Versions.compare("6.5.3.Final", "6.6.0.Alpha1")).isNegative();
-		assertThat(Versions.compare("8.14.3", "8.4")).isPositive();
-		assertThat(Versions.major("9.1.0")).isEqualTo(9);
+	@ParameterizedTest
+	@CsvSource({ "9.1.0, 9", "8.14.3, 8", "17, 17" })
+	void extractsMajorVersion(String version, int major) {
+		assertThat(Versions.major(version)).isEqualTo(major);
 	}
 
 }

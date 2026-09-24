@@ -9,6 +9,8 @@ import java.util.Set;
 import com.eottabom.migration.plan.MigrationPlanner;
 import com.eottabom.migration.playbook.KnownIssues.Match;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,33 +33,37 @@ class KnownIssuesTests {
 		assertThat(this.issues.failureHints()).isNotEmpty();
 	}
 
-	@Test
-	void stageIssueWithRequiresMatchesOnlyWhenDependencyPresent() {
-		Map<String, String> withoutMongo = Map.of("org.springframework.boot:spring-boot", "4.0.0");
-		Map<String, String> withMongo = Map.of("org.mongodb:mongodb-driver-sync", "5.5.0");
-
-		assertThat(ids(this.issues.match("4.0", withoutMongo, withoutMongo)))
-			.doesNotContain("boot40-mongodb-properties")
-			.contains("boot40-jackson3");
-		assertThat(ids(this.issues.match("4.0", withMongo, withMongo))).contains("boot40-mongodb-properties");
+	@ParameterizedTest
+	@CsvSource({ "4.0, org.springframework.boot:spring-boot, 4.0.0, boot40-jackson3, boot40-mongodb-properties",
+			"4.0, org.mongodb:mongodb-driver-sync, 5.5.0, boot40-mongodb-properties, ''" })
+	void stageIssueWithRequiresMatchesOnlyWhenDependencyPresent(String stage, String module, String version,
+			String expectedId, String unexpectedId) {
+		Map<String, String> deps = Map.of(module, version);
+		List<String> matched = ids(this.issues.match(stage, deps, deps));
+		assertThat(matched).contains(expectedId);
+		if (!unexpectedId.isEmpty()) {
+			assertThat(matched).doesNotContain(unexpectedId);
+		}
 	}
 
-	@Test
-	void libraryIssuesMatchByCrossesAndAffected() {
-		Map<String, String> before = Map.of("org.hibernate.orm:hibernate-core", "6.5.2.Final");
-		Map<String, String> after = Map.of("org.hibernate.orm:hibernate-core", "6.6.4.Final");
+	@ParameterizedTest
+	@CsvSource({ "3.4, 6.5.2.Final, 6.6.4.Final, hibernate-66", "3.3, 6.4.4.Final, 6.5.2.Final, hibernate-hhh18378" })
+	void libraryIssuesMatchByCrossesAndAffected(String stage, String beforeVersion, String afterVersion,
+			String expectedIssueId) {
+		Map<String, String> before = Map.of("org.hibernate.orm:hibernate-core", beforeVersion);
+		Map<String, String> after = Map.of("org.hibernate.orm:hibernate-core", afterVersion);
 
-		List<Match> matches = this.issues.match("3.4", before, after);
+		List<Match> matches = this.issues.match(stage, before, after);
 
-		assertThat(ids(matches)).contains("hibernate-66").doesNotContain("hibernate-hhh18378", "hibernate-7");
-		assertThat(matches.stream()
-			.filter((m) -> m.issue().id().equals("hibernate-66"))
-			.findFirst()
-			.orElseThrow()
-			.trigger()).isEqualTo("`org.hibernate.orm:hibernate-core` 6.5.2.Final → 6.6.4.Final");
-		assertThat(ids(this.issues.match("3.3", Map.of("org.hibernate.orm:hibernate-core", "6.4.4.Final"),
-				Map.of("org.hibernate.orm:hibernate-core", "6.5.2.Final"))))
-			.contains("hibernate-hhh18378");
+		assertThat(ids(matches)).contains(expectedIssueId);
+		if ("hibernate-66".equals(expectedIssueId)) {
+			assertThat(ids(matches)).doesNotContain("hibernate-hhh18378", "hibernate-7");
+			assertThat(matches.stream()
+				.filter((m) -> m.issue().id().equals("hibernate-66"))
+				.findFirst()
+				.orElseThrow()
+				.trigger()).isEqualTo("`org.hibernate.orm:hibernate-core` 6.5.2.Final → 6.6.4.Final");
+		}
 	}
 
 	@Test
