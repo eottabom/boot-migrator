@@ -1,5 +1,7 @@
 plugins {
     `java-library`
+    id("io.spring.javaformat") version "0.0.47"
+    checkstyle
 }
 
 base {
@@ -62,6 +64,16 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.assertj:assertj-core:3.27.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    checkstyle("io.spring.javaformat:spring-javaformat-checkstyle:0.0.47")
+}
+
+checkstyle {
+    config = resources.text.fromFile(rootProject.file("config/checkstyle/checkstyle.xml"))
+    configDirectory = rootProject.layout.projectDirectory.dir("config/checkstyle")
+    // 경고를 허용하면 쌓이기만 하고 아무도 보지 않는다
+    isIgnoreFailures = false
+    maxWarnings = 0
 }
 
 tasks.test {

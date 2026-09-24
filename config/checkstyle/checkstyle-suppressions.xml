@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+		"-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+		"https://checkstyle.org/dtds/suppressions_1_2.dtd">
+<suppressions>
+	<!-- package-info.java 체크 비활성화 -->
+	<suppress files=".*" checks="JavadocPackage"/>
+	<!-- @author, @param 강제 제외. 단일 저장소라 작성자 태그가 의미 없고, 레코드 컴포넌트마다 @param을 다는 것은 타입 선언과 중복된다 -->
+	<suppress files=".*" checks="JavadocType"/>
+	<suppress files=".*" checks="JavadocMethod"/>
+	<suppress files=".*" checks="JavadocVariable"/>
+	<!-- 설명이 한국어라 영문 문장 부호 규칙을 적용하지 않는다 -->
+	<suppress files=".*" checks="JavadocStyle"/>
+	<!-- OpenRewrite 테스트 DSL(java(), buildGradle(), mavenProject() 등)은 static import 로 쓰는 것이 관례다 -->
+	<suppress files=".*[\\/]src[\\/]test[\\/].*" checks="SpringAvoidStaticImport" message="org\.openrewrite\."/>
+</suppressions>
