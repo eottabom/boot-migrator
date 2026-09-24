@@ -273,8 +273,6 @@ public final class MigrationRunner {
             ws.appendSummary(projectName, "- 스캔 실패: 수동 검토 대상 표시 없음 (00-scan.log)\n");
         }
         ws.appendSummary(projectName, "\n| 단계 | 컴파일 | 테스트 | 빌드 | 자동 보정 | 수동 검토 | 알려진 이슈 | 리포트 |\n|---|---|---|---|---|---|---|---|\n");
-        writeJson(ws.file("failure-hints.json"), knownIssues.failureHints().stream()
-                .map(h -> (Object) Map.of("pattern", h.pattern(), "text", h.text())).toList());
 
         // ── 단계 루프 ── 단계 번호는 지난 기록 뒤에 이어서 붙인다 (재개 시에는 다시 시도하는 단계 번호부터)
         int order = resumed.retryFrom() != null ? resumed.retryFrom() : ws.stageReportCount();
@@ -554,27 +552,19 @@ public final class MigrationRunner {
     }
 
     /** 단계 리포트(md, json)를 만들고 HTML 리포트를 갱신한다. */
+    @SuppressWarnings("unchecked")
     private void reportStage(BuildTool gradle, MigrationWorkspace ws, String projectName, ProjectRecipes projectRecipes,
                              String stageName, String tag, Path previousVersions, GateResult gate, String gateOption) {
-        boolean reported = gradle.run(ws.file(tag + ".report.log"), verifyArgs("migrationReport",
-                "-PmigrationStage=" + stageName,
-                "-PmigrationIssues=" + ws.file(tag + ".issues.json"),
-                "-PmigrationFailureHints=" + ws.file("failure-hints.json"),
-                "-PmigrationProjectRecipes=" + String.join(",", projectRecipes.recipes().stream().map(ProjectRecipe::name).toList()),
-                "-PmigrationCompileLog=" + ws.file(tag + ".compile.log"),
-                "-PmigrationFindPatch=" + ws.file("00-scan.find.patch"),
-                "-PmigrationRewriteLog=" + ws.file(tag + ".rewrite.log"),
-                "-PmigrationCompileOk=" + (gateOption.equals("none") ? "skip" : gate.compileOk() ? "1" : "0"),
-                "-PmigrationBuildOk=" + gate.buildOk(),
-                // 원본에서도 실패하던 태스크만 실패했으면 리포트에 기존 문제로 표시한다
-                "-PmigrationBaselineBuildOk=" + (gate.buildOk().equals("0") && !gate.buildBlocking() ? "0" : "1"),
-                "-PmigrationVersionsBefore=" + previousVersions,
-                "-PmigrationVersionsAfter=" + ws.file(tag + ".versions.txt"),
-                "-PmigrationReportOut=" + ws.file(tag + ".md"),
-                "-PmigrationReportJson=" + ws.file(tag + ".report.json")));
-        if (!reported) {
-            fail("리포트 생성 실패 → " + ws.file(tag + ".report.log"));
-        }
+        Map<String, Object> issues = Files.exists(ws.file(tag + ".issues.json"))
+                ? new org.yaml.snakeyaml.Yaml().load(MigrationWorkspace.read(ws.file(tag + ".issues.json"))) : Map.of();
+        StageReport.write(new StageReport.Input(stageName, ws.dir().getParent(), ws.file(tag + ".compile.log"), ws.file(tag + ".rewrite.log"),
+                        ws.file("00-scan.find.patch"), previousVersions, ws.file(tag + ".versions.txt"),
+                        gateOption.equals("none") ? "skip" : gate.compileOk() ? "1" : "0", gate.buildOk(),
+                        // 원본에서도 실패하던 태스크만 실패했으면 기존 문제로 표시한다
+                        gate.buildOk().equals("0") && !gate.buildBlocking() ? "0" : "1",
+                        (List<Map<String, Object>>) issues.getOrDefault("issues", List.of()), (String) issues.get("guide"),
+                        knownIssues.failureHints(), Set.copyOf(projectRecipes.recipes().stream().map(ProjectRecipe::name).toList())),
+                ws.file(tag + ".md"), ws.file(tag + ".report.json"));
         ws.reportHead(tag).forEach(logger::lifecycle);
         Path html = HtmlReport.write(ws, projectName, ws.startBoot().orElse(null), inspector.bootVersion(ws.dir().getParent()));
         logger.lifecycle("   리포트: {}", html.toUri());

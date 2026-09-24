@@ -3,7 +3,7 @@ package com.eottabom.migration.exec;
 import java.util.List;
 import java.util.Map;
 
-/** 리포트(verify.init.gradle 의 JsonSlurper)에 넘길 작은 JSON 을 만든다. 값은 문자열 / 리스트 / 맵 / null. */
+/** 리포트 데이터용 작은 JSON 을 만든다. 값은 문자열 / 숫자 / 불리언 / 리스트 / 맵 / null. */
 final class Json {
 
     private Json() {
@@ -24,6 +24,8 @@ final class Json {
             out.append("null");
         } else if (value instanceof Raw raw) {
             out.append(raw.json());
+        } else if (value instanceof Number || value instanceof Boolean) {
+            out.append(value);
         } else if (value instanceof Map<?, ?> map) {
             out.append('{');
             boolean first = true;

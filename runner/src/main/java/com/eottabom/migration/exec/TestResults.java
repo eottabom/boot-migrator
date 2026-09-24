@@ -52,7 +52,8 @@ final class TestResults {
         return files(projectDir, since).size();
     }
 
-    private static List<Path> files(Path projectDir, FileTime since) {
+    /** since 이후에 쓰인 결과 XML (null 이면 전부) */
+    static List<Path> files(Path projectDir, FileTime since) {
         List<Path> found = new ArrayList<>();
         try {
             Files.walkFileTree(projectDir, new SimpleFileVisitor<>() {

@@ -60,13 +60,6 @@ final class FakeBuildTool implements BuildTool {
         calls.add(cmd.replaceAll("--init-script \\S+ ", ""));
         args.stream().filter(a -> a.startsWith("-PmigrationVersionsOut=")).findFirst()
                 .ifPresent(a -> write(Path.of(a.substring(a.indexOf('=') + 1)), "org.springframework.boot:spring-boot=3.4.0\n"));
-        if (args.contains("migrationReport")) {
-            String md = value(args, "-PmigrationReportOut=");
-            String stage = value(args, "-PmigrationStage=");
-            write(Path.of(md), "# Spring Boot " + stage + "\n\n| 항목 | 결과 |\n|---|---|\n| 컴파일 | " + value(args, "-PmigrationCompileOk=") + " |\n");
-            write(Path.of(value(args, "-PmigrationReportJson=")), "{\"stage\":\"" + stage + "\",\"compile\":\"ok\",\"tests\":{\"total\":0,\"failures\":[]}}");
-            return true;
-        }
         if (args.contains("-x") && args.contains("build")) {
             return finish(log, baseline);
         }
@@ -101,10 +94,6 @@ final class FakeBuildTool implements BuildTool {
         // 빌드가 만든 추적 안 되는 파일 (.gitignore 에 없는 산출물). 커밋에 섞이면 안 된다
         write(projectDir.resolve("test-output.log"), "junk");
         return outcome.ok();
-    }
-
-    private static String value(List<String> args, String prefix) {
-        return args.stream().filter(a -> a.startsWith(prefix)).map(a -> a.substring(prefix.length())).findFirst().orElse("");
     }
 
     static void write(Path file, String content) {

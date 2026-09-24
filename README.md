@@ -106,13 +106,14 @@ runner/                               러너 Gradle 플러그인 (루트 빌드�
   recipe/                             대상 프로젝트의 .rewrite/ 레시피 탐색, 단계별 rewrite.generated.yml 생성
   exec/MigrationRunner                단계 루프, 게이트, 재개, 커밋
   exec/TargetGradle                   대상 프로젝트의 gradlew 를 별도 프로세스로 실행 (로그는 .rewrite-migration/)
+  exec/StageReport                    단계 리포트 (NN-*.md, NN-*.report.json)
   exec/HtmlReport                     전 단계를 한 페이지로 보는 report.html
   task/                               migrationAnalyze / Plan / Run / Verify / Help
 playbook/compatibility.yml            Boot 단계별 Java / Gradle 범위, Spring Framework, Spring Cloud 트레인 (공식 문서 기준, 출처는 파일 상단)
 playbook/known-issues.yml             알려진 이슈 레지스트리 (단계 / 라이브러리 버전 조건, AUTO_FIX / REVIEW_REQUIRED / REPORT_ONLY)
                                       와 테스트 실패 힌트
 init/rewrite.init.gradle              대상 프로젝트에 OpenRewrite 플러그인과 레시피 jar 를 붙이는 Gradle init script
-init/verify.init.gradle               컴파일 경고 수집, 테스트 fail-fast 해제와 결과 XML 강제, 리포트 생성(migrationReport 태스크)
+init/verify.init.gradle               컴파일 경고 옵션, 테스트 fail-fast 해제와 결과 XML 강제, resolve 된 의존성 버전 수집
                                       init script 는 대상 프로젝트의 Gradle 안에서 돌아서 Groovy 로 둔다
                                       (Gradle 8.x 의 Kotlin 스크립트 컴파일러는 JDK 25 에서 깨진다)
 ```
@@ -135,28 +136,26 @@ init/verify.init.gradle               컴파일 경고 수집, 테스트 fail-fa
 
 이 방식은 `rewrite` configuration 이 루트 프로젝트의 의존성 그래프에 보인다. upstream 의 일부 precondition 이 이걸 실제 의존성으로 오인해서(`jackson-module-jaxb-annotations`) 생기는 부작용은 `RemoveSpuriousJaxbApi` 가 되돌린다.
 
-**`init/verify.init.gradle`** (compile / test / 리포트 단계에 사용)
+**`init/verify.init.gradle`** (compile / test 단계에 사용, 대상 빌드 모델이 필요한 것만)
 
 | 설정 | 내용 |
 |---|---|
 | `JavaCompile` 에 `-Xlint:deprecation -Xlint:removal -Xmaxwarns 10000` | deprecated / 제거 예정 API 사용처를 경고로 남긴다. 리포트의 "제거 예정 API" 섹션 출처 |
-| `Test` 에 `ignoreFailures = true`, `failFast = false` | 테스트가 실패해도 끝까지 실행하고 리포트를 만든다. 프로젝트가 fail-fast 를 켜 둬도 검증 때는 끈다 |
-| `migrationReport` 태스크 | 아래 입력을 모아 `.rewrite-migration/NN-boot-X.Y.md` 를 만든다 |
+| `Test` 에 `ignoreFailures = true`, `failFast = false`, JUnit XML 강제 | 테스트가 실패해도 끝까지 실행하고 결과 XML 을 남긴다. 프로젝트가 fail-fast 를 켜 둬도 검증 때는 끈다 |
+| `migrationResolvedVersions` 태스크 | 전 모듈의 runtime/test classpath 에서 resolve 된 `group:artifact=version` 목록. 단계 전후 비교와 라이브러리 이슈 판단에 쓴다 |
 
-`migrationReport` 입력은 migrationRun 이 `-P` 로 넘긴다.
+### 리포트 (runner 의 `StageReport`)
 
-| 프로퍼티 | 내용 |
+단계가 끝나면 러너가 남은 파일을 읽어 `NN-*.md` 와 HTML 리포트용 `NN-*.report.json` 을 만든다. 대상 프로젝트의 Gradle 을 다시 띄우지 않는다.
+
+| 입력 | 리포트에 쓰는 곳 |
 |---|---|
-| `migrationStage` | 단계 이름 |
-| `migrationIssues` | 러너가 골라 둔 알려진 이슈 (JSON). 리포트는 그리기만 한다 |
-| `migrationFailureHints` | known-issues.yml 의 failureHints (JSON). 실패한 테스트에 원인 힌트를 붙인다 |
-| `migrationCompileLog` | 컴파일 로그. `[removal]` / `[deprecation]` 경고 추출 |
-| `migrationCompileOk` | 러너가 판단한 컴파일 결과 (`1` / `0` / `skip`) |
-| `migrationRewriteLog` | rewriteRun 로그. 파일별 레시피 트리에서 말단 레시피를 가장 가까운 커스텀 레시피에 귀속시켜 "자동 보정 내역" 을 만든다 |
-| `migrationFindPatch` | 스캔 단계의 FindManualMigrationItems 결과 patch. `~~>` 마커 위치를 "수동 검토 대상" 으로 |
-| `migrationReportOut` | 출력 파일 경로 |
-
-테스트 결과는 `build/test-results/**/TEST-*.xml` 에서 읽고, properties-migrator 경고는 그 안의 테스트 로그(system-out)에서 `The use of configuration keys that ...` 블록을 찾아 추출한다.
+| `NN-*.compile.log` | `[removal]` / `[deprecation]` 경고 (같은 위치는 한 번만) |
+| `build/test-results/**/TEST-*.xml` | 테스트 수와 실패 원인(가장 안쪽 예외, 위치, playbook 의 실패 힌트). system-out 에서 properties-migrator 의 설정 키 변경 |
+| `NN-*.rewrite.log` | 파일별 레시피 트리에서 말단 레시피를 가장 가까운 커스텀 레시피에 귀속시킨 "자동 보정 내역" |
+| `00-scan.find.patch` | FindManualMigrationItems 의 `~~>` 마커 위치를 "수동 검토 대상" 으로 |
+| `NN-*.versions.txt` (단계 전후) | 의존성 버전 변경 (major / minor / patch) |
+| `NN-*.issues.json` | 러너가 playbook 에서 이 단계와 의존성 변경에 맞게 고른 알려진 이슈 |
 
 ### yml 파일
 
