@@ -84,9 +84,10 @@ class MigrationPlannerTests {
 
 	@ParameterizedTest(name = "[{index}] {0}")
 	@MethodSource("decisionNoteScenarios")
-	void explainsJavaAndGradleDecisions(String scenario, ProjectModel project, MigrationRequest request, String note) {
+	void explainsJavaAndGradleDecisions(String scenario, ProjectModel project, MigrationRequest request,
+			String expectedNote) {
 		MigrationPlan plan = this.planner.plan(project, request);
-		assertThat(plan.notes()).anyMatch((n) -> n.contains(note));
+		assertThat(plan.notes()).anyMatch((n) -> n.contains(expectedNote));
 	}
 
 	// @formatter:off
@@ -118,9 +119,9 @@ class MigrationPlannerTests {
 
 	@ParameterizedTest(name = "[{index}] {0}")
 	@MethodSource("stageRecipeScenarios")
-	void choosesStageRecipe(String scenario, ProjectModel project, MigrationRequest request, String recipe) {
+	void choosesStageRecipe(String scenario, ProjectModel project, MigrationRequest request, String expectedRecipe) {
 		MigrationPlan plan = this.planner.plan(project, request);
-		assertThat(plan.stages()).extracting(Stage::recipe).containsExactly(recipe);
+		assertThat(plan.stages()).extracting(Stage::recipe).containsExactly(expectedRecipe);
 	}
 
 	// @formatter:off
@@ -153,8 +154,8 @@ class MigrationPlannerTests {
 	@ParameterizedTest(name = "[{index}] {0}")
 	@MethodSource("invalidRequestScenarios")
 	void rejectsInvalidRequest(String scenario, ProjectModel project, MigrationRequest request,
-			String expectedMessage) {
-		assertThatThrownBy(() -> this.planner.plan(project, request)).hasMessageContaining(expectedMessage);
+			String expectedErrorMessage) {
+		assertThatThrownBy(() -> this.planner.plan(project, request)).hasMessageContaining(expectedErrorMessage);
 	}
 
 	// @formatter:off

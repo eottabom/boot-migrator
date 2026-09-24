@@ -47,14 +47,14 @@ class KnownIssuesTests {
 		return Stream.concat(Stream.concat(issueTests, guideTests), Stream.of(hintsTest));
 	}
 
-	@ParameterizedTest(name = "[{index}] {0}")
+	@ParameterizedTest(name = "[{index}] Boot {0} 단계 의존성 검사 -> 기대 이슈: {2}")
 	@MethodSource("stageIssueWithRequiresCases")
-	void stageIssueWithRequiresMatchesOnlyWhenDependencyPresent(String scenario, String stage, Map<String, String> deps,
-			String expectedId, List<String> unexpectedIds) {
-		List<String> matched = ids(this.issues.match(stage, deps, deps));
-		assertThat(matched).contains(expectedId);
-		for (String unexpectedId : unexpectedIds) {
-			assertThat(matched).doesNotContain(unexpectedId);
+	void stageIssueWithRequiresMatchesOnlyWhenDependencyPresent(String stage, Map<String, String> dependencies,
+			String expectedIssueId, List<String> unexpectedIssueIds) {
+		List<String> matched = ids(this.issues.match(stage, dependencies, dependencies));
+		assertThat(matched).contains(expectedIssueId);
+		for (String unexpectedIssueId : unexpectedIssueIds) {
+			assertThat(matched).doesNotContain(unexpectedIssueId);
 		}
 	}
 
@@ -62,14 +62,12 @@ class KnownIssuesTests {
 	static Stream<Arguments> stageIssueWithRequiresCases() {
 		return Stream.of(
 			Arguments.of(
-				"의존성이 없을 때는 requires 조건이 걸린 이슈가 매칭되지 않는다",
 				"4.0",
 				Map.of("org.springframework.boot:spring-boot", "4.0.0"),
 				"boot40-jackson3",
 				List.of("boot40-mongodb-properties")
 			),
 			Arguments.of(
-				"해당 의존성(mongodb)이 있을 때만 requires 조건 이슈가 매칭된다",
 				"4.0",
 				Map.of("org.mongodb:mongodb-driver-sync", "5.5.0"),
 				"boot40-mongodb-properties",
@@ -79,18 +77,18 @@ class KnownIssuesTests {
 	}
 	// @formatter:on
 
-	@ParameterizedTest(name = "[{index}] {0}")
+	@ParameterizedTest(name = "[{index}] Boot {0} ({1} -> {2}) -> 기대 이슈: {3}")
 	@MethodSource("libraryIssueMatchCases")
-	void libraryIssuesMatchByCrossesAndAffected(String scenario, String stage, String beforeVersion,
-			String afterVersion, String expectedIssueId, String expectedTrigger, List<String> unexpectedIds) {
+	void libraryIssuesMatchByCrossesAndAffected(String stage, String beforeVersion, String afterVersion,
+			String expectedIssueId, String expectedTrigger, List<String> unexpectedIssueIds) {
 		Map<String, String> before = Map.of("org.hibernate.orm:hibernate-core", beforeVersion);
 		Map<String, String> after = Map.of("org.hibernate.orm:hibernate-core", afterVersion);
 
 		List<Match> matches = this.issues.match(stage, before, after);
 
 		assertThat(ids(matches)).contains(expectedIssueId);
-		for (String unexpectedId : unexpectedIds) {
-			assertThat(ids(matches)).doesNotContain(unexpectedId);
+		for (String unexpectedIssueId : unexpectedIssueIds) {
+			assertThat(ids(matches)).doesNotContain(unexpectedIssueId);
 		}
 		if (expectedTrigger != null) {
 			assertThat(matches.stream()
@@ -105,7 +103,6 @@ class KnownIssuesTests {
 	static Stream<Arguments> libraryIssueMatchCases() {
 		return Stream.of(
 			Arguments.of(
-				"Hibernate 6.5 -> 6.6 버전 교차 시 hibernate-66 이슈 매칭 및 트리거 문구 생성",
 				"3.4",
 				"6.5.2.Final",
 				"6.6.4.Final",
@@ -114,7 +111,6 @@ class KnownIssuesTests {
 				List.of("hibernate-hhh18378", "hibernate-7")
 			),
 			Arguments.of(
-				"Hibernate 6.4 -> 6.5 버전 교차 시 hibernate-hhh18378 이슈 매칭",
 				"3.3",
 				"6.4.4.Final",
 				"6.5.2.Final",

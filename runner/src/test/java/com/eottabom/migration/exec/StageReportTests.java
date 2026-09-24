@@ -32,19 +32,16 @@ class StageReportTests {
 	static Stream<Arguments> failures() {
 		return Stream.of(
 			Arguments.of(
-				"단일 예외 및 실패 위치(소스 코드 줄번호) 추출",
 				"demo.app.OrderTest",
 				"java.lang.AssertionError: expected 1\n\tat demo.app.OrderTest.saves(OrderTest.java:12)",
 				"OrderTest", "saves", "AssertionError", "expected 1", "OrderTest.java:12", null
 			),
 			Arguments.of(
-				"중첩 예외(Caused by) 시 가장 안쪽(root cause) 예외 추출",
 				"demo.app.OrderTest$WhenPaid$Refund",
 				"java.lang.IllegalStateException: outer\nCaused by: org.x.InnerException: root cause",
 				"OrderTest", "WhenPaid > Refund > saves", "InnerException", "root cause", null, null
 			),
 			Arguments.of(
-				"알려진 문제 힌트(FailureHint)와 일치하는 예외 힌트 추출",
 				"demo.app.AsyncTest",
 				"org.springframework.beans.factory.NoSuchBeanDefinitionException: No bean named 'taskExecutor' available",
 				"AsyncTest", "saves", "NoSuchBeanDefinitionException", "No bean named 'taskExecutor' available",
@@ -54,25 +51,26 @@ class StageReportTests {
 	}
 	// @formatter:on
 
-	@ParameterizedTest(name = "[{index}] {0}")
+	@ParameterizedTest(name = "[{index}] {0} 실패 스택 분석 -> 기대 예외: {4}")
 	@MethodSource("failures")
-	void extractsInnermostCauseLocationAndHint(String scenario, String classname, String stack, String simpleClass,
-			String test, String exception, String message, String location, String hint) {
-		Map<String, Object> failure = StageReport.testFailure(classname, "saves", "", stack, HINTS);
+	void extractsInnermostCauseLocationAndHint(String className, String stackTrace, String expectedSimpleClassName,
+			String expectedTestName, String expectedException, String expectedMessage, String expectedLocation,
+			String expectedHint) {
+		Map<String, Object> failure = StageReport.testFailure(className, "saves", "", stackTrace, HINTS);
 
-		assertThat((String) failure.get("cls")).endsWith(simpleClass);
-		assertThat(failure).containsEntry("test", test)
-			.containsEntry("exception", exception)
-			.containsEntry("message", message)
-			.containsEntry("location", location)
-			.containsEntry("hint", hint);
+		assertThat((String) failure.get("cls")).endsWith(expectedSimpleClassName);
+		assertThat(failure).containsEntry("test", expectedTestName)
+			.containsEntry("exception", expectedException)
+			.containsEntry("message", expectedMessage)
+			.containsEntry("location", expectedLocation)
+			.containsEntry("hint", expectedHint);
 	}
 
 	@ParameterizedTest(name = "[{index}] {0} -> {1} ({2})")
 	@CsvSource({ "1.2.3, 2.0.0, major", "1.2.3, 1.3.0, minor", "1.2.3, 1.2.4, patch", "6.6.2.Final, 6.6.3.Final, patch",
 			"33.4.8-jre, 33.5.0-jre, minor" })
-	void classifiesVersionChange(String before, String after, String level) {
-		assertThat(StageReport.level(before, after)).isEqualTo(level);
+	void classifiesVersionChange(String beforeVersion, String afterVersion, String expectedLevel) {
+		assertThat(StageReport.level(beforeVersion, afterVersion)).isEqualTo(expectedLevel);
 	}
 
 	@ParameterizedTest(name = "[{index}] 레시피: {0} -> 커스텀 fix={1}")
@@ -82,8 +80,9 @@ class StageReportTests {
 			"com.eottabom.rewrite.spring.upstream.UpgradeSpringBootStep_3_4, false",
 			"com.eottabom.rewrite.CommonMigrationFixes, false",
 			"org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_4, false", "demo.migration.RenameGreeting, true" })
-	void countsOnlyCustomAndProjectRecipesAsFixes(String recipe, boolean custom) {
-		assertThat(StageReport.isCustomFix(recipe, Set.of("demo.migration.RenameGreeting"))).isEqualTo(custom);
+	void countsOnlyCustomAndProjectRecipesAsFixes(String recipeName, boolean expectedCustomFix) {
+		assertThat(StageReport.isCustomFix(recipeName, Set.of("demo.migration.RenameGreeting")))
+			.isEqualTo(expectedCustomFix);
 	}
 
 	@Test
