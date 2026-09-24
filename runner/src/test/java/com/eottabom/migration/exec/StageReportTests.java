@@ -28,19 +28,31 @@ class StageReportTests {
 	@TempDir
 	Path project;
 
+	// @formatter:off
 	static Stream<Arguments> failures() {
 		return Stream.of(
-				Arguments.of("단일 예외 및 실패 위치(소스 코드 줄번호) 추출", "demo.app.OrderTest",
-						"java.lang.AssertionError: expected 1\n\tat demo.app.OrderTest.saves(OrderTest.java:12)",
-						"OrderTest", "saves", "AssertionError", "expected 1", "OrderTest.java:12", null),
-				Arguments.of("중첩 예외(Caused by) 시 가장 안쪽(root cause) 예외 추출", "demo.app.OrderTest$WhenPaid$Refund",
-						"java.lang.IllegalStateException: outer\nCaused by: org.x.InnerException: root cause",
-						"OrderTest", "WhenPaid > Refund > saves", "InnerException", "root cause", null, null),
-				Arguments.of("알려진 문제 힌트(FailureHint)와 일치하는 예외 힌트 추출", "demo.app.AsyncTest",
-						"org.springframework.beans.factory.NoSuchBeanDefinitionException: No bean named 'taskExecutor' available",
-						"AsyncTest", "saves", "NoSuchBeanDefinitionException", "No bean named 'taskExecutor' available",
-						null, "applicationTaskExecutor 로 바꾼다"));
+			Arguments.of(
+				"단일 예외 및 실패 위치(소스 코드 줄번호) 추출",
+				"demo.app.OrderTest",
+				"java.lang.AssertionError: expected 1\n\tat demo.app.OrderTest.saves(OrderTest.java:12)",
+				"OrderTest", "saves", "AssertionError", "expected 1", "OrderTest.java:12", null
+			),
+			Arguments.of(
+				"중첩 예외(Caused by) 시 가장 안쪽(root cause) 예외 추출",
+				"demo.app.OrderTest$WhenPaid$Refund",
+				"java.lang.IllegalStateException: outer\nCaused by: org.x.InnerException: root cause",
+				"OrderTest", "WhenPaid > Refund > saves", "InnerException", "root cause", null, null
+			),
+			Arguments.of(
+				"알려진 문제 힌트(FailureHint)와 일치하는 예외 힌트 추출",
+				"demo.app.AsyncTest",
+				"org.springframework.beans.factory.NoSuchBeanDefinitionException: No bean named 'taskExecutor' available",
+				"AsyncTest", "saves", "NoSuchBeanDefinitionException", "No bean named 'taskExecutor' available",
+				null, "applicationTaskExecutor 로 바꾼다"
+			)
+		);
 	}
+	// @formatter:on
 
 	@ParameterizedTest(name = "[{index}] {0}")
 	@MethodSource("failures")
