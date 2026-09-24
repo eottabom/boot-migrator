@@ -13,6 +13,7 @@ SpringBootStep_3_4                    러너가 단계별로 실행하는 레시
  ├─ ReplaceMockBeanAndSpyBean            이 단계에서만 필요한 보정 (커스텀)
  ├─ UpgradeSpringCloudAws_3_3            upstream 에 없는 라이브러리 정렬 (커스텀)
  ├─ AddPropertiesMigrator                이 단계의 설정 키 변경 확인용
+ ├─ catalog.VersionCatalog_3_4           위 레시피들의 버전 변경을 gradle/libs.versions.toml 에도 적용 (생성)
  └─ CommonMigrationFixes                 매 단계 마지막에 도는 공통 보정 (커스텀)
 
 MigrateToSpringBoot_3_4               직전 MigrateToSpringBoot_3_3 + SpringBootStep_3_4
@@ -30,6 +31,12 @@ upstream 이 큰 틀을 맡고, 커스텀 레시피는 **upstream 만으로는 �
 upstream 단계 레시피(`upstream-spring-boot-steps.yml`)는 rewrite-spring jar 에서 생성한 파일이다.
 rewrite-recipe-bom 을 올리면 `UpstreamStepsUpToDateTests` 가 깨지고, `./gradlew :recipes:syncUpstreamSteps` 로 다시 만든다.
 
+**version catalog.** upstream 의 `UpgradeDependencyVersion`, `UpgradePluginVersion`, `ChangeDependency` 는 빌드 스크립트의 선언만 바꾸고
+`gradle/*.versions.toml` 은 건드리지 않는다. catalog 로 Boot 플러그인 버전을 관리하는 프로젝트는 레시피가 돌아도 Boot 버전이 그대로다.
+`VersionCatalogStepsGenerator` 가 단계 레시피 트리 전체에서 이 세 종류의 레시피를 모아 `version-catalog-steps.yml` 의 규칙으로 옮기고,
+`UpgradeVersionCatalog` 가 같은 규칙을 catalog 에 적용한다. 버전은 upstream 과 같은 방식(`DependencyVersionSelector`)으로 대상 프로젝트의 저장소에서 고른다.
+이 파일도 `syncUpstreamSteps` 가 함께 만들고 `UpstreamStepsUpToDateTests` 가 검사한다. 단계 레시피를 고친 뒤에도 다시 만든다.
+
 ## 파일 구성
 
 ```
@@ -40,6 +47,7 @@ recipes/                              OpenRewrite 레시피 jar (대상 프로�
   src/main/resources/META-INF/rewrite/  레시피 선언 (yml)
     spring-boot.yml                   단계 레시피: 단계별로 무엇을 어떤 순서로 돌리는지 (SpringBootStep / MigrateToSpringBoot)
     upstream-spring-boot-steps.yml    upstream 단계 레시피에서 직전 단계 체인을 뺀 것 (생성 파일, ./gradlew :recipes:syncUpstreamSteps)
+    version-catalog-steps.yml         단계별 버전 변경을 version catalog 규칙으로 옮긴 것 (생성 파일, 같은 태스크)
     common.yml                        단계 레시피가 가져다 쓰는 부품
     find-manual.yml                   코드를 바꾸지 않고 "사람이 봐야 할 곳" 만 표시하는 검색 레시피
   src/main/java/                      yml(upstream 조합)로는 불가능한 보정만 Java 로 구현 (4절)
@@ -108,6 +116,7 @@ init/verify.init.gradle               컴파일 경고 옵션, 테스트 fail-fa
 |---|---|---|
 | `spring-boot.yml` | `SpringBootStep_3_0` ~ `4_1` (이 단계의 변경만) 과 `MigrateToSpringBoot_3_0` ~ `4_1` (체이닝). 단계마다 upstream 레시피와 커스텀 부품을 어떤 순서로 돌릴지 정의 | 예 |
 | `upstream-spring-boot-steps.yml` | upstream `UpgradeSpringBoot_3_1` ~ `4_0` 에서 직전 단계 체인을 뺀 것. 생성 파일 | 예 |
+| `version-catalog-steps.yml` | `VersionCatalog_3_0` ~ `4_1`, `Java21`, `Java25`, `Gradle8_14`. 단계 레시피의 버전 변경을 catalog 규칙으로 옮긴 것. 생성 파일 | 예 |
 | `common.yml` | Spring Cloud AWS / QueryDSL / logstash / Gradle 정렬, 버전 고정 정리, Hibernate, Boot 4 패키지 보정, `CommonMigrationFixes` | 예 |
 | `find-manual.yml` | `FindManualMigrationItems`. 자동으로 바꾸면 위험한 곳(mariadb-java-client 2.x, redisson, Jackson 3 전환 대상, `@EntityGraph` 등)을 찾아 리포트에 위치만 표시 | 아니오 |
 
@@ -133,6 +142,7 @@ init/verify.init.gradle               컴파일 경고 옵션, 테스트 fail-fa
 | `elasticsearch/MigrateRangeQueryToUntyped` | (3.4) `RangeQuery.Builder` → `UntypedRangeQuery.Builder`, `build()` → `build()._toRangeQuery()` | Boot 3.4 BOM 의 elasticsearch-java 8.15 에서 `RangeQuery` 가 untyped/date/number/term 중 하나를 고르는 구조로 바뀌어 `field`/`gte`/`lte` 가 `UntypedRangeQuery` 로 옮겨짐. 실측, 컴파일 에러. `q.range(r -> r.field(..))` 람다 형태는 바꾸지 않는다 |
 | `elasticsearch/Rest5ClientCallbacksToConsumer` | (4.0) `setHttpClientConfigCallback` / `setRequestConfigCallback` 람다 끝의 `return builder;` 제거 (`return builder.setX(..)` 는 호출만 남김) | `Rest5ClientBuilder` 의 콜백은 `Consumer` 라 값을 돌려주면 컴파일 에러 |
 | `lombok/CopyJacksonAnnotationsToAccessors` | 루트 `lombok.config` 에 `lombok.copyJacksonAnnotationsToAccessors = true` (없으면 만들고, 있으면 한 줄 추가, 키가 이미 있으면 그대로). 루트 `.gitignore` 가 `lombok.config` 를 무시하면 `!/lombok.config` 를 추가해 커밋되게 한다. Lombok 과 Jackson 어노테이션을 함께 쓰는 프로젝트만 | Lombok 1.18.40 부터 필드의 `@JsonProperty` 를 getter 에 복사하지 않는다([lombok#3978](https://github.com/projectlombok/lombok/issues/3978)). `@JsonProperty("isShow") boolean isShow` 가 JSON 에 `isShow` 와 `show` 로 두 번 나간다. 실측, REST Docs 테스트 실패(3.4, freefair 플러그인 업그레이드로 새 Lombok 적용). 예전 freefair 가 만들던 파일 때문에 `lombok.config` 를 무시하던 프로젝트가 있었다 |
+| `gradle/UpgradeVersionCatalog` | upstream 이 빌드 스크립트에 하는 버전 업그레이드와 좌표 변경을 `gradle/*.versions.toml` 에 적용. 버전 키를 다른 항목과 같이 쓰면 새 키를 만들어 나머지는 그대로 둔다 | upstream 은 catalog 를 바꾸지 않는다. 실측, catalog 를 쓰는 프로젝트의 Boot 버전이 올라가지 않음 |
 | `gradle/UpgradeJacocoToolVersion` | `jacoco { toolVersion = "x" }` 를 지정 버전 이상으로 (Java 단계) | upstream `UpgradeJaCoCo` 는 의존성만 올림. 구버전 JaCoCo 는 새 Java 클래스 파일을 못 읽음 |
 
 ### yml 레시피 (`common.yml`)
@@ -174,7 +184,7 @@ OpenRewrite 레시피는 소스를 LST(Lossless Semantic Tree, 타입 정보가 
 | 형태 | 흐름 | 해당 레시피 |
 |---|---|---|
 | `Recipe` | `getVisitor()` 가 파일마다 트리를 돌며 바로 수정 | QuerydslJakartaClassifier, EnsureQuerydslAptJakartaApis, RemoveDependencyVersion, UpgradeJacocoToolVersion, DisambiguateRetryableExceptionNull, RemoveDependsOnDatabaseInitializationFromDataSourceConfig, AddLenientMockitoExtension, FixJacksonIOExceptionCatch, RevertHttpClient5ForElasticsearchRestClient, FixHttpClient5AsyncInterceptors, MigrateRangeQueryToUntyped, Rest5ClientCallbacksToConsumer |
-| `ScanningRecipe` | 1) `getScanner()` 로 전체 파일을 먼저 훑어 정보 수집 2) `getVisitor()` 에서 그 정보로 수정 | DeclareUsedDependency (Java import 를 모은 뒤 build.gradle 수정), FixHypersistenceJsonAttributes (JSON 속성 타입을 모은 뒤 해당 클래스 수정), CopyJacksonAnnotationsToAccessors (Lombok + Jackson 사용 여부와 lombok.config 존재 여부를 본 뒤 파일 생성 또는 추가) |
+| `ScanningRecipe` | 1) `getScanner()` 로 전체 파일을 먼저 훑어 정보 수집 2) `getVisitor()` 에서 그 정보로 수정 | DeclareUsedDependency (Java import 를 모은 뒤 build.gradle 수정), FixHypersistenceJsonAttributes (JSON 속성 타입을 모은 뒤 해당 클래스 수정), CopyJacksonAnnotationsToAccessors (Lombok + Jackson 사용 여부와 lombok.config 존재 여부를 본 뒤 파일 생성 또는 추가), UpgradeVersionCatalog (루트 프로젝트의 저장소 정보를 모은 뒤 catalog 수정) |
 
 - build.gradle 은 Groovy LST, build.gradle.kts 는 Kotlin LST 로 읽힌다. 둘 다 `J.MethodInvocation` / `J.Literal` 로 보이므로 `JavaIsoVisitor` 로 함께 처리한다 (`GroovyIsoVisitor` 는 kts 를 조용히 건너뛴다). `IsBuildGradle` 로 대상을 제한하고, Gradle 모델(선언된 의존성, configuration)은 `GradleProject` 마커에서 읽는다
 - Java 소스는 `JavaIsoVisitor` 로 돈다. 어노테이션 추가는 `JavaTemplate`, 인터페이스 추가는 `ImplementInterface` 를 쓴다
@@ -190,7 +200,7 @@ OpenRewrite 레시피는 소스를 LST(Lossless Semantic Tree, 타입 정보가 
 | 3rd-party 버전 정렬 | `common.yml` 에 레시피를 만들고 `spring-boot.yml` 의 해당 `SpringBootStep_X_Y` 에 추가 |
 | 새 알려진 이슈 | `playbook/known-issues.yml` 에 항목 추가. 장애/버그 → 원인 → 재현 조건(단계 또는 라이브러리 버전) → 등록 → 가능하면 탐지/수정 레시피를 만들어 `fix` 에 연결 |
 | 호환성 변경 (새 Boot 라인, Java/Gradle 범위) | `playbook/compatibility.yml` |
-| rewrite-recipe-bom 버전 올리기 | 올린 뒤 `./gradlew :recipes:syncUpstreamSteps` 로 upstream 단계 레시피를 다시 만들고 `./gradlew test` |
+| rewrite-recipe-bom 버전 올리기 | 올린 뒤 `./gradlew :recipes:syncUpstreamSteps` 로 upstream 단계 레시피와 catalog 규칙을 다시 만들고 `./gradlew test` |
 | 새 Boot 단계 | `UpstreamStepsGenerator` 의 단계 목록, `spring-boot.yml` (`SpringBootStep` + `MigrateToSpringBoot`), `MigrationPlanner.BOOT_STAGES`, `compatibility.yml`, `known-issues.yml` 의 `guides` 에 추가 |
 
 `./gradlew test` 는 playbook 파일 형식과 `fix` / `recipe` 가 가리키는 레시피가 실제로 있는지까지 검증한다.

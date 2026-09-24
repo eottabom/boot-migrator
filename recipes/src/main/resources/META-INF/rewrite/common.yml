@@ -495,6 +495,7 @@ recipeList:
   - org.openrewrite.gradle.plugins.UpgradePluginVersion:
       pluginIdPattern: com.gorylenko.gradle-git-properties
       newVersion: 2.5.x
+  - com.eottabom.rewrite.gradle.catalog.VersionCatalog_Gradle8_14
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Java 버전업 (migrationRun 의 --java). upstream UpgradeToJavaNN 에 빌드 플러그인 정렬을 더한다.
@@ -511,6 +512,7 @@ recipeList:
   - org.openrewrite.java.migrate.jacoco.UpgradeJaCoCo
   - com.eottabom.rewrite.gradle.UpgradeJacocoToolVersion:
       version: 0.8.15
+  - com.eottabom.rewrite.gradle.catalog.VersionCatalog_Java21
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: com.eottabom.rewrite.java.UpgradeToJava25
@@ -535,6 +537,7 @@ recipeList:
   - org.openrewrite.gradle.plugins.UpgradePluginVersion:
       pluginIdPattern: org.asciidoctor.jvm.*
       newVersion: 4.x
+  - com.eottabom.rewrite.gradle.catalog.VersionCatalog_Java25
 
 # ---------------------------------------------------------------------------------------------------------------------
 # opensearch-java: Boot BOM 이 관리하지 않아서 직접 올린다

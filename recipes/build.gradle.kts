@@ -39,6 +39,7 @@ dependencies {
     api(platform("org.openrewrite.recipe:rewrite-recipe-bom:$rewriteRecipeBomVersion"))
     implementation("org.openrewrite:rewrite-gradle")
     implementation("org.openrewrite:rewrite-groovy")
+    implementation("org.openrewrite:rewrite-toml")
     runtimeOnly("org.openrewrite.recipe:rewrite-spring")
     runtimeOnly("org.openrewrite.recipe:rewrite-migrate-java")
     runtimeOnly("org.openrewrite.recipe:rewrite-hibernate")
@@ -94,7 +95,7 @@ tasks.register<Sync>("recipeLibs") {
 // upstream(rewrite-spring) UpgradeSpringBoot_X_Y 에서 직전 단계 체인을 뺀 단계 레시피를 다시 만든다 (rewrite-recipe-bom 을 올린 뒤)
 tasks.register<JavaExec>("syncUpstreamSteps") {
     group = "build"
-    description = "src/main/resources/META-INF/rewrite/upstream-spring-boot-steps.yml 을 upstream 에서 다시 만든다"
+    description = "upstream-spring-boot-steps.yml 과 version-catalog-steps.yml 을 다시 만든다"
     classpath = sourceSets.test.get().runtimeClasspath
     mainClass = "com.eottabom.rewrite.UpstreamStepsGenerator"
     workingDir = projectDir

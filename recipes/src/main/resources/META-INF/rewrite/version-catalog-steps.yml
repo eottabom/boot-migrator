@@ -1,0 +1,948 @@
+# 생성 파일: ./gradlew syncUpstreamSteps (VersionCatalogStepsGenerator). 직접 고치지 않는다.
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.gradle.catalog.VersionCatalog_3_0
+displayName: version catalog 정렬 (3_0)
+description: com.eottabom.rewrite.spring.SpringBootStep_3_0 의 의존성/플러그인 버전 변경을 gradle/*.versions.toml 에 적용한다.
+recipeList:
+- com.eottabom.rewrite.gradle.UpgradeVersionCatalog:
+    rules:
+    - dependency org.springframework.boot:* 2.0.x
+    - dependency org.springframework.boot:spring-boot-dependencies 2.0.x
+    - plugin org.springframework.boot 2.0.x
+    - dependency org.mockito:* 3.x
+    - change org.webjars:webjars-locator org.webjars:webjars-locator-core ^0.35
+    - dependency org.springframework.security:* 5.0.x
+    - dependency org.springframework:* 5.0.x
+    - change commons-lang:commons-lang org.apache.commons:commons-lang3 3.x
+    - dependency org.mybatis.spring.boot:* 2.0.1
+    - dependency org.springframework:* 5.1.x
+    - dependency org.springframework.security:* 5.1.x
+    - dependency org.springframework.boot:* 2.1.x
+    - dependency org.springframework.boot:spring-boot-dependencies 2.1.x
+    - plugin org.springframework.boot 2.1.x
+    - plugin io.spring.dependency-management 1.0.10.RELEASE
+    - dependency org.mybatis.spring.boot:* 2.1.1
+    - dependency org.springframework:* 5.2.x
+    - dependency org.springframework.security:* 5.2.x
+    - dependency org.springframework.boot:* 2.2.x
+    - dependency org.springframework.boot:spring-boot-dependencies 2.2.x
+    - plugin org.springframework.boot 2.2.x
+    - plugin io.spring.dependency-management 1.0.11.RELEASE
+    - dependency org.springdoc:* 1.3.x
+    - dependency org.mybatis.spring.boot:* 2.1.2
+    - dependency org.springframework.boot:* 2.3.x
+    - dependency org.springframework.boot:spring-boot-dependencies 2.3.x
+    - plugin org.springframework.boot 2.3.x
+    - dependency org.springdoc:* 1.4.x
+    - dependency org.mybatis.spring.boot:* 2.1.3
+    - dependency org.springframework:* 5.3.x
+    - dependency org.springframework.security:* 5.3.x
+    - dependency org.hibernate:hibernate-search-orm 5.11.x
+    - dependency com.github.tomakehurst:wiremock* 2.x
+    - dependency com.squareup.okhttp3:mockwebserver 4.X
+    - change com.squareup.okhttp3:mockwebserver *:mockwebserver3 5.x
+    - change org.mockito:mockito-all *:mockito-core
+    - dependency net.bytebuddy:byte-buddy* 1.11.13
+    - dependency org.mockito:* 4.x
+    - dependency net.bytebuddy:byte-buddy* 1.12.19
+    - change xmlunit:xmlunit org.xmlunit:xmlunit-legacy 2.x
+    - change org.jboss.arquillian.junit:arquillian-junit-container org.jboss.arquillian.junit5:arquillian-junit5-container x
+    - change org.jboss.byteman:byteman-bmunit org.jboss.byteman:byteman-bmunit5 x
+    - change com.github.database-rider:rider-spring *:rider-junit5 1.x
+    - dependency org.springframework.boot:* 2.4.x
+    - dependency org.springframework.boot:spring-boot-dependencies 2.4.x
+    - plugin org.springframework.boot 2.4.x
+    - dependency org.mybatis.spring.boot:* 2.1.x
+    - dependency org.springframework.boot:* 2.5.x
+    - dependency org.springframework.boot:spring-boot-dependencies 2.5.x
+    - plugin org.springframework.boot 2.5.x
+    - plugin io.spring.dependency-management 1.0.x
+    - dependency org.spockframework:* 2.0-groovy-3.0
+    - change mysql:mysql-connector-java com.mysql:mysql-connector-j 8.0.x
+    - dependency org.mybatis.spring.boot:* 2.2.0
+    - dependency org.springframework.boot:* 2.6.x
+    - dependency org.springframework.boot:spring-boot-dependencies 2.6.x
+    - plugin org.springframework.boot 2.6.x
+    - change io.swagger:swagger-jersey2-jaxrs io.swagger.core.v3:swagger-jaxrs2 2.2.x
+    - change io.swagger:swagger-jaxrs io.swagger.core.v3:swagger-jaxrs2 2.2.x
+    - change io.swagger:swagger-* io.swagger.core.v3:* 2.2.x
+    - dependency org.springdoc:* 1.5.x
+    - dependency org.springframework.cloud:spring-cloud-dependencies 2021.0.X
+    - dependency org.mybatis.spring.boot:* 2.2.x
+    - dependency org.springframework.boot:* 2.7.x
+    - dependency org.springframework.boot:spring-boot-dependencies 2.7.x
+    - plugin org.springframework.boot 2.7.x
+    - dependency org.springframework.security:* 5.7.x
+    - dependency org.springframework.security:spring-security-oauth2-authorization-server 0.3.x
+    - dependency org.springdoc:* 1.8.x
+    - dependency org.mybatis.spring.boot:* 2.3.x
+    - dependency org.jacoco:* 0.8.x
+    - change org.bouncycastle:bcprov-jdk15on *:bcprov-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-ext-jdk15on *:bcprov-ext-jdk15to18 latest.release
+    - change org.bouncycastle:bcutil-jdk15on *:bcutil-jdk15to18 latest.release
+    - change org.bouncycastle:bcpkix-jdk15on *:bcpkix-jdk15to18 latest.release
+    - change org.bouncycastle:bcmail-jdk15on *:bcmail-jdk15to18 latest.release
+    - change org.bouncycastle:bcjmail-jdk15on *:bcjmail-jdk15to18 latest.release
+    - change org.bouncycastle:bcpg-jdk15on *:bcpg-jdk15to18 latest.release
+    - change org.bouncycastle:bctls-jdk15on *:bctls-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-jdk16 *:bcprov-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-ext-jdk16 *:bcprov-ext-jdk15to18 latest.release
+    - change org.bouncycastle:bcmail-jdk16 *:bcmail-jdk15to18 latest.release
+    - change org.bouncycastle:bcpg-jdk16 *:bcpg-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-jdk15+ *:bcprov-jdk15to18 latest.release
+    - change org.bouncycastle:bcmail-jdk15+ *:bcmail-jdk15to18 latest.release
+    - change org.bouncycastle:bcpg-jdk15+ *:bcpg-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-jdk15 *:bcprov-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-ext-jdk15 *:bcprov-ext-jdk15to18 latest.release
+    - change org.bouncycastle:bcmail-jdk15 *:bcmail-jdk15to18 latest.release
+    - change org.bouncycastle:bcpg-jdk15 *:bcpg-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-jdk14 *:bcprov-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-ext-jdk14 *:bcprov-ext-jdk15to18 latest.release
+    - change org.bouncycastle:bcutil-jdk14 *:bcutil-jdk15to18 latest.release
+    - change org.bouncycastle:bcpkix-jdk14 *:bcpkix-jdk15to18 latest.release
+    - change org.bouncycastle:bcmail-jdk14 *:bcmail-jdk15to18 latest.release
+    - change org.bouncycastle:bcpg-jdk14 *:bcpg-jdk15to18 latest.release
+    - change org.bouncycastle:bctls-jdk14 *:bctls-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-jdk12 *:bcprov-jdk15to18 latest.release
+    - change org.bouncycastle:bcpg-jdk12 *:bcpg-jdk15to18 latest.release
+    - change org.bouncycastle:bctsp-jdk15on *:bcpkix-jdk15to18 latest.release
+    - change org.bouncycastle:bctsp-jdk16 *:bcpkix-jdk15to18 latest.release
+    - change org.bouncycastle:bctsp-jdk15+ *:bcpkix-jdk15to18 latest.release
+    - change org.bouncycastle:bctsp-jdk15 *:bcpkix-jdk15to18 latest.release
+    - change org.bouncycastle:bctsp-jdk14 *:bcpkix-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-jdk15on *:bcprov-jdk18on latest.release
+    - change org.bouncycastle:bcprov-ext-jdk15on *:bcprov-ext-jdk18on latest.release
+    - change org.bouncycastle:bcutil-jdk15on *:bcutil-jdk18on latest.release
+    - change org.bouncycastle:bcpkix-jdk15on *:bcpkix-jdk18on latest.release
+    - change org.bouncycastle:bcmail-jdk15on *:bcmail-jdk18on latest.release
+    - change org.bouncycastle:bcjmail-jdk15on *:bcjmail-jdk18on latest.release
+    - change org.bouncycastle:bcpg-jdk15on *:bcpg-jdk18on latest.release
+    - change org.bouncycastle:bctls-jdk15on *:bctls-jdk18on latest.release
+    - change org.bouncycastle:bcprov-jdk15to18 *:bcprov-jdk18on latest.release
+    - change org.bouncycastle:bcprov-ext-jdk15to18 *:bcprov-ext-jdk18on latest.release
+    - change org.bouncycastle:bcutil-jdk15to18 *:bcutil-jdk18on latest.release
+    - change org.bouncycastle:bcpkix-jdk15to18 *:bcpkix-jdk18on latest.release
+    - change org.bouncycastle:bcmail-jdk15to18 *:bcmail-jdk18on latest.release
+    - change org.bouncycastle:bcjmail-jdk15to18 *:bcjmail-jdk18on latest.release
+    - change org.bouncycastle:bcpg-jdk15to18 *:bcpg-jdk18on latest.release
+    - change org.bouncycastle:bctls-jdk15to18 *:bctls-jdk18on latest.release
+    - change org.bouncycastle:bcprov-jdk16 *:bcprov-jdk18on latest.release
+    - change org.bouncycastle:bcprov-ext-jdk16 *:bcprov-ext-jdk18on latest.release
+    - change org.bouncycastle:bcmail-jdk16 *:bcmail-jdk18on latest.release
+    - change org.bouncycastle:bcpg-jdk16 *:bcpg-jdk18on latest.release
+    - change org.bouncycastle:bcprov-jdk15+ *:bcprov-jdk18on latest.release
+    - change org.bouncycastle:bcmail-jdk15+ *:bcmail-jdk18on latest.release
+    - change org.bouncycastle:bcpg-jdk15+ *:bcpg-jdk18on latest.release
+    - change org.bouncycastle:bcprov-jdk15 *:bcprov-jdk18on latest.release
+    - change org.bouncycastle:bcprov-ext-jdk15 *:bcprov-ext-jdk18on latest.release
+    - change org.bouncycastle:bcmail-jdk15 *:bcmail-jdk18on latest.release
+    - change org.bouncycastle:bcpg-jdk15 *:bcpg-jdk18on latest.release
+    - change org.bouncycastle:bcprov-jdk14 *:bcprov-jdk18on latest.release
+    - change org.bouncycastle:bcprov-ext-jdk14 *:bcprov-ext-jdk18on latest.release
+    - change org.bouncycastle:bcutil-jdk14 *:bcutil-jdk18on latest.release
+    - change org.bouncycastle:bcpkix-jdk14 *:bcpkix-jdk18on latest.release
+    - change org.bouncycastle:bcmail-jdk14 *:bcmail-jdk18on latest.release
+    - change org.bouncycastle:bcpg-jdk14 *:bcpg-jdk18on latest.release
+    - change org.bouncycastle:bctls-jdk14 *:bctls-jdk18on latest.release
+    - change org.bouncycastle:bcprov-jdk12 *:bcprov-jdk18on latest.release
+    - change org.bouncycastle:bcpg-jdk12 *:bcpg-jdk18on latest.release
+    - change org.bouncycastle:bctsp-jdk15on *:bcpkix-jdk18on latest.release
+    - change org.bouncycastle:bctsp-jdk16 *:bcpkix-jdk18on latest.release
+    - change org.bouncycastle:bctsp-jdk15+ *:bcpkix-jdk18on latest.release
+    - change org.bouncycastle:bctsp-jdk15 *:bcpkix-jdk18on latest.release
+    - change org.bouncycastle:bctsp-jdk14 *:bcpkix-jdk18on latest.release
+    - change javax.xml.bind:jaxb-api jakarta.xml.bind:jakarta.xml.bind-api 2.3.x
+    - dependency jakarta.xml.bind:jakarta.xml.bind-api 2.3.x
+    - change javax.xml.ws:jaxws-api jakarta.xml.ws:jakarta.xml.ws-api 2.3.x
+    - dependency jakarta.xml.ws:jakarta.xml.ws-api 2.3.x
+    - dependency jakarta.inject:jakarta.inject-api 1.0.3
+    - change javax.annotation:javax.annotation-api jakarta.annotation:jakarta.annotation-api 1.3.x
+    - dependency org.projectlombok:lombok 1.18.*
+    - dependency org.scala-lang:scala-* 2.12.x
+    - dependency com.google.inject:guice 5.x
+    - dependency commons-codec:commons-codec 1.17.x
+    - dependency org.mapstruct:mapstruct* 1.6.x
+    - dependency org.springframework.boot:* 3.0.x
+    - dependency org.springframework.boot:spring-boot-dependencies 3.0.x
+    - dependency org.springframework:* 6.0.x
+    - dependency org.springframework.ws:* 4.x
+    - plugin org.springframework.boot 3.0.x
+    - plugin io.spring.dependency-management 1.1.x
+    - change javax.servlet:servlet-api javax.servlet:javax.servlet-api 3.x
+    - change javax.activation:javax.activation-api jakarta.activation:jakarta.activation-api 2.0.x
+    - dependency com.sun.activation:jakarta.activation 2.0.x
+    - dependency jakarta.activation:jakarta.activation-api 2.0.x
+    - change javax.annotation:javax.annotation-api jakarta.annotation:jakarta.annotation-api 2.0.x
+    - change org.glassfish.main:javax.annotation jakarta.annotation:jakarta.annotation-api 2.0.x
+    - dependency jakarta.annotation:jakarta.annotation-api 2.0.x
+    - change javax.security.auth.message:javax.security.auth.message-api jakarta.authentication:jakarta.authentication-api 2.0.x
+    - change org.glassfish.main:javax.security.auth.message jakarta.authentication:jakarta.authentication-api 2.0.x
+    - dependency jakarta.authentication:jakarta.authentication-api 2.0.x
+    - change javax.security.jacc:javax.security.jacc-api jakarta.authorization:jakarta.authorization-api 2.0.x
+    - change org.glassfish.main:javax.security.jacc jakarta.authorization:jakarta.authorization-api 2.0.x
+    - dependency jakarta.authorization:jakarta.authorization-api 2.0.x
+    - change javax.batch:javax.batch-api jakarta.batch:jakarta.batch-api 2.0.x
+    - dependency jakarta.batch:jakarta.batch-api 2.0.x
+    - change javax.enterprise:cdi-api jakarta.enterprise:jakarta.enterprise.cdi-api 3.0.x
+    - dependency jakarta.enterprise:jakarta.enterprise.cdi-api 3.0.x
+    - change javax.ejb:javax.ejb-api jakarta.ejb:jakarta.ejb-api 4.0.x
+    - change org.glassfish.main:javax.ejb jakarta.ejb:jakarta.ejb-api 4.0.x
+    - dependency jakarta.ejb:jakarta.ejb-api 4.0.x
+    - change javax.el:javax.el-api jakarta.el:jakarta.el-api 4.0.x
+    - dependency jakarta.el:jakarta.el-api 4.0.x
+    - change commons-fileupload:commons-fileupload org.apache.commons:commons-fileupload2-jakarta-servlet5 2.0.0-M4
+    - change org.apache.commons:commons-fileupload2-jakarta *:commons-fileupload2-jakarta-servlet5
+    - change javax.enterprise.concurrent:javax.enterprise.concurrent-api jakarta.enterprise.concurrent:jakarta.enterprise.concurrent-api 2.0.x
+    - dependency jakarta.enterprise.concurrent:jakarta.enterprise.concurrent-api 2.0.x
+    - change javax.faces:javax.faces-api jakarta.faces:jakarta.faces-api 3.0.x
+    - dependency jakarta.faces:jakarta.faces-api 3.0.x
+    - change com.sun.faces:jsf-api jakarta.faces:jakarta.faces-api 3.0.x
+    - change com.sun.faces:jsf-impl org.glassfish:jakarta.faces 3.0.x
+    - change org.glassfish:javax.faces org.glassfish:jakarta.faces 3.0.x
+    - dependency org.primefaces:primefaces 14.0.x
+    - dependency org.primefaces.extensions:primefaces-extensions 14.0.x
+    - dependency org.omnifaces:omnifaces 4.x
+    - dependency org.apache.myfaces.core:myfaces-api 4.0.x
+    - dependency org.apache.myfaces.core:myfaces-impl 4.0.x
+    - change javax.inject:javax.inject-api jakarta.inject:jakarta.inject-api 2.0.x
+    - change javax.inject:javax.inject jakarta.inject:jakarta.inject-api 2.0.x
+    - dependency jakarta.inject:jakarta.inject-api 2.0.x
+    - change javax.interceptor:javax.interceptor-api jakarta.interceptor:jakarta.interceptor-api 2.0.x
+    - dependency jakarta.interceptor:jakarta.interceptor-api 2.0.x
+    - change javax.jms:javax.jms-api jakarta.jms:jakarta.jms-api 3.0.x
+    - change org.glassfish.main:javax.jms jakarta.jms:jakarta.jms-api 3.0.x
+    - dependency jakarta.jms:jakarta.jms-api 3.0.x
+    - change javax.json:javax.json-api jakarta.json:jakarta.json-api 2.0.x
+    - dependency jakarta.json:jakarta.json-api 2.0.x
+    - change javax.jws:javax.jws-api jakarta.jws:jakarta.jws-api 3.0.x
+    - change org.glassfish.main:javax.jws jakarta.jws:jakarta.jws-api 3.0.x
+    - dependency jakarta.jws:jakarta.jws-api 3.0.x
+    - change javax.servlet.jsp:javax.servlet.jsp-api jakarta.servlet.jsp:jakarta.servlet.jsp-api 3.0.x
+    - change javax.servlet.jsp:jsp-api jakarta.servlet.jsp:jakarta.servlet.jsp-api 3.0.x
+    - dependency jakarta.servlet.jsp:jakarta.servlet.jsp-api 3.0.x
+    - change com.sun.mail:javax.mail jakarta.mail:jakarta.mail-api 2.0.x
+    - change com.sun.mail:jakarta.mail jakarta.mail:jakarta.mail-api 2.0.x
+    - change javax.mail:mail jakarta.mail:jakarta.mail-api 2.0.x
+    - change javax.mail:javax.mail-api jakarta.mail:jakarta.mail-api 2.0.x
+    - dependency jakarta.mail:jakarta.mail-api 2.0.x
+    - change javax.persistence:javax.persistence-api jakarta.persistence:jakarta.persistence-api 3.0.x
+    - change org.eclipse.persistence:javax.persistence jakarta.persistence:jakarta.persistence-api 3.0.x
+    - dependency jakarta.persistence:jakarta.persistence-api 3.0.x
+    - change javax.resource:javax.resource-api jakarta.resource:jakarta.resource-api 2.0.x
+    - change org.glassfish.main:javax.resource jakarta.resource:jakarta.resource-api 2.0.x
+    - dependency jakarta.resource:jakarta.resource-api 2.0.x
+    - change javax.security.enterprise:javax.security.enterprise-api jakarta.security.enterprise:jakarta.security.enterprise-api 2.0.x
+    - dependency jakarta.security.enterprise:jakarta.security.enterprise-api 2.0.x
+    - change javax.servlet:javax.servlet-api jakarta.servlet:jakarta.servlet-api 5.0.x
+    - dependency jakarta.servlet:jakarta.servlet-api 5.0.x
+    - change javax.transaction:javax.transaction-api jakarta.transaction:jakarta.transaction-api 2.0.x
+    - change org.glassfish.main:javax.transaction jakarta.transaction:jakarta.transaction-api 2.0.x
+    - dependency jakarta.transaction:jakarta.transaction-api 2.0.x
+    - change javax.validation:validation-api jakarta.validation:jakarta.validation-api 3.0.x
+    - dependency jakarta.validation:jakarta.validation-api 3.0.x
+    - change javax.websocket:javax.websocket-api jakarta.websocket:jakarta.websocket-api 2.0.x
+    - dependency jakarta.websocket:jakarta.websocket-api 2.0.x
+    - change javax.websocket:javax.websocket-client-api jakarta.websocket:jakarta.websocket-client-api 2.0.x
+    - dependency jakarta.websocket:jakarta.websocket-client-api 2.0.x
+    - change javax.websocket:javax.websocket-all jakarta.websocket:jakarta.websocket-all 2.0.x
+    - dependency jakarta.websocket:jakarta.websocket-all 2.0.x
+    - change javax.ws.rs:javax.ws.rs-api jakarta.ws.rs:jakarta.ws.rs-api 3.0.x
+    - dependency jakarta.ws.rs:jakarta.ws.rs-api 3.0.x
+    - change javax.xml.bind:jaxb-api jakarta.xml.bind:jakarta.xml.bind-api 3.0.x
+    - dependency jakarta.xml.bind:jakarta.xml.bind-api 3.0.x
+    - change com.sun.xml.bind:jaxb-impl org.glassfish.jaxb:jaxb-runtime 3.0.x
+    - dependency org.glassfish.jaxb:jaxb-runtime 3.0.x
+    - change javax.xml.soap:javax.xml.soap-api jakarta.xml.soap:jakarta.xml.soap-api 2.0.x
+    - dependency jakarta.xml.soap:jakarta.xml.soap-api 2.0.x
+    - change javax.xml.ws:jaxws-api jakarta.xml.ws:jakarta.xml.ws-api 3.0.x
+    - dependency jakarta.xml.ws:jakarta.xml.ws-api 3.0.x
+    - dependency com.sun.xml.ws:jaxws-rt 3.x
+    - change com.fasterxml.jackson.module:jackson-module-jaxb-annotations com.fasterxml.jackson.module:jackson-module-jakarta-xmlbind-annotations 2.13.x
+    - change com.fasterxml.jackson.jaxrs:jackson-jaxrs-cbor-provider com.fasterxml.jackson.jakarta.rs:jackson-jakarta-rs-cbor-provider 2.13.x
+    - change com.fasterxml.jackson.jaxrs:jackson-jaxrs-base com.fasterxml.jackson.jakarta.rs:jackson-jakarta-rs-base 2.13.x
+    - change com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider com.fasterxml.jackson.jakarta.rs:jackson-jakarta-rs-json-provider 2.13.x
+    - change com.fasterxml.jackson.jaxrs:jackson-jaxrs-smile-provider com.fasterxml.jackson.jakarta.rs:jackson-jakarta-rs-smile-provider 2.13.x
+    - change com.fasterxml.jackson.jaxrs:jackson-jaxrs-xml-provider com.fasterxml.jackson.jakarta.rs:jackson-jakarta-rs-xml-provider 2.13.x
+    - change com.fasterxml.jackson.jaxrs:jackson-jaxrs-yaml-provider com.fasterxml.jackson.jakarta.rs:jackson-jakarta-rs-yaml-provider 2.13.x
+    - change com.fasterxml.jackson.datatype:jackson-datatype-jsr353 com.fasterxml.jackson.datatype:jackson-datatype-jakarta-jsonp 2.13.x
+    - change org.glassfish:javax.json org.glassfish:jakarta.json 2.0.x
+    - change org.eclipse.jetty.websocket:websocket-api org.eclipse.jetty.ee9.websocket:jetty-ee9-websocket-jetty-api 12.0.x
+    - change org.eclipse.jetty.websocket:websocket-server org.eclipse.jetty.ee9.websocket:jetty-ee9-websocket-jetty-server 12.0.x
+    - change org.eclipse.jetty.websocket:websocket-client org.eclipse.jetty.ee9.websocket:jetty-ee9-websocket-jetty-client 12.0.x
+    - change org.eclipse.jetty.websocket:javax-websocket-server-impl org.eclipse.jetty.ee9.websocket:jetty-ee9-websocket-jakarta-server 12.0.x
+    - change org.eclipse.jetty.websocket:javax-websocket-client-impl org.eclipse.jetty.ee9.websocket:jetty-ee9-websocket-jakarta-client 12.0.x
+    - change org.eclipse.jetty:apache-jsp org.eclipse.jetty.ee9:jetty-ee9-apache-jsp 12.0.x
+    - change org.eclipse.jetty:jetty-servlets org.eclipse.jetty.ee9:jetty-ee9-servlets 12.0.x
+    - change org.eclipse.jetty:jetty-servlet org.eclipse.jetty.ee9:jetty-ee9-servlet 12.0.x
+    - change org.eclipse.jetty:jetty-webapp org.eclipse.jetty.ee9:jetty-ee9-webapp 12.0.x
+    - change org.eclipse.jetty:jetty-security org.eclipse.jetty.ee9:jetty-ee9-security 12.0.x
+    - change org.eclipse.jetty:jetty-proxy org.eclipse.jetty.ee9:jetty-ee9-proxy 12.0.x
+    - change org.eclipse.jetty:jetty-annotations org.eclipse.jetty.ee9:jetty-ee9-annotations 12.0.x
+    - dependency org.ehcache:* 3.10.x
+    - dependency org.apache.johnzon:* latest.release
+    - dependency io.rest-assured:* 5.1.x
+    - change javax:javaee-api jakarta.platform:jakarta.jakartaee-api 9.1.0
+    - change javax:javaee-web-api jakarta.platform:jakarta.jakartaee-web-api 9.1.0
+    - dependency jakarta.platform:* 9.1.0
+    - dependency org.restlet:* 2.6.x
+    - change org.restlet.jee:* org.restlet:* 2.6.x
+    - change jakarta.jws:jakarta.jws-api jakarta.xml.ws:jakarta.xml.ws-api 4.0.x
+    - dependency jakarta.xml.bind:jakarta.xml.bind-api 4.0.x
+    - dependency jakarta.xml.soap:jakarta.xml.soap-api 3.0.x
+    - dependency jakarta.xml.ws:jakarta.xml.ws-api 4.0.x
+    - dependency com.sun.xml.ws:jaxws-rt 4.x
+    - dependency jakarta.activation:jakarta.activation-api 2.1.x
+    - dependency jakarta.annotation:jakarta.annotation-api 2.1.x
+    - dependency jakarta.authentication:jakarta.authentication-api 3.0.x
+    - dependency jakarta.authorization:jakarta.authorization-api 2.1.x
+    - dependency jakarta.batch:jakarta.batch-api 2.1.x
+    - dependency jakarta.mail:jakarta.mail-api 2.1.x
+    - dependency jakarta.enterprise:jakarta.enterprise.cdi-api 4.0.x
+    - dependency jakarta.enterprise.concurrent:jakarta.enterprise.concurrent-api 3.0.x
+    - dependency jakarta.el:jakarta.el-api 5.0.x
+    - dependency jakarta.interceptor:jakarta.interceptor-api 2.1.x
+    - dependency jakarta.persistence:jakarta.persistence-api 3.1.x
+    - dependency jakarta.resource:jakarta.resource-api 2.1.x
+    - dependency jakarta.security.enterprise:jakarta.security.enterprise-api 3.0.x
+    - dependency jakarta.servlet:jakarta.servlet-api 6.0.x
+    - dependency jakarta.servlet.jsp:jakarta.servlet.jsp-api 3.1.x
+    - dependency jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api 3.0.x
+    - dependency jakarta.websocket:jakarta.websocket-api 2.1.x
+    - dependency jakarta.websocket:jakarta.websocket-client-api 2.1.x
+    - dependency jakarta.websocket:jakarta.websocket-all 2.1.x
+    - dependency jakarta.jms:jakarta.jms-api 3.1.x
+    - dependency jakarta.json:jakarta.json-api 2.1.x
+    - dependency jakarta.ws.rs:jakarta.ws.rs-api 3.1.x
+    - change org.eclipse.jetty.ee9.websocket:jetty-ee9-websocket-jetty-api org.eclipse.jetty.ee10.websocket:jetty-ee10-websocket-jetty-api 12.0.x
+    - change org.eclipse.jetty.ee9.websocket:jetty-ee9-websocket-jetty-server org.eclipse.jetty.ee10.websocket:jetty-ee10-websocket-jetty-server 12.0.x
+    - change org.eclipse.jetty.ee9.websocket:jetty-ee9-websocket-jetty-client org.eclipse.jetty.ee10.websocket:jetty-ee10-websocket-jetty-client 12.0.x
+    - change org.eclipse.jetty.ee9.websocket:jetty-ee9-websocket-jakarta-server org.eclipse.jetty.ee10.websocket:jetty-ee10-websocket-jakarta-server 12.x
+    - change org.eclipse.jetty.ee9.websocket:jetty-ee9-websocket-jakarta-client org.eclipse.jetty.ee10.websocket:jetty-ee10-websocket-jakarta-client 12.x
+    - change org.eclipse.jetty.ee9:jetty-ee9-apache-jsp org.eclipse.jetty.ee10:jetty-ee10-apache-jsp 12.0.x
+    - change org.eclipse.jetty.ee9:jetty-ee9-servlets org.eclipse.jetty.ee10:jetty-ee10-servlets 12.0.x
+    - change org.eclipse.jetty.ee9:jetty-ee9-servlet org.eclipse.jetty.ee10:jetty-ee10-servlet 12.0.x
+    - change org.eclipse.jetty.ee9:jetty-ee9-webapp org.eclipse.jetty.ee10:jetty-ee10-webapp 12.0.x
+    - change org.eclipse.jetty.ee9:jetty-ee9-security org.eclipse.jetty.ee10:jetty-ee10-security 12.0.x
+    - change org.eclipse.jetty.ee9:jetty-ee9-proxy org.eclipse.jetty.ee10:jetty-ee10-proxy 12.0.x
+    - change org.eclipse.jetty.ee9:jetty-ee9-annotations org.eclipse.jetty.ee10:jetty-ee10-annotations 12.0.x
+    - dependency jakarta.faces:jakarta.faces-api 4.0.x
+    - dependency org.glassfish:jakarta.faces 4.0.x
+    - dependency jakarta.platform:* 10.0.0
+    - dependency org.glassfish.jersey.core:* 3.1.x
+    - dependency org.glassfish.jersey.inject:* 3.1.x
+    - dependency org.glassfish.jersey.media:* 3.1.x
+    - dependency org.glassfish.jersey.containers:* 3.1.x
+    - dependency org.glassfish.jersey.server:* 3.1.x
+    - dependency org.glassfish.jersey.ext:* 3.1.x
+    - dependency org.glassfish.tyrus:* 2.1.x
+    - change org.apache.commons:commons-email org.apache.commons:commons-email2-jakarta 2.0.x
+    - dependency org.apache.shiro:* 2.0.x
+    - dependency io.buji:buji-pac4j 9.x
+    - dependency org.pac4j:* 6.x
+    - change org.pac4j:javaee-pac4j *:pac4j-jakartaee 6.x
+    - change org.pac4j:pac4j-javaee *:pac4j-jakartaee 6.x
+    - dependency org.eclipse.persistence:* 4.x
+    - change org.apache.commons:commons-fileupload2-jakarta-servlet5 *:commons-fileupload2-jakarta-servlet6
+    - dependency org.eclipse:yasson 3.0.x
+    - change com.alibaba:fastjson com.alibaba.fastjson2:fastjson2 2.x
+    - dependency org.springframework.kafka:spring-kafka 3.0.x
+    - dependency org.springframework.integration:* 6.0.x
+    - dependency org.apache.httpcomponents:httpclient 4.5.x
+    - dependency org.springframework.data:* 3.0.x
+    - change org.thymeleaf:thymeleaf-spring5 *:thymeleaf-spring6 3.1.x
+    - change org.thymeleaf.extras:thymeleaf-extras-springsecurity5 *:thymeleaf-extras-springsecurity6 3.1.x
+    - change io.dropwizard.metrics:metrics-servlet *:metrics-jakarta-servlet 4.2.x
+    - change io.dropwizard.metrics:metrics-servlets *:metrics-jakarta-servlets 4.2.x
+    - dependency org.springframework.batch:* 5.0.x
+    - dependency org.springframework.security:* 5.8.x
+    - dependency org.springframework.security:spring-security-oauth2-authorization-server 0.4.x
+    - dependency org.springframework.security:* 6.0.x
+    - dependency org.springframework.security:spring-security-oauth2-authorization-server 1.0.x
+    - dependency org.springframework.cloud:* 4.0.x
+    - change org.springframework.cloud:spring-cloud-starter-feign *:spring-cloud-starter-openfeign
+    - dependency org.springframework.cloud:spring-cloud-dependencies 2022.0.x
+    - dependency org.springframework.cloud:spring-cloud-starter-circuitbreaker-* 3.0.x
+    - dependency org.springframework.cloud:spring-cloud-circuitbreaker-* 3.0.x
+    - dependency org.springframework.cloud:spring-cloud-starter-kubernetes-* 3.0.x
+    - dependency org.springframework.cloud:spring-cloud-kubernetes-* 3.0.x
+    - dependency org.springframework.cloud:spring-cloud-starter-task-* 3.0.x
+    - dependency org.springframework.cloud:spring-cloud-task-* 3.0.x
+    - change org.springframework.cloud:spring-cloud-starter-sleuth io.micrometer:micrometer-tracing-bridge-brave 1.0.x
+    - change org.springframework.cloud:spring-cloud-sleuth-otel-dependencies io.micrometer:micrometer-tracing-bridge-otel 1.0.x
+    - change org.springframework.cloud:spring-cloud-sleuth-api io.micrometer:micrometer-tracing 1.0.x
+    - change org.springframework.cloud:spring-cloud-sleuth-autoconfigure org.springframework.boot:spring-boot-actuator-autoconfigure
+    - change org.springframework.cloud:spring-cloud-sleuth-otel-autoconfigure org.springframework.boot:spring-boot-actuator-autoconfigure
+    - change org.springframework.cloud:spring-cloud-sleuth-zipkin io.zipkin.reporter2:zipkin-reporter-brave 2.16.x
+    - change io.swagger.core.v3:swagger-annotations *:swagger-annotations-jakarta
+    - change io.swagger.core.v3:swagger-core *:swagger-core-jakarta
+    - change io.swagger.core.v3:swagger-gradle-plugin *:swagger-gradle-plugin-jakarta
+    - change io.swagger.core.v3:swagger-integration *:swagger-integration-jakarta
+    - change io.swagger.core.v3:swagger-jaxrs2 *:swagger-jaxrs2-jakarta
+    - change io.swagger.core.v3:swagger-jaxrs2-servlet-initializer *:swagger-jaxrs2-servlet-initializer-jakarta
+    - change io.swagger.core.v3:swagger-jaxrs2-servlet-initializer-v2 *:swagger-jaxrs2-servlet-initializer-v2-jakarta
+    - change io.swagger.core.v3:swagger-maven-plugin *:swagger-maven-plugin-jakarta
+    - change io.swagger.core.v3:swagger-models *:swagger-models-jakarta
+    - change io.swagger.core.v3:swagger-project *:swagger-project-jakarta
+    - change org.springdoc:springdoc-openapi-common *:springdoc-openapi-starter-common 2.1.x
+    - change org.springdoc:springdoc-openapi-webmvc-core *:springdoc-openapi-starter-webmvc-api 2.1.x
+    - change org.springdoc:springdoc-openapi-webflux-core *:springdoc-openapi-starter-webflux-api 2.1.x
+    - change org.springdoc:springdoc-openapi-ui *:springdoc-openapi-starter-webmvc-ui 2.1.x
+    - change org.springdoc:springdoc-openapi-webflux-ui *:springdoc-openapi-starter-webflux-ui 2.1.x
+    - dependency org.springdoc:* 2.1.x
+    - change org.hibernate:hibernate-agroal-jakarta org.hibernate.orm:hibernate-agroal 6.0.x
+    - change org.hibernate:hibernate-c3p0-jakarta org.hibernate.orm:hibernate-c3p0 6.0.x
+    - change org.hibernate:hibernate-community-dialects-jakarta org.hibernate.orm:hibernate-community-dialects 6.0.x
+    - change org.hibernate:hibernate-core-jakarta org.hibernate.orm:hibernate-core 6.0.x
+    - change org.hibernate:hibernate-envers-jakarta org.hibernate.orm:hibernate-envers 6.0.x
+    - change org.hibernate:hibernate-graalvm-jakarta org.hibernate.orm:hibernate-graalvm 6.0.x
+    - change org.hibernate:hibernate-hikaricp-jakarta org.hibernate.orm:hibernate-hikaricp 6.0.x
+    - change org.hibernate:hibernate-jcache-jakarta org.hibernate.orm:hibernate-jcache 6.0.x
+    - change org.hibernate:hibernate-jpamodelgen-jakarta org.hibernate.orm:hibernate-jpamodelgen 6.0.x
+    - change org.hibernate:hibernate-micrometer-jakarta org.hibernate.orm:hibernate-micrometer 6.0.x
+    - change org.hibernate:hibernate-proxool-jakarta org.hibernate.orm:hibernate-proxool 6.0.x
+    - change org.hibernate:hibernate-spatial-jakarta org.hibernate.orm:hibernate-spatial 6.0.x
+    - change org.hibernate:hibernate-testing-jakarta org.hibernate.orm:hibernate-testing 6.0.x
+    - change org.hibernate:hibernate-validator org.hibernate.validator:* 8.0.x
+    - change org.hibernate:hibernate-* org.hibernate.orm:* 6.0.x
+    - change com.vladmihalcea:hibernate-types-4 io.hypersistence:hypersistence-utils-hibernate-60 3.5.x
+    - change com.vladmihalcea:hibernate-types-5 io.hypersistence:hypersistence-utils-hibernate-60 3.5.x
+    - change com.vladmihalcea:hibernate-types-43 io.hypersistence:hypersistence-utils-hibernate-60 3.5.x
+    - change com.vladmihalcea:hibernate-types-52 io.hypersistence:hypersistence-utils-hibernate-60 3.5.x
+    - change com.vladmihalcea:hibernate-types-55 io.hypersistence:hypersistence-utils-hibernate-60 3.5.x
+    - change com.vladmihalcea:hibernate-types-60 io.hypersistence:hypersistence-utils-hibernate-60 3.5.x
+    - dependency org.hibernate.orm:* 6.1.x
+    - dependency org.mybatis.spring.boot:* 3.0.2
+    - change com.sap.hcp.cf.logging:cf-java-logging-support-servlet *:cf-java-logging-support-servlet-jakarta [3.7.0,4)
+    - dependency org.opensearch.client:opensearch-java 3.x
+    - dependency org.opensearch.client:opensearch-rest-client 3.x
+    - change io.awspring.cloud:spring-cloud-starter-aws-secrets-manager-config *:spring-cloud-aws-starter-secrets-manager
+    - change io.awspring.cloud:spring-cloud-starter-aws-parameter-store-config *:spring-cloud-aws-starter-parameter-store
+    - change io.awspring.cloud:spring-cloud-starter-aws-messaging *:spring-cloud-aws-starter-sqs
+    - change io.awspring.cloud:spring-cloud-starter-aws *:spring-cloud-aws-starter
+    - dependency io.awspring.cloud:* 3.0.x
+    - dependency net.logstash.logback:logstash-logback-encoder 7.4
+    - change io.github.resilience4j:resilience4j-spring-boot2 *:resilience4j-spring-boot3 2.2.x
+    - dependency org.mockito:mockito-inline 4.x
+    - dependency org.projectlombok:lombok 1.18.x
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.gradle.catalog.VersionCatalog_3_1
+displayName: version catalog 정렬 (3_1)
+description: com.eottabom.rewrite.spring.SpringBootStep_3_1 의 의존성/플러그인 버전 변경을 gradle/*.versions.toml 에 적용한다.
+recipeList:
+- com.eottabom.rewrite.gradle.UpgradeVersionCatalog:
+    rules:
+    - dependency org.springframework.boot:* 3.1.x
+    - dependency org.springframework.boot:spring-boot-dependencies 3.1.x
+    - plugin org.springframework.boot 3.1.x
+    - dependency org.springframework.security:* 6.1.x
+    - dependency org.springframework.security:spring-security-oauth2-authorization-server 1.1.x
+    - dependency org.springdoc:* 2.2.x
+    - change io.hypersistence:hypersistence-utils-hibernate-60 io.hypersistence:hypersistence-utils-hibernate-62 3.9.x
+    - dependency org.hibernate.orm:* 6.2.x
+    - change org.mockito:mockito-inline *:mockito-core
+    - dependency org.mockito:* 5.x
+    - dependency net.bytebuddy:byte-buddy* 1.17.x
+    - dependency io.awspring.cloud:* 3.0.x
+    - dependency org.projectlombok:lombok 1.18.x
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.gradle.catalog.VersionCatalog_3_2
+displayName: version catalog 정렬 (3_2)
+description: com.eottabom.rewrite.spring.SpringBootStep_3_2 의 의존성/플러그인 버전 변경을 gradle/*.versions.toml 에 적용한다.
+recipeList:
+- com.eottabom.rewrite.gradle.UpgradeVersionCatalog:
+    rules:
+    - dependency org.springframework.boot:* 3.2.x
+    - dependency org.springframework.boot:spring-boot-dependencies 3.2.x
+    - dependency org.springframework:* 6.1.x
+    - plugin org.springframework.boot 3.2.x
+    - dependency org.springframework.security:* 6.2.x
+    - dependency org.springframework.security:spring-security-oauth2-authorization-server 1.2.x
+    - dependency org.springframework.cloud:* 4.1.x
+    - dependency org.springframework.cloud:spring-cloud-dependencies 2023.0.x
+    - dependency org.springframework.cloud:spring-cloud-starter-circuitbreaker-* 3.1.x
+    - dependency org.springframework.cloud:spring-cloud-circuitbreaker-* 3.1.x
+    - dependency org.springframework.cloud:spring-cloud-starter-kubernetes-* 3.1.x
+    - dependency org.springframework.cloud:spring-cloud-kubernetes-* 3.1.x
+    - dependency org.springframework.cloud:spring-cloud-starter-task-* 3.1.x
+    - dependency org.springframework.cloud:spring-cloud-task-* 3.1.x
+    - dependency org.springdoc:* 2.5.x
+    - change io.hypersistence:hypersistence-utils-hibernate-62 io.hypersistence:hypersistence-utils-hibernate-63 3.15.x
+    - dependency org.hibernate.orm:* 6.3.x
+    - dependency org.hibernate.orm:* 6.4.x
+    - dependency org.mybatis.spring.boot:* 3.0.3
+    - dependency io.awspring.cloud:* 3.1.x
+    - dependency org.projectlombok:lombok 1.18.x
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.gradle.catalog.VersionCatalog_3_3
+displayName: version catalog 정렬 (3_3)
+description: com.eottabom.rewrite.spring.SpringBootStep_3_3 의 의존성/플러그인 버전 변경을 gradle/*.versions.toml 에 적용한다.
+recipeList:
+- com.eottabom.rewrite.gradle.UpgradeVersionCatalog:
+    rules:
+    - dependency org.springframework.security:* 6.3.x
+    - dependency org.springframework.security:spring-security-oauth2-authorization-server 1.3.x
+    - dependency org.springframework.boot:* 3.3.x
+    - dependency org.springframework.boot:spring-boot-dependencies 3.3.x
+    - dependency org.springframework:* 6.1.x
+    - plugin org.springframework.boot 3.3.x
+    - dependency io.micrometer:* 1.13.x
+    - plugin org.graalvm.buildtools.native 0.10.x
+    - change com.datastax.oss:java-driver-bom org.apache.cassandra:* 4.18.x
+    - change com.datastax.oss:java-driver-core org.apache.cassandra:* 4.18.x
+    - change com.datastax.oss:java-driver-core-shaded org.apache.cassandra:* 4.18.x
+    - change com.datastax.oss:java-driver-mapper-processor org.apache.cassandra:* 4.18.x
+    - change com.datastax.oss:java-driver-mapper-runtime org.apache.cassandra:* 4.18.x
+    - change com.datastax.oss:java-driver-query-builder org.apache.cassandra:* 4.18.x
+    - change com.datastax.oss:java-driver-test-infra org.apache.cassandra:* 4.18.x
+    - change com.datastax.oss:java-driver-metrics-micrometer org.apache.cassandra:* 4.18.x
+    - change com.datastax.oss:java-driver-metrics-microprofile org.apache.cassandra:* 4.18.x
+    - dependency org.springdoc:* 2.6.x
+    - dependency org.hibernate.orm:* 6.5.x
+    - dependency io.awspring.cloud:* 3.2.x
+    - dependency net.logstash.logback:logstash-logback-encoder 8.x
+    - dependency org.projectlombok:lombok 1.18.x
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.gradle.catalog.VersionCatalog_3_4
+displayName: version catalog 정렬 (3_4)
+description: com.eottabom.rewrite.spring.SpringBootStep_3_4 의 의존성/플러그인 버전 변경을 gradle/*.versions.toml 에 적용한다.
+recipeList:
+- com.eottabom.rewrite.gradle.UpgradeVersionCatalog:
+    rules:
+    - dependency org.springframework:* 6.2.x
+    - dependency org.springframework.cloud:* 4.2.x
+    - dependency org.springframework.cloud:spring-cloud-dependencies 2024.0.x
+    - dependency org.springframework.cloud:spring-cloud-starter-circuitbreaker-* 3.2.x
+    - dependency org.springframework.cloud:spring-cloud-circuitbreaker-* 3.2.x
+    - dependency org.springframework.cloud:spring-cloud-starter-kubernetes-* 3.2.x
+    - dependency org.springframework.cloud:spring-cloud-kubernetes-* 3.2.x
+    - dependency org.springframework.cloud:spring-cloud-starter-task-* 3.2.x
+    - dependency org.springframework.cloud:spring-cloud-task-* 3.2.x
+    - dependency org.springframework.security:* 6.4.x
+    - dependency org.springframework.security:spring-security-oauth2-authorization-server 1.4.x
+    - dependency org.springframework.boot:* 3.4.x
+    - dependency org.springframework.boot:spring-boot-dependencies 3.4.x
+    - plugin org.springframework.boot 3.4.x
+    - dependency org.springdoc:* 2.8.x
+    - change org.webjars:webjars-locator-core org.webjars:webjars-locator-lite 1.0.x
+    - dependency io.awspring.cloud:* 3.3.x
+    - dependency org.projectlombok:lombok 1.18.x
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.gradle.catalog.VersionCatalog_3_5
+displayName: version catalog 정렬 (3_5)
+description: com.eottabom.rewrite.spring.SpringBootStep_3_5 의 의존성/플러그인 버전 변경을 gradle/*.versions.toml 에 적용한다.
+recipeList:
+- com.eottabom.rewrite.gradle.UpgradeVersionCatalog:
+    rules:
+    - dependency org.springframework.cloud:* 4.3.x
+    - dependency org.springframework.cloud:spring-cloud-dependencies 2025.0.x
+    - dependency org.springframework.cloud:spring-cloud-starter-circuitbreaker-* 3.3.x
+    - dependency org.springframework.cloud:spring-cloud-circuitbreaker-* 3.3.x
+    - dependency org.springframework.cloud:spring-cloud-starter-kubernetes-* 3.3.x
+    - dependency org.springframework.cloud:spring-cloud-kubernetes-* 3.3.x
+    - dependency org.springframework.cloud:spring-cloud-starter-task-* 3.3.x
+    - dependency org.springframework.cloud:spring-cloud-task-* 3.3.x
+    - change org.springframework.cloud:spring-cloud-gateway-server *:spring-cloud-gateway-server-webflux 4.3.x
+    - change org.springframework.cloud:spring-cloud-gateway-server-mvc *:spring-cloud-gateway-server-webmvc 4.3.x
+    - change org.springframework.cloud:spring-cloud-starter-gateway *:spring-cloud-starter-gateway-server-webflux 4.3.x
+    - change org.springframework.cloud:spring-cloud-starter-gateway-mvc *:spring-cloud-starter-gateway-server-webmvc 4.3.x
+    - change org.springframework.cloud:spring-cloud-gateway-mvc *:spring-cloud-gateway-proxyexchange-webmvc 4.3.x
+    - change org.springframework.cloud:spring-cloud-gateway-webflux *:spring-cloud-gateway-proxyexchange-webflux 4.3.x
+    - change io.prometheus:simpleclient_pushgateway io.prometheus:prometheus-metrics-exporter-pushgateway
+    - dependency org.springframework.security:* 6.5.x
+    - dependency org.springframework.security:spring-security-oauth2-authorization-server 1.5.x
+    - dependency org.springframework.boot:* 3.5.x
+    - dependency org.springframework.boot:spring-boot-dependencies 3.5.x
+    - plugin org.springframework.boot 3.5.x
+    - dependency io.awspring.cloud:* 3.4.x
+    - dependency org.projectlombok:lombok 1.18.x
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.gradle.catalog.VersionCatalog_4_0
+displayName: version catalog 정렬 (4_0)
+description: com.eottabom.rewrite.spring.SpringBootStep_4_0 의 의존성/플러그인 버전 변경을 gradle/*.versions.toml 에 적용한다.
+recipeList:
+- com.eottabom.rewrite.gradle.UpgradeVersionCatalog:
+    rules:
+    - plugin io.freefair.* 8.x
+    - plugin org.asciidoctor.jvm.* 4.0.x
+    - plugin com.gorylenko.gradle-git-properties 2.5.x
+    - dependency org.springframework.cloud:* 5.0.x
+    - dependency org.springframework.cloud:spring-cloud-dependencies 2025.1.x
+    - dependency org.springframework:* 7.0.x
+    - dependency org.junit:junit-bom 5.13.x
+    - dependency org.junit.jupiter:* 5.13.x
+    - dependency org.junit.platform:* 1.13.x
+    - dependency org.junit.vintage:* 5.13.x
+    - dependency org.junit:junit-bom 5.14.x
+    - dependency org.junit.jupiter:* 5.14.x
+    - dependency org.junit.platform:* 1.14.x
+    - dependency org.junit.vintage:* 5.14.x
+    - dependency org.junit:junit-bom 6.x
+    - dependency org.junit.jupiter:junit-jupiter* 6.x
+    - change com.github.tomakehurst:wiremock org.wiremock:wiremock 3.x
+    - change com.github.tomakehurst:wiremock-jre8 org.wiremock:wiremock 3.x
+    - change com.github.tomakehurst:wiremock-standalone org.wiremock:wiremock-standalone 3.x
+    - change com.github.tomakehurst:wiremock-jre8-standalone org.wiremock:wiremock-standalone 3.x
+    - change org.codehaus.jackson:jackson-core-asl com.fasterxml.jackson.core:jackson-core 2.x
+    - change org.codehaus.jackson:jackson-mapper-asl com.fasterxml.jackson.core:jackson-databind 2.x
+    - change com.fasterxml.jackson.core:jackson-core tools.jackson.core:jackson-core 3.1.x
+    - change com.fasterxml.jackson:jackson-bom tools.jackson:jackson-bom 3.1.x
+    - change com.fasterxml.jackson.core:jackson-databind tools.jackson.core:jackson-databind 3.1.x
+    - change com.fasterxml.jackson.module:jackson-module-parameter-names tools.jackson.core:jackson-databind 3.1.x
+    - change com.fasterxml.jackson.module:jackson-module-scala_2.13 tools.jackson.module:jackson-module-scala_2.13 3.1.x
+    - change com.fasterxml.jackson.module:jackson-module-scala_2.12 tools.jackson.module:jackson-module-scala_2.12 3.1.x
+    - change com.fasterxml.jackson.module:jackson-module-scala_3 tools.jackson.module:jackson-module-scala_3 3.1.x
+    - change com.fasterxml.jackson.module:jackson-module-kotlin tools.jackson.module:jackson-module-kotlin 3.1.x
+    - change com.fasterxml.jackson.module:jackson-module-no-ctor-deser tools.jackson.module:jackson-module-no-ctor-deser 3.1.x
+    - change com.fasterxml.jackson.module:jackson-module-jakarta-xmlbind-annotations tools.jackson.module:jackson-module-jakarta-xmlbind-annotations 3.1.x
+    - change com.fasterxml.jackson.module:jackson-module-mrbean tools.jackson.module:jackson-module-mrbean 3.1.x
+    - change com.fasterxml.jackson.module:jackson-module-jaxb-annotations tools.jackson.module:jackson-module-jaxb-annotations 3.1.x
+    - change com.fasterxml.jackson.module:jackson-module-afterburner tools.jackson.module:jackson-module-afterburner 3.1.x
+    - change com.fasterxml.jackson.module:jackson-module-guice7 tools.jackson.module:jackson-module-guice7 3.1.x
+    - change com.fasterxml.jackson.module:jackson-modules-base tools.jackson.module:jackson-modules-base 3.1.x
+    - change com.fasterxml.jackson.module:jackson-module-osgi tools.jackson.module:jackson-module-osgi 3.1.x
+    - change com.fasterxml.jackson.module:jackson-module-guice tools.jackson.module:jackson-module-guice 3.1.x
+    - change com.fasterxml.jackson.module:jackson-module-android-record tools.jackson.module:jackson-module-android-record 3.1.x
+    - change com.fasterxml.jackson.module:jackson-module-blackbird tools.jackson.module:jackson-module-blackbird 3.1.x
+    - change com.fasterxml.jackson.dataformat:* tools.jackson.dataformat:* 3.1.x
+    - change com.fasterxml.jackson.datatype:jackson-datatype-jdk8 tools.jackson.core:jackson-databind 3.1.x
+    - change com.fasterxml.jackson.datatype:jackson-datatype-jsr310 tools.jackson.core:jackson-databind 3.1.x
+    - change com.fasterxml.jackson.datatype:jackson-datatype-* tools.jackson.datatype:* 3.1.x
+    - change com.fasterxml.jackson.jaxrs:* tools.jackson.jaxrs:* 3.1.x
+    - change com.fasterxml.jackson.jakarta.rs:* tools.jackson.jakarta.rs:* 3.1.x
+    - change com.fasterxml.jackson.jr:* tools.jackson.jr:* 3.1.x
+    - dependency com.fasterxml.jackson.core:jackson-annotations 2.21
+    - dependency org.projectlombok:lombok 1.18.44
+    - dependency org.springframework.security:* 7.0.x
+    - dependency org.springframework.batch:* 6.0.x
+    - dependency org.hibernate.orm:* 6.6.x
+    - change io.hypersistence:hypersistence-utils-hibernate-63 io.hypersistence:hypersistence-utils-hibernate-70 3.15.x
+    - dependency org.hibernate.orm:* 7.0.x
+    - change org.hibernate.orm:hibernate-jpamodelgen *:hibernate-processor
+    - change io.hypersistence:hypersistence-utils-hibernate-70 io.hypersistence:hypersistence-utils-hibernate-71 3.15.x
+    - dependency org.hibernate.orm:* 7.1.x
+    - change org.testcontainers:activemq *:testcontainers-activemq 2.x
+    - change org.testcontainers:azure *:testcontainers-azure 2.x
+    - change org.testcontainers:cassandra *:testcontainers-cassandra 2.x
+    - change org.testcontainers:chromadb *:testcontainers-chromadb 2.x
+    - change org.testcontainers:clickhouse *:testcontainers-clickhouse 2.x
+    - change org.testcontainers:cockroachdb *:testcontainers-cockroachdb 2.x
+    - change org.testcontainers:consul *:testcontainers-consul 2.x
+    - change org.testcontainers:couchbase *:testcontainers-couchbase 2.x
+    - change org.testcontainers:cratedb *:testcontainers-cratedb 2.x
+    - change org.testcontainers:database-commons *:testcontainers-database-commons 2.x
+    - change org.testcontainers:databend *:testcontainers-databend 2.x
+    - change org.testcontainers:db2 *:testcontainers-db2 2.x
+    - change org.testcontainers:elasticsearch *:testcontainers-elasticsearch 2.x
+    - change org.testcontainers:gcloud *:testcontainers-gcloud 2.x
+    - change org.testcontainers:grafana *:testcontainers-grafana 2.x
+    - change org.testcontainers:hivemq *:testcontainers-hivemq 2.x
+    - change org.testcontainers:influxdb *:testcontainers-influxdb 2.x
+    - change org.testcontainers:jdbc *:testcontainers-jdbc 2.x
+    - change org.testcontainers:junit-jupiter *:testcontainers-junit-jupiter 2.x
+    - change org.testcontainers:k3s *:testcontainers-k3s 2.x
+    - change org.testcontainers:k6 *:testcontainers-k6 2.x
+    - change org.testcontainers:kafka *:testcontainers-kafka 2.x
+    - change org.testcontainers:ldap *:testcontainers-ldap 2.x
+    - change org.testcontainers:localstack *:testcontainers-localstack 2.x
+    - change org.testcontainers:mariadb *:testcontainers-mariadb 2.x
+    - change org.testcontainers:milvus *:testcontainers-milvus 2.x
+    - change org.testcontainers:minio *:testcontainers-minio 2.x
+    - change org.testcontainers:mockserver *:testcontainers-mockserver 2.x
+    - change org.testcontainers:mongodb *:testcontainers-mongodb 2.x
+    - change org.testcontainers:mssqlserver *:testcontainers-mssqlserver 2.x
+    - change org.testcontainers:mysql *:testcontainers-mysql 2.x
+    - change org.testcontainers:neo4j *:testcontainers-neo4j 2.x
+    - change org.testcontainers:nginx *:testcontainers-nginx 2.x
+    - change org.testcontainers:oceanbase *:testcontainers-oceanbase 2.x
+    - change org.testcontainers:ollama *:testcontainers-ollama 2.x
+    - change org.testcontainers:openfga *:testcontainers-openfga 2.x
+    - change org.testcontainers:oracle-free *:testcontainers-oracle-free 2.x
+    - change org.testcontainers:oracle-xe *:testcontainers-oracle-xe 2.x
+    - change org.testcontainers:orientdb *:testcontainers-orientdb 2.x
+    - change org.testcontainers:pinecone *:testcontainers-pinecone 2.x
+    - change org.testcontainers:postgresql *:testcontainers-postgresql 2.x
+    - change org.testcontainers:presto *:testcontainers-presto 2.x
+    - change org.testcontainers:pulsar *:testcontainers-pulsar 2.x
+    - change org.testcontainers:qdrant *:testcontainers-qdrant 2.x
+    - change org.testcontainers:questdb *:testcontainers-questdb 2.x
+    - change org.testcontainers:r2dbc *:testcontainers-r2dbc 2.x
+    - change org.testcontainers:rabbitmq *:testcontainers-rabbitmq 2.x
+    - change org.testcontainers:redpanda *:testcontainers-redpanda 2.x
+    - change org.testcontainers:scylladb *:testcontainers-scylladb 2.x
+    - change org.testcontainers:selenium *:testcontainers-selenium 2.x
+    - change org.testcontainers:solace *:testcontainers-solace 2.x
+    - change org.testcontainers:solr *:testcontainers-solr 2.x
+    - change org.testcontainers:spock *:testcontainers-spock 2.x
+    - change org.testcontainers:tidb *:testcontainers-tidb 2.x
+    - change org.testcontainers:timeplus *:testcontainers-timeplus 2.x
+    - change org.testcontainers:toxiproxy *:testcontainers-toxiproxy 2.x
+    - change org.testcontainers:trino *:testcontainers-trino 2.x
+    - change org.testcontainers:typesense *:testcontainers-typesense 2.x
+    - change org.testcontainers:vault *:testcontainers-vault 2.x
+    - change org.testcontainers:weaviate *:testcontainers-weaviate 2.x
+    - change org.testcontainers:yugabytedb *:testcontainers-yugabytedb 2.x
+    - dependency org.testcontainers:* 2.x
+    - dependency org.springdoc:* 3.0.x
+    - dependency org.springframework.boot:* 4.0.x
+    - dependency org.springframework.boot:spring-boot-dependencies 4.0.x
+    - plugin org.springframework.boot 4.0.x
+    - plugin org.jetbrains.kotlin.* 2.2.x
+    - dependency org.jetbrains.kotlin:* 2.2.x
+    - change org.liquibase:liquibase-core org.springframework.boot:spring-boot-starter-liquibase 4.0.x
+    - change org.flywaydb:flyway-core org.springframework.boot:spring-boot-starter-flyway 4.0.x
+    - change org.springframework.kafka:spring-kafka org.springframework.boot:spring-boot-starter-kafka 4.0.x
+    - change org.springframework.security:spring-security-test org.springframework.boot:spring-boot-starter-security-test 4.0.x
+    - change org.springframework.boot:spring-boot-starter-oauth2-authorization-server *:spring-boot-starter-security-oauth2-authorization-server
+    - change org.springframework.boot:spring-boot-starter-oauth2-client *:spring-boot-starter-security-oauth2-client
+    - change org.springframework.boot:spring-boot-starter-oauth2-resource-server *:spring-boot-starter-security-oauth2-resource-server
+    - change org.springframework.boot:spring-boot-starter-web *:spring-boot-starter-webmvc
+    - change org.springframework.boot:spring-boot-starter-web-services *:spring-boot-starter-webservices
+    - change org.springframework.boot:spring-boot-starter-aop *:spring-boot-starter-aspectj
+    - change org.springframework.boot:spring-boot-starter-oauth2-authorization-server *:spring-boot-starter-security-oauth2-authorization-server 4.0.x
+    - change org.springframework.boot:spring-boot-starter-oauth2-client *:spring-boot-starter-security-oauth2-client 4.0.x
+    - change org.springframework.boot:spring-boot-starter-oauth2-resource-server *:spring-boot-starter-security-oauth2-resource-server 4.0.x
+    - change org.springframework.boot:spring-boot-starter-web *:spring-boot-starter-webmvc 4.0.x
+    - change org.springframework.boot:spring-boot-starter-web-services *:spring-boot-starter-webservices 4.0.x
+    - change org.springframework.boot:spring-boot-starter-aop *:spring-boot-starter-aspectj 4.0.x
+    - dependency eu.michael-simons.neo4j:neo4j-migrations-spring-boot-starter 3.0.x
+    - dependency io.github.wimdeblauwe:error-handling-spring-boot-starter 5.0.x
+    - change org.jobrunr:jobrunr-spring-boot-3-starter *:jobrunr-spring-boot-4-starter 8.x
+    - dependency org.jobrunr:* 8.x
+    - dependency org.apache.httpcomponents:httpclient 4.5.x
+    - dependency io.awspring.cloud:* 4.0.x
+    - dependency net.logstash.logback:logstash-logback-encoder 9.x
+    - dependency org.projectlombok:lombok 1.18.x
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.gradle.catalog.VersionCatalog_4_1
+displayName: version catalog 정렬 (4_1)
+description: com.eottabom.rewrite.spring.SpringBootStep_4_1 의 의존성/플러그인 버전 변경을 gradle/*.versions.toml 에 적용한다.
+recipeList:
+- com.eottabom.rewrite.gradle.UpgradeVersionCatalog:
+    rules:
+    - dependency org.springframework.boot:* 4.1.x
+    - dependency org.springframework.boot:spring-boot-dependencies 4.1.x
+    - plugin org.springframework.boot 4.1.x
+    - dependency org.springframework.cloud:spring-cloud-dependencies 2025.1.x
+    - dependency io.awspring.cloud:* 4.1.x
+    - dependency org.projectlombok:lombok 1.18.x
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.gradle.catalog.VersionCatalog_Java21
+displayName: version catalog 정렬 (Java21)
+description: com.eottabom.rewrite.java.UpgradeToJava21 의 의존성/플러그인 버전 변경을 gradle/*.versions.toml 에 적용한다.
+recipeList:
+- com.eottabom.rewrite.gradle.UpgradeVersionCatalog:
+    rules:
+    - dependency org.jacoco:* 0.8.x
+    - change org.bouncycastle:bcprov-jdk15on *:bcprov-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-ext-jdk15on *:bcprov-ext-jdk15to18 latest.release
+    - change org.bouncycastle:bcutil-jdk15on *:bcutil-jdk15to18 latest.release
+    - change org.bouncycastle:bcpkix-jdk15on *:bcpkix-jdk15to18 latest.release
+    - change org.bouncycastle:bcmail-jdk15on *:bcmail-jdk15to18 latest.release
+    - change org.bouncycastle:bcjmail-jdk15on *:bcjmail-jdk15to18 latest.release
+    - change org.bouncycastle:bcpg-jdk15on *:bcpg-jdk15to18 latest.release
+    - change org.bouncycastle:bctls-jdk15on *:bctls-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-jdk16 *:bcprov-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-ext-jdk16 *:bcprov-ext-jdk15to18 latest.release
+    - change org.bouncycastle:bcmail-jdk16 *:bcmail-jdk15to18 latest.release
+    - change org.bouncycastle:bcpg-jdk16 *:bcpg-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-jdk15+ *:bcprov-jdk15to18 latest.release
+    - change org.bouncycastle:bcmail-jdk15+ *:bcmail-jdk15to18 latest.release
+    - change org.bouncycastle:bcpg-jdk15+ *:bcpg-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-jdk15 *:bcprov-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-ext-jdk15 *:bcprov-ext-jdk15to18 latest.release
+    - change org.bouncycastle:bcmail-jdk15 *:bcmail-jdk15to18 latest.release
+    - change org.bouncycastle:bcpg-jdk15 *:bcpg-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-jdk14 *:bcprov-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-ext-jdk14 *:bcprov-ext-jdk15to18 latest.release
+    - change org.bouncycastle:bcutil-jdk14 *:bcutil-jdk15to18 latest.release
+    - change org.bouncycastle:bcpkix-jdk14 *:bcpkix-jdk15to18 latest.release
+    - change org.bouncycastle:bcmail-jdk14 *:bcmail-jdk15to18 latest.release
+    - change org.bouncycastle:bcpg-jdk14 *:bcpg-jdk15to18 latest.release
+    - change org.bouncycastle:bctls-jdk14 *:bctls-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-jdk12 *:bcprov-jdk15to18 latest.release
+    - change org.bouncycastle:bcpg-jdk12 *:bcpg-jdk15to18 latest.release
+    - change org.bouncycastle:bctsp-jdk15on *:bcpkix-jdk15to18 latest.release
+    - change org.bouncycastle:bctsp-jdk16 *:bcpkix-jdk15to18 latest.release
+    - change org.bouncycastle:bctsp-jdk15+ *:bcpkix-jdk15to18 latest.release
+    - change org.bouncycastle:bctsp-jdk15 *:bcpkix-jdk15to18 latest.release
+    - change org.bouncycastle:bctsp-jdk14 *:bcpkix-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-jdk15on *:bcprov-jdk18on latest.release
+    - change org.bouncycastle:bcprov-ext-jdk15on *:bcprov-ext-jdk18on latest.release
+    - change org.bouncycastle:bcutil-jdk15on *:bcutil-jdk18on latest.release
+    - change org.bouncycastle:bcpkix-jdk15on *:bcpkix-jdk18on latest.release
+    - change org.bouncycastle:bcmail-jdk15on *:bcmail-jdk18on latest.release
+    - change org.bouncycastle:bcjmail-jdk15on *:bcjmail-jdk18on latest.release
+    - change org.bouncycastle:bcpg-jdk15on *:bcpg-jdk18on latest.release
+    - change org.bouncycastle:bctls-jdk15on *:bctls-jdk18on latest.release
+    - change org.bouncycastle:bcprov-jdk15to18 *:bcprov-jdk18on latest.release
+    - change org.bouncycastle:bcprov-ext-jdk15to18 *:bcprov-ext-jdk18on latest.release
+    - change org.bouncycastle:bcutil-jdk15to18 *:bcutil-jdk18on latest.release
+    - change org.bouncycastle:bcpkix-jdk15to18 *:bcpkix-jdk18on latest.release
+    - change org.bouncycastle:bcmail-jdk15to18 *:bcmail-jdk18on latest.release
+    - change org.bouncycastle:bcjmail-jdk15to18 *:bcjmail-jdk18on latest.release
+    - change org.bouncycastle:bcpg-jdk15to18 *:bcpg-jdk18on latest.release
+    - change org.bouncycastle:bctls-jdk15to18 *:bctls-jdk18on latest.release
+    - change org.bouncycastle:bcprov-jdk16 *:bcprov-jdk18on latest.release
+    - change org.bouncycastle:bcprov-ext-jdk16 *:bcprov-ext-jdk18on latest.release
+    - change org.bouncycastle:bcmail-jdk16 *:bcmail-jdk18on latest.release
+    - change org.bouncycastle:bcpg-jdk16 *:bcpg-jdk18on latest.release
+    - change org.bouncycastle:bcprov-jdk15+ *:bcprov-jdk18on latest.release
+    - change org.bouncycastle:bcmail-jdk15+ *:bcmail-jdk18on latest.release
+    - change org.bouncycastle:bcpg-jdk15+ *:bcpg-jdk18on latest.release
+    - change org.bouncycastle:bcprov-jdk15 *:bcprov-jdk18on latest.release
+    - change org.bouncycastle:bcprov-ext-jdk15 *:bcprov-ext-jdk18on latest.release
+    - change org.bouncycastle:bcmail-jdk15 *:bcmail-jdk18on latest.release
+    - change org.bouncycastle:bcpg-jdk15 *:bcpg-jdk18on latest.release
+    - change org.bouncycastle:bcprov-jdk14 *:bcprov-jdk18on latest.release
+    - change org.bouncycastle:bcprov-ext-jdk14 *:bcprov-ext-jdk18on latest.release
+    - change org.bouncycastle:bcutil-jdk14 *:bcutil-jdk18on latest.release
+    - change org.bouncycastle:bcpkix-jdk14 *:bcpkix-jdk18on latest.release
+    - change org.bouncycastle:bcmail-jdk14 *:bcmail-jdk18on latest.release
+    - change org.bouncycastle:bcpg-jdk14 *:bcpg-jdk18on latest.release
+    - change org.bouncycastle:bctls-jdk14 *:bctls-jdk18on latest.release
+    - change org.bouncycastle:bcprov-jdk12 *:bcprov-jdk18on latest.release
+    - change org.bouncycastle:bcpg-jdk12 *:bcpg-jdk18on latest.release
+    - change org.bouncycastle:bctsp-jdk15on *:bcpkix-jdk18on latest.release
+    - change org.bouncycastle:bctsp-jdk16 *:bcpkix-jdk18on latest.release
+    - change org.bouncycastle:bctsp-jdk15+ *:bcpkix-jdk18on latest.release
+    - change org.bouncycastle:bctsp-jdk15 *:bcpkix-jdk18on latest.release
+    - change org.bouncycastle:bctsp-jdk14 *:bcpkix-jdk18on latest.release
+    - change javax.xml.bind:jaxb-api jakarta.xml.bind:jakarta.xml.bind-api 2.3.x
+    - dependency jakarta.xml.bind:jakarta.xml.bind-api 2.3.x
+    - change javax.xml.ws:jaxws-api jakarta.xml.ws:jakarta.xml.ws-api 2.3.x
+    - dependency jakarta.xml.ws:jakarta.xml.ws-api 2.3.x
+    - dependency jakarta.inject:jakarta.inject-api 1.0.3
+    - change javax.annotation:javax.annotation-api jakarta.annotation:jakarta.annotation-api 1.3.x
+    - dependency org.projectlombok:lombok 1.18.*
+    - dependency org.scala-lang:scala-* 2.12.x
+    - dependency com.google.inject:guice 5.x
+    - dependency commons-codec:commons-codec 1.17.x
+    - dependency org.mapstruct:mapstruct* 1.6.x
+    - dependency com.google.guava:guava 29.0 -jre
+    - dependency net.bytebuddy:byte-buddy 1.14.11
+    - dependency org.modelmapper:modelmapper 3.2.x
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.gradle.catalog.VersionCatalog_Java25
+displayName: version catalog 정렬 (Java25)
+description: com.eottabom.rewrite.java.UpgradeToJava25 의 의존성/플러그인 버전 변경을 gradle/*.versions.toml 에 적용한다.
+recipeList:
+- com.eottabom.rewrite.gradle.UpgradeVersionCatalog:
+    rules:
+    - dependency org.jacoco:* 0.8.x
+    - change org.bouncycastle:bcprov-jdk15on *:bcprov-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-ext-jdk15on *:bcprov-ext-jdk15to18 latest.release
+    - change org.bouncycastle:bcutil-jdk15on *:bcutil-jdk15to18 latest.release
+    - change org.bouncycastle:bcpkix-jdk15on *:bcpkix-jdk15to18 latest.release
+    - change org.bouncycastle:bcmail-jdk15on *:bcmail-jdk15to18 latest.release
+    - change org.bouncycastle:bcjmail-jdk15on *:bcjmail-jdk15to18 latest.release
+    - change org.bouncycastle:bcpg-jdk15on *:bcpg-jdk15to18 latest.release
+    - change org.bouncycastle:bctls-jdk15on *:bctls-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-jdk16 *:bcprov-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-ext-jdk16 *:bcprov-ext-jdk15to18 latest.release
+    - change org.bouncycastle:bcmail-jdk16 *:bcmail-jdk15to18 latest.release
+    - change org.bouncycastle:bcpg-jdk16 *:bcpg-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-jdk15+ *:bcprov-jdk15to18 latest.release
+    - change org.bouncycastle:bcmail-jdk15+ *:bcmail-jdk15to18 latest.release
+    - change org.bouncycastle:bcpg-jdk15+ *:bcpg-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-jdk15 *:bcprov-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-ext-jdk15 *:bcprov-ext-jdk15to18 latest.release
+    - change org.bouncycastle:bcmail-jdk15 *:bcmail-jdk15to18 latest.release
+    - change org.bouncycastle:bcpg-jdk15 *:bcpg-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-jdk14 *:bcprov-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-ext-jdk14 *:bcprov-ext-jdk15to18 latest.release
+    - change org.bouncycastle:bcutil-jdk14 *:bcutil-jdk15to18 latest.release
+    - change org.bouncycastle:bcpkix-jdk14 *:bcpkix-jdk15to18 latest.release
+    - change org.bouncycastle:bcmail-jdk14 *:bcmail-jdk15to18 latest.release
+    - change org.bouncycastle:bcpg-jdk14 *:bcpg-jdk15to18 latest.release
+    - change org.bouncycastle:bctls-jdk14 *:bctls-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-jdk12 *:bcprov-jdk15to18 latest.release
+    - change org.bouncycastle:bcpg-jdk12 *:bcpg-jdk15to18 latest.release
+    - change org.bouncycastle:bctsp-jdk15on *:bcpkix-jdk15to18 latest.release
+    - change org.bouncycastle:bctsp-jdk16 *:bcpkix-jdk15to18 latest.release
+    - change org.bouncycastle:bctsp-jdk15+ *:bcpkix-jdk15to18 latest.release
+    - change org.bouncycastle:bctsp-jdk15 *:bcpkix-jdk15to18 latest.release
+    - change org.bouncycastle:bctsp-jdk14 *:bcpkix-jdk15to18 latest.release
+    - change org.bouncycastle:bcprov-jdk15on *:bcprov-jdk18on latest.release
+    - change org.bouncycastle:bcprov-ext-jdk15on *:bcprov-ext-jdk18on latest.release
+    - change org.bouncycastle:bcutil-jdk15on *:bcutil-jdk18on latest.release
+    - change org.bouncycastle:bcpkix-jdk15on *:bcpkix-jdk18on latest.release
+    - change org.bouncycastle:bcmail-jdk15on *:bcmail-jdk18on latest.release
+    - change org.bouncycastle:bcjmail-jdk15on *:bcjmail-jdk18on latest.release
+    - change org.bouncycastle:bcpg-jdk15on *:bcpg-jdk18on latest.release
+    - change org.bouncycastle:bctls-jdk15on *:bctls-jdk18on latest.release
+    - change org.bouncycastle:bcprov-jdk15to18 *:bcprov-jdk18on latest.release
+    - change org.bouncycastle:bcprov-ext-jdk15to18 *:bcprov-ext-jdk18on latest.release
+    - change org.bouncycastle:bcutil-jdk15to18 *:bcutil-jdk18on latest.release
+    - change org.bouncycastle:bcpkix-jdk15to18 *:bcpkix-jdk18on latest.release
+    - change org.bouncycastle:bcmail-jdk15to18 *:bcmail-jdk18on latest.release
+    - change org.bouncycastle:bcjmail-jdk15to18 *:bcjmail-jdk18on latest.release
+    - change org.bouncycastle:bcpg-jdk15to18 *:bcpg-jdk18on latest.release
+    - change org.bouncycastle:bctls-jdk15to18 *:bctls-jdk18on latest.release
+    - change org.bouncycastle:bcprov-jdk16 *:bcprov-jdk18on latest.release
+    - change org.bouncycastle:bcprov-ext-jdk16 *:bcprov-ext-jdk18on latest.release
+    - change org.bouncycastle:bcmail-jdk16 *:bcmail-jdk18on latest.release
+    - change org.bouncycastle:bcpg-jdk16 *:bcpg-jdk18on latest.release
+    - change org.bouncycastle:bcprov-jdk15+ *:bcprov-jdk18on latest.release
+    - change org.bouncycastle:bcmail-jdk15+ *:bcmail-jdk18on latest.release
+    - change org.bouncycastle:bcpg-jdk15+ *:bcpg-jdk18on latest.release
+    - change org.bouncycastle:bcprov-jdk15 *:bcprov-jdk18on latest.release
+    - change org.bouncycastle:bcprov-ext-jdk15 *:bcprov-ext-jdk18on latest.release
+    - change org.bouncycastle:bcmail-jdk15 *:bcmail-jdk18on latest.release
+    - change org.bouncycastle:bcpg-jdk15 *:bcpg-jdk18on latest.release
+    - change org.bouncycastle:bcprov-jdk14 *:bcprov-jdk18on latest.release
+    - change org.bouncycastle:bcprov-ext-jdk14 *:bcprov-ext-jdk18on latest.release
+    - change org.bouncycastle:bcutil-jdk14 *:bcutil-jdk18on latest.release
+    - change org.bouncycastle:bcpkix-jdk14 *:bcpkix-jdk18on latest.release
+    - change org.bouncycastle:bcmail-jdk14 *:bcmail-jdk18on latest.release
+    - change org.bouncycastle:bcpg-jdk14 *:bcpg-jdk18on latest.release
+    - change org.bouncycastle:bctls-jdk14 *:bctls-jdk18on latest.release
+    - change org.bouncycastle:bcprov-jdk12 *:bcprov-jdk18on latest.release
+    - change org.bouncycastle:bcpg-jdk12 *:bcpg-jdk18on latest.release
+    - change org.bouncycastle:bctsp-jdk15on *:bcpkix-jdk18on latest.release
+    - change org.bouncycastle:bctsp-jdk16 *:bcpkix-jdk18on latest.release
+    - change org.bouncycastle:bctsp-jdk15+ *:bcpkix-jdk18on latest.release
+    - change org.bouncycastle:bctsp-jdk15 *:bcpkix-jdk18on latest.release
+    - change org.bouncycastle:bctsp-jdk14 *:bcpkix-jdk18on latest.release
+    - change javax.xml.bind:jaxb-api jakarta.xml.bind:jakarta.xml.bind-api 2.3.x
+    - dependency jakarta.xml.bind:jakarta.xml.bind-api 2.3.x
+    - change javax.xml.ws:jaxws-api jakarta.xml.ws:jakarta.xml.ws-api 2.3.x
+    - dependency jakarta.xml.ws:jakarta.xml.ws-api 2.3.x
+    - dependency jakarta.inject:jakarta.inject-api 1.0.3
+    - change javax.annotation:javax.annotation-api jakarta.annotation:jakarta.annotation-api 1.3.x
+    - dependency org.projectlombok:lombok 1.18.*
+    - dependency org.scala-lang:scala-* 2.12.x
+    - dependency com.google.inject:guice 5.x
+    - dependency commons-codec:commons-codec 1.17.x
+    - dependency org.mapstruct:mapstruct* 1.6.x
+    - dependency com.google.guava:guava 29.0 -jre
+    - dependency net.bytebuddy:byte-buddy 1.14.11
+    - dependency org.modelmapper:modelmapper 3.2.x
+    - dependency org.jetbrains.kotlin:* 2.3.x
+    - plugin org.jetbrains.kotlin.* 2.3.x
+    - dependency net.bytebuddy:byte-buddy* 1.17.x
+    - dependency org.mockito:mockito-* 5.17.x
+    - plugin io.freefair.* 9.x
+    - plugin org.sonarqube 7.x
+    - plugin com.gorylenko.gradle-git-properties 4.x
+    - plugin org.asciidoctor.jvm.* 4.x
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.gradle.catalog.VersionCatalog_Gradle8_14
+displayName: version catalog 정렬 (Gradle8_14)
+description: com.eottabom.rewrite.gradle.UpgradeGradleToolchain_8_14 의 의존성/플러그인 버전 변경을 gradle/*.versions.toml 에 적용한다.
+recipeList:
+- com.eottabom.rewrite.gradle.UpgradeVersionCatalog:
+    rules:
+    - plugin io.freefair.* 8.x
+    - plugin org.asciidoctor.jvm.* 4.0.x
+    - plugin com.gorylenko.gradle-git-properties 2.5.x

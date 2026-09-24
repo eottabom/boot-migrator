@@ -27,12 +27,14 @@ import org.yaml.snakeyaml.Yaml;
  * <p>
  * 결과는 src/main/resources/META-INF/rewrite/upstream-spring-boot-steps.yml 에 넣어 둔다 (생성 파일,
  * 직접 고치지 않는다). rewrite-recipe-bom 을 올리면 UpstreamStepsUpToDateTests 가 깨지고, ./gradlew
- * syncUpstreamSteps 로 다시 만든다.
+ * syncUpstreamSteps 로 다시 만든다. version catalog 레시피(VersionCatalogStepsGenerator)도 함께 만든다.
  */
 public final class UpstreamStepsGenerator {
 
 	public static final Path OUTPUT = Path.of("src/main/resources/META-INF/rewrite/upstream-spring-boot-steps.yml");
 	static final String STEP_PREFIX = "com.eottabom.rewrite.spring.upstream.UpgradeSpringBootStep_";
+
+	private static final String FIRST_PREVIOUS = "org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_0";
 
 	/** 단계 → upstream 레시피. 3.0 은 2.x 에서 올라오는 입구라 체인을 그대로 쓰므로 만들지 않는다. */
 	private static final Map<String, String> UPSTREAM = new LinkedHashMap<>();
@@ -50,16 +52,31 @@ public final class UpstreamStepsGenerator {
 	}
 
 	public static void main(String[] args) throws IOException {
-		Path out = (args.length > 0) ? Path.of(args[0]) : OUTPUT;
-		Files.writeString(out, generate());
-		System.out.println("생성: " + out);
+		Files.writeString(OUTPUT, generate());
+		System.out.println("생성: " + OUTPUT);
+		VersionCatalogStepsGenerator.main(args);
+	}
+
+	static String upstreamOf(String version) {
+		return UPSTREAM.get(version);
+	}
+
+	static String previousOf(String version) {
+		String previous = FIRST_PREVIOUS;
+		for (Map.Entry<String, String> e : UPSTREAM.entrySet()) {
+			if (e.getKey().equals(version)) {
+				return previous;
+			}
+			previous = e.getValue();
+		}
+		throw new IllegalArgumentException(version);
 	}
 
 	@SuppressWarnings("unchecked")
 	static String generate() {
 		Map<String, Map<String, Object>> upstream = upstreamRecipes();
 		List<Object> docs = new ArrayList<>();
-		String previous = "org.openrewrite.java.spring.boot3.UpgradeSpringBoot_3_0";
+		String previous = FIRST_PREVIOUS;
 		for (Map.Entry<String, String> e : UPSTREAM.entrySet()) {
 			Map<String, Object> source = upstream.get(e.getValue());
 			if (source == null) {
