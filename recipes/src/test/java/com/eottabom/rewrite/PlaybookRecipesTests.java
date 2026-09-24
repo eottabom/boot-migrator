@@ -8,8 +8,10 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.TestFactory;
 import org.openrewrite.Recipe;
 import org.openrewrite.config.Environment;
 
@@ -25,8 +27,8 @@ class PlaybookRecipesTests {
 
 	private static final Pattern RECIPE_REF = Pattern.compile("(?m)^\\s*(?:fix|recipe):\\s*([\\w.]+)");
 
-	@Test
-	void playbookRecipesExist() throws IOException {
+	@TestFactory
+	Stream<DynamicTest> playbookRecipesExist() throws IOException {
 		Set<String> available = ENV.listRecipes().stream().map(Recipe::getName).collect(Collectors.toSet());
 		Set<String> referenced = new TreeSet<>();
 		for (String file : new String[] { "../playbook/compatibility.yml", "../playbook/known-issues.yml" }) {
@@ -37,7 +39,8 @@ class PlaybookRecipesTests {
 		}
 
 		assertThat(referenced).hasSizeGreaterThan(10);
-		assertThat(referenced).allSatisfy((name) -> assertThat(available).as(name).contains(name));
+		return referenced.stream()
+			.map((name) -> DynamicTest.dynamicTest(name, () -> assertThat(available).as(name).contains(name)));
 	}
 
 }
