@@ -88,9 +88,9 @@ rewrite-recipe-bom 을 올리면 `UpstreamStepsUpToDateTest` 가 깨지고, `./g
 ## 2. 파일 구성
 
 ```
-settings.gradle / build.gradle        루트는 소스 없이 모듈을 묶고 migration* 태스크만 붙인다
+settings.gradle.kts / build.gradle.kts  루트는 소스 없이 모듈을 묶고 migration* 태스크만 붙인다 (빌드 스크립트는 Kotlin DSL)
 recipes/                              OpenRewrite 레시피 jar (대상 프로젝트의 rewrite classpath 에 올라간다)
-  build.gradle                        레시피 jar 빌드와 recipeLibs 태스크(recipes/build/recipe-libs). JDK 25 로 빌드하되 바이트코드는 17
+  build.gradle.kts                    레시피 jar 빌드와 recipeLibs 태스크(recipes/build/recipe-libs). JDK 25 로 빌드하되 바이트코드는 17
                                       (레시피 jar 는 대상 프로젝트의 Gradle JVM 안에서 로딩되는데, JDK 17 로 Gradle 을 띄우는 프로젝트가 있다)
   src/main/resources/META-INF/rewrite/  레시피 선언 (yml)
     spring-boot.yml                   단계 레시피: 단계별로 무엇을 어떤 순서로 돌리는지 (SpringBootStep / MigrateToSpringBoot)
@@ -113,6 +113,8 @@ playbook/known-issues.yml             알려진 이슈 레지스트리 (단계 /
                                       와 테스트 실패 힌트
 init/rewrite.init.gradle              대상 프로젝트에 OpenRewrite 플러그인과 레시피 jar 를 붙이는 Gradle init script
 init/verify.init.gradle               컴파일 경고 수집, 테스트 fail-fast 해제와 결과 XML 강제, 리포트 생성(migrationReport 태스크)
+                                      init script 는 대상 프로젝트의 Gradle 안에서 돌아서 Groovy 로 둔다
+                                      (Gradle 8.x 의 Kotlin 스크립트 컴파일러는 JDK 25 에서 깨진다)
 ```
 
 ### init script
