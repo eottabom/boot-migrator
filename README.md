@@ -81,7 +81,7 @@ upstream 이 큰 틀을 맡고, 커스텀 레시피는 **upstream 만으로는 �
 단계 레시피로 바꾼 뒤 2개 파일만 바뀌고 통과했다. 3.0 단계는 2.x 에서 올라오는 입구라 upstream 전체 체인을 그대로 쓴다.
 
 upstream 단계 레시피(`upstream-spring-boot-steps.yml`)는 rewrite-spring jar 에서 생성한 파일이다.
-rewrite-recipe-bom 을 올리면 `UpstreamStepsUpToDateTest` 가 깨지고, `./gradlew :recipes:syncUpstreamSteps` 로 다시 만든다.
+rewrite-recipe-bom 을 올리면 `UpstreamStepsUpToDateTests` 가 깨지고, `./gradlew :recipes:syncUpstreamSteps` 로 다시 만든다.
 
 ---
 
