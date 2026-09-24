@@ -45,13 +45,13 @@ public final class Git {
     }
 
     /**
-     * base 커밋 대비 누적 변경을 patch 로 남긴다. 인덱스는 원래대로 돌려놓는다.
+     * base 커밋 대비 누적 변경을 patch 로 남긴다. 실제 인덱스는 건드리지 않는다.
      * 추적 중인 파일의 변경과 created(레시피가 새로 만든 파일)만 담는다. 빌드/테스트가 만든 파일(.gitignore 누락)은 섞이지 않는다.
      */
-    public boolean diffSince(String base, Path patch, Collection<String> created) {
-        boolean ok = stage(created) && Processes.run(dir, patch, List.of("git", "diff", "--cached", "--binary", base));
-        run("git", "reset", "-q");
-        return ok;
+    public boolean diffSince(String base, Path patch, Collection<String> created, Path tempIndex) {
+        // 사용자 인덱스(스테이징 상태)를 건드리지 않도록 임시 인덱스에서 스테이징하고 비교한다
+        String tree = snapshotTree(created, tempIndex);
+        return tree != null && Processes.run(dir, patch, List.of("git", "diff", "--binary", base, tree));
     }
 
     /** 줄바꿈/공백 차이(core.autocrlf 등)로 실패하면 공백을 무시하고 한 번 더 시도한다. */

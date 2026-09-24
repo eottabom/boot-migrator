@@ -41,14 +41,16 @@ JDK(17 / 21 / 25)와 대상 프로젝트의 Gradle wrapper 만 있으면 된다.
  │    ├─ rewriteRun     init/rewrite.init.gradle 로 대상 프로젝트에 OpenRewrite 플러그인 + 레시피 jar 를 붙여 실행
  │    │                 (대상 프로젝트의 build.gradle 은 수정하지 않는다)
  │    ├─ compile        init/verify.init.gradle: javac -Xlint:removal 로 "다음 버전에서 제거될 API" 수집
- │    ├─ build          전체 테스트(fail-fast 끔) + 패키징, asciidoctor, checkstyle. 테스트 실패 목록과 properties-migrator 경고 수집
+ │    ├─ build          전체 테스트(fail-fast 끔) + 패키징, asciidoctor, checkstyle (--continue). 테스트 실패 목록과 properties-migrator 경고 수집
  │    ├─ 알려진 이슈     known-issues.yml 에서 이 단계 + 단계 전후 의존성 버전 변경에 맞는 항목을 고른다
  │    ├─ 리포트          .rewrite-migration/NN-boot-X.Y.md    단계별 결과
  │    ├─ 패치           .rewrite-migration/NN-boot-X.Y.patch 시작 시점 대비 누적 변경
- │    └─ commit         --commit 일 때만
+ │    └─ commit         --commit 일 때만. 게이트를 통과한 단계만, 추적 중인 파일의 변경과 레시피가 만든 파일만 담는다
  │
- │    컴파일이 깨지면 그 단계에서 멈춘다 → 고치고 같은 명령을 다시 실행하면 현재 버전부터 이어서 진행
- │    (고치지 않고 다시 실행하면 단계별 누적 patch 로 그 단계 전 상태를 만들어 그 단계부터 다시 시도)
+ │    다음 중 하나면 그 단계에서 멈추고 커밋하지 않는다
+ │      컴파일 실패, 테스트 실패 1개 이상, 원본 빌드(build -x test)에서는 실패하지 않던 태스크의 실패, 원인을 모르는 빌드 실패
+ │    고치고 같은 명령을 다시 실행하면 그 단계의 게이트를 처음부터 다시 확인하고, 통과하면 커밋하고 다음 단계로 간다
+ │    (컴파일 에러를 고치지 않고 다시 실행하면 단계별 누적 patch 로 그 단계 전 상태를 만들어 그 단계부터 다시 시도)
  │
  └─ 5) 요약
 ```

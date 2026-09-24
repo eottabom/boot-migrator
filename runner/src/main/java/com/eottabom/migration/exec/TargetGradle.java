@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * 대상 프로젝트의 Gradle wrapper 를 별도 프로세스로 실행한다.
  * 대상 프로젝트는 자기 Gradle 버전, 플러그인, JDK 로 돌아야 하므로 이 빌드 안에서 직접 실행하지 않는다.
  */
-public final class TargetGradle {
+public final class TargetGradle implements BuildTool {
 
     private static final long PROGRESS_INTERVAL_MS = 20_000;
     private static final boolean WINDOWS = System.getProperty("os.name", "").toLowerCase().startsWith("windows");
@@ -52,6 +52,7 @@ public final class TargetGradle {
         return "-Xmx" + heapMb + "m -XX:MaxMetaspaceSize=1g";
     }
 
+    @Override
     public String javaHome() {
         return javaHome;
     }
@@ -61,11 +62,7 @@ public final class TargetGradle {
      * clean: src/main/generated 등에 남은 QueryDSL Q-class 가 있으면 APT 가 "Attempt to recreate a file" 로 실패한다.
      * --no-daemon: 데몬이 이전에 로딩한 레시피 jar 를 캐시해서, 레시피를 고쳐도 옛 버전이 도는 문제 방지.
      */
-    public boolean rewrite(Path log, String task, String recipe, Path rewriteInit, Path recipeLibs) {
-        return rewrite(log, task, recipe, rewriteInit, recipeLibs, null);
-    }
-
-    /** configFile: 선언형 레시피 파일 (.rewrite/rewrite.generated.yml). null 이면 플러그인 기본값 */
+    @Override
     public boolean rewrite(Path log, String task, String recipe, Path rewriteInit, Path recipeLibs, Path configFile) {
         List<String> args = new ArrayList<>(List.of("--no-daemon", "--init-script", rewriteInit.toString(), "clean", task,
                 "-Drewrite.activeRecipe=" + recipe, "-PrewriteRecipeLibs=" + recipeLibs));
@@ -79,6 +76,7 @@ public final class TargetGradle {
      * 출력은 log 파일로 보내고, 실행 중에는 경과 시간과 현재 Gradle 태스크를 주기적으로 찍는다
      * (테스트 태스크면 끝난 테스트 클래스 수도). 끝나면 소요 시간을 남긴다.
      */
+    @Override
     public boolean run(Path log, List<String> args) {
         long start = System.currentTimeMillis();
         FileTime startTime = FileTime.fromMillis(start);
@@ -110,6 +108,7 @@ public final class TargetGradle {
     }
 
     /** 결과만 필요하고 로그는 남기지 않는 실행. */
+    @Override
     public boolean runQuietly(List<String> args) {
         try {
             Process process = start(args);

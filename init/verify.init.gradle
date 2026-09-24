@@ -245,7 +245,7 @@ rootProject {
             L << "| 테스트 | ${total == 0 ? '실행 안 함' : (failures ? "❌ ${failures.size()} / ${total} 실패" : "✅ ${total}개 통과")} |"
             String buildOk = findProperty('migrationBuildOk')
             String baselineOk = findProperty('migrationBaselineBuildOk')
-            String buildFail = baselineOk == '0' ? '❌ 실패 (원본에서도 실패하는 기존 문제, 00-baseline-assemble.log)' : '❌ 실패 (테스트 외: 패키징/asciidoctor/checkstyle 등, test.log 참고)'
+            String buildFail = baselineOk == '0' ? '❌ 실패 (원본에서도 실패하던 태스크만 실패한 기존 문제, 00-baseline-build.log)' : '❌ 실패 (테스트 외: 패키징/asciidoctor/checkstyle 등, test.log 참고)'
             L << "| 빌드 | ${buildOk == '1' ? '✅ 통과' : (buildOk == '0' ? buildFail : '실행 안 함')} |"
             L << "| 제거 예정 API 사용 ([removal]) | ${warnings.removal.size()} 종류 |"
             L << "| deprecated API 사용 | ${warnings.deprecation.size()} 종류 |"

@@ -150,6 +150,60 @@ public final class MigrationWorkspace {
         }
     }
 
+    // ── 처음 실행 때 정한 값 (재개해도 바뀌지 않는다) ─────────────────────────────────────────────────────────────────
+
+    /** 원본 빌드(테스트 제외)에서 실패한 태스크. 저장된 적이 없으면 빈 집합 (원본 빌드가 통과했다고 본다) */
+    public Set<String> baselineFailedTasks() {
+        return new LinkedHashSet<>(read(file("00-baseline-failed-tasks.txt")).lines().filter(l -> !l.isBlank()).toList());
+    }
+
+    public void writeBaselineFailedTasks(Collection<String> tasks) {
+        write(file("00-baseline-failed-tasks.txt"), String.join("\n", tasks));
+    }
+
+    /** 멈출 때 있던 추적 안 된 파일 (실패한 빌드가 남긴 것 포함). 재개 때는 그 뒤에 생긴 파일만 사용자가 고치며 만든 파일로 본다 */
+    public Set<String> untrackedAtStop() {
+        return new LinkedHashSet<>(read(file("untracked-at-stop.txt")).lines().filter(l -> !l.isBlank()).toList());
+    }
+
+    public void recordUntrackedAtStop(Collection<String> files) {
+        write(file("untracked-at-stop.txt"), String.join("\n", files));
+    }
+
+    /** 누적 patch 의 기준 커밋. 재개한 실행도 처음 실행과 같은 기준이어야 단계 전 상태로 되돌릴 수 있다 */
+    public Optional<String> baseRevision() {
+        return firstLine(file("base-revision.txt"));
+    }
+
+    public void recordBaseRevision(String revision) {
+        if (baseRevision().isEmpty() && revision != null) {
+            write(file("base-revision.txt"), revision);
+        }
+    }
+
+    /** 처음 실행 때의 Boot 버전 (리포트 제목의 "시작 → 현재") */
+    public Optional<String> startBoot() {
+        return firstLine(file("start-boot.txt"));
+    }
+
+    public void recordStartBoot(String version) {
+        if (startBoot().isEmpty() && version != null) {
+            write(file("start-boot.txt"), version);
+        }
+    }
+
+    private static Optional<String> firstLine(Path file) {
+        return read(file).lines().map(String::trim).filter(l -> !l.isEmpty()).findFirst();
+    }
+
+    private static void write(Path file, String content) {
+        try {
+            Files.writeString(file, content);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     // ── 파일 도우미 ──────────────────────────────────────────────────────────────────────────────────────────────────
 
     public static String read(Path file) {
