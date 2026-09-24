@@ -89,3 +89,7 @@ recipeList:
   - com.eottabom.rewrite.spring.FindLateConditionalComponentScan
   - com.eottabom.rewrite.httpclient.FindHttpHeadersMapUsage
   - com.eottabom.rewrite.testing.FindTestListenerClassScopeAssumption
+  - com.eottabom.rewrite.spring.FindUnregisteredHttpMessageConverterBeans
+  - com.eottabom.rewrite.feign.FindFeignMessageConverterCustomizationGap
+  - com.eottabom.rewrite.httpclient.FindRequestBodyBufferingCompatibilityRisk
+  - com.eottabom.rewrite.testing.FindSpyStubbingThroughCachingProxy

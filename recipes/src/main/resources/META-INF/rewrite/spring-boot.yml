@@ -167,6 +167,8 @@ recipeList:
   - com.eottabom.rewrite.aws.UpgradeSpringCloudAws_3_3
   # Boot 3.4 BOM 이 elasticsearch-java 를 8.15 로 올린다. 8.15 에서 RangeQuery 의 field/gte/lte 가 UntypedRangeQuery 로 옮겨졌다
   - com.eottabom.rewrite.elasticsearch.MigrateRangeQueryToUntyped
+  # 3.4 부터 @ConditionalOn(Missing)Bean(annotation = ..) 이 @Bean 반환 타입을 기본으로 보지 않는다. value 로 명시해 이전 동작 유지
+  - com.eottabom.rewrite.spring.PreserveConditionalBeanReturnType
   # 이 단계의 설정 키 변경을 기동 로그로 확인하기 위해 (이미 있으면 그대로)
   - com.eottabom.rewrite.spring.AddPropertiesMigrator
   # upstream 버전 변경을 gradle/libs.versions.toml 에도 적용 (version-catalog-steps.yml, 생성 파일)
@@ -243,6 +245,8 @@ recipeList:
   - com.eottabom.rewrite.logging.FixLogstashDecoratorForJackson3
   # upstream Jackson 3 전환이 catch (IOException) 를 catch (JacksonException) 로 바꿀 때 Files.readString 같은 진짜 IOException 을 놓치는 경우
   - com.eottabom.rewrite.jackson.FixJacksonIOExceptionCatch
+  # Boot 4 는 JsonMapper 타입 빈이 있을 때만 자동 설정 매퍼가 물러난다. JsonMapper 를 돌려주는 @Bean ObjectMapper 의 반환 타입을 좁힌다
+  - com.eottabom.rewrite.jackson.NarrowJsonMapperBeanReturnType
   # Boot 4 BOM 이 elasticsearch-java 를 9.x 로 올린다. HttpClient 5 기반 Rest5Client 로 옮기고, 매퍼를 Jackson 3 용으로 맞춘다
   - com.eottabom.rewrite.elasticsearch.MigrateToRest5Client
   - com.eottabom.rewrite.elasticsearch.ElasticsearchJava9ApiChanges

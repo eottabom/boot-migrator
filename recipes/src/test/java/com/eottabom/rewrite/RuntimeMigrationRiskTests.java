@@ -99,4 +99,70 @@ class RuntimeMigrationRiskTests implements RewriteTest {
 						"""));
 	}
 
+	@Test
+	void marksRestClientAndRequestFactoryCreation() {
+		rewriteRun((spec) -> spec
+			.recipeFromResources("com.eottabom.rewrite.httpclient.FindRequestBodyBufferingCompatibilityRisk")
+			.parser(JavaParser.fromJavaVersion()
+				.dependsOn(
+						"package org.springframework.web.client; public class RestTemplate { public RestTemplate() {} }",
+						"package org.springframework.http.client; public class SimpleClientHttpRequestFactory {}")),
+				java("""
+						import org.springframework.http.client.SimpleClientHttpRequestFactory;
+						import org.springframework.web.client.RestTemplate;
+
+						class Clients {
+						    RestTemplate restTemplate = new RestTemplate();
+						    Object factory = new SimpleClientHttpRequestFactory();
+						}
+						""", """
+						import org.springframework.http.client.SimpleClientHttpRequestFactory;
+						import org.springframework.web.client.RestTemplate;
+
+						class Clients {
+						    RestTemplate restTemplate = /*~~>*/new RestTemplate();
+						    Object factory = /*~~>*/new SimpleClientHttpRequestFactory();
+						}
+						"""));
+	}
+
+	@Test
+	void marksHttpMessageConverterBeansIncludingSubtypes() {
+		rewriteRun((spec) -> spec
+			.recipeFromResources("com.eottabom.rewrite.spring.FindUnregisteredHttpMessageConverterBeans")
+			.parser(JavaParser.fromJavaVersion()
+				.dependsOn("package org.springframework.context.annotation; public @interface Bean {}",
+						"package org.springframework.http.converter; public interface HttpMessageConverter<T> {}",
+						"package com.example; public class JsonConverter implements org.springframework.http.converter.HttpMessageConverter<Object> {}")),
+				java("""
+						import com.example.JsonConverter;
+						import org.springframework.context.annotation.Bean;
+
+						class WebConfig {
+						    @Bean
+						    JsonConverter jsonConverter() {
+						        return new JsonConverter();
+						    }
+
+						    JsonConverter notABean() {
+						        return new JsonConverter();
+						    }
+						}
+						""", """
+						import com.example.JsonConverter;
+						import org.springframework.context.annotation.Bean;
+
+						class WebConfig {
+						    /*~~>*/@Bean
+						    JsonConverter jsonConverter() {
+						        return new JsonConverter();
+						    }
+
+						    JsonConverter notABean() {
+						        return new JsonConverter();
+						    }
+						}
+						"""));
+	}
+
 }

@@ -98,3 +98,39 @@ preconditions:
 recipeList:
   - org.openrewrite.java.search.FindMethods:
       methodPattern: "org.springframework.test.context.TestContext getTestClass()"
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.spring.FindUnregisteredHttpMessageConverterBeans
+displayName: "HttpMessageConverter 빈 등록 방식 전환 검토 후보 탐지"
+description: "Boot 4 는 HttpMessageConverter 빈을 모아 서버와 클라이언트에 함께 적용하던 방식에서 ServerHttpMessageConvertersCustomizer / ClientHttpMessageConvertersCustomizer 로 옮겨 가는 중이다. 빈 수집은 당분간 유지되지만, Jackson 2 와 3 이 함께 classpath 에 있으면 Jackson 3 컨버터가 application/json 을 먼저 처리해 직접 등록한 Jackson 2 컨버터가 쓰이지 않을 수 있다. 서버와 클라이언트 중 어디에 적용할지 정해 customizer 로 옮기거나 spring.http.converters.preferred-json-mapper 를 지정한다. 응답과 요청 JSON 형식을 테스트한다."
+recipeList:
+  - com.eottabom.rewrite.spring.FindBeanMethodsReturning:
+      fullyQualifiedTypeName: "org.springframework.http.converter.HttpMessageConverter"
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.feign.FindFeignMessageConverterCustomizationGap
+displayName: "Boot 컨버터 customizer 가 Feign 에 적용되지 않음 검토 후보 탐지"
+description: "Spring Cloud OpenFeign 은 Boot 4 의 ClientHttpMessageConvertersCustomizer 를 Feign 컨버터에 적용하지 않는다 (5.0.1 에서 일부 보완, 이슈는 열려 있음). RestClient 용 customizer 만 선언하면 Feign 응답 역직렬화에 다른 JSON 설정(naming strategy 등)이 쓰일 수 있다. Feign 전용 org.springframework.cloud.openfeign.support.HttpMessageConverterCustomizer 도 선언했는지 확인하고 Feign 응답 역직렬화를 테스트한다. 검색은 OpenFeign 을 쓰는 모듈의 Boot customizer 빈을 표시한다."
+preconditions:
+  - org.openrewrite.java.dependencies.search.ModuleHasDependency:
+      groupIdPattern: "org.springframework.cloud"
+      artifactIdPattern: "spring-cloud-openfeign-core"
+recipeList:
+  - com.eottabom.rewrite.spring.FindBeanMethodsReturning:
+      fullyQualifiedTypeName: "org.springframework.boot.http.converter.autoconfigure.ClientHttpMessageConvertersCustomizer"
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.eottabom.rewrite.httpclient.FindRequestBodyBufferingCompatibilityRisk
+displayName: "요청 본문 버퍼링 중단으로 Content-Length 가 빠짐 검토 후보 탐지"
+description: "Framework 6.1 부터 대부분의 ClientHttpRequestFactory 가 요청 본문을 버퍼링하지 않아 JSON 같은 요청에 Content-Length 헤더가 설정되지 않는다. Content-Length 를 요구하는 서버(일부 게이트웨이, 요청 서명 검증, 레거시 서버)와 연동하는 클라이언트는 BufferingClientHttpRequestFactory 로 감싸는지 확인한다. 버퍼링은 메모리를 더 쓰므로 일괄 적용하지 않는다. 검색은 RestTemplate, RestClient 와 요청 팩토리를 만드는 곳을 표시한다."
+recipeList:
+  - org.openrewrite.java.search.FindMethods:
+      methodPattern: "org.springframework.web.client.RestTemplate <constructor>(..)"
+  - org.openrewrite.java.search.FindMethods:
+      methodPattern: "org.springframework.web.client.RestClient create(..)"
+  - org.openrewrite.java.search.FindMethods:
+      methodPattern: "org.springframework.web.client.RestClient builder(..)"
+  - org.openrewrite.java.search.FindMethods:
+      methodPattern: "org.springframework.boot.web.client.RestTemplateBuilder build(..)"
+  - org.openrewrite.java.search.FindMethods:
+      methodPattern: "org.springframework.http.client.*RequestFactory <constructor>(..)"

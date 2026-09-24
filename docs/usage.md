@@ -101,9 +101,10 @@ recipeList:
 
 ## 외부 사례 기반 검토
 
-`runtime-migration-risks.yml` 의 검색 레시피 9개를 `FindManualMigrationItems` 에 연결했다.
+`runtime-migration-risks.yml` 의 검색 레시피와 `FindSpyStubbingThroughCachingProxy` 를 `FindManualMigrationItems` 에 연결했다.
 분석/preview 단계에서 후보 위치를 표시하고, 단계별 영향과 공식 출처는
-`playbook/known-issues.yml` 의 REPORT_ONLY 항목으로 제공한다. 소스를 자동 수정하지 않는다.
+`playbook/known-issues.yml` 의 REPORT_ONLY 항목으로 제공한다. 이 검색 레시피들은 소스를 자동 수정하지 않는다.
+변환 결과가 분명한 두 가지(3.4 조건부 빈의 반환 타입, 4.0 `@Bean ObjectMapper` 반환 타입)는 단계 레시피가 고친다.
 
 | 단계 | 검토 대상 | 확인할 회귀 동작 |
 |---|---|---|
@@ -112,10 +113,14 @@ recipeList:
 | 3.2 | 전역 예외 처리와 NoResourceFoundException | 없는 URL 은 404 응답 |
 | 3.2 | 비동기 캐시 | 캐시 적중, 완료, 오류 시 동작 |
 | 3.2 | 트랜잭션 이벤트 리스너 | 기동 및 commit/rollback 별 저장 |
+| 3.2 | 요청 본문 버퍼링과 Content-Length | Content-Length 를 요구하는 서버로의 요청 |
 | 3.4 | 조건부 ComponentScan | 조건에 따른 컨텍스트 기동 |
+| 3.4 | 캐시 프록시를 거치는 spy stubbing | stubbing 한 값이 캐시되지 않고 spy 에 닿는지 |
 | 4.0 | Redis JSON serializer | 기존 데이터, 타입 정보, null 값 호환 |
 | 4.0 | HttpHeaders / MultiValueMap | 타입 호환 및 헤더 대소문자 의미 |
 | 4.0 | TestExecutionListener | 최상위, 중첩 테스트 초기화 |
+| 4.0 | HttpMessageConverter 빈 | 직접 등록한 컨버터로 JSON 이 나가고 들어오는지 |
+| 4.0 | OpenFeign 과 Boot 컨버터 customizer | Feign 응답 역직렬화의 JSON 설정 |
 
 검색 결과는 결함 확정이 아니다. 일부 레시피는 파일 단위 조합을 검색하므로 서로 무관한 선언이
 같은 파일에 있으면 후보가 될 수 있다. 어노테이션 배열, 생략된 예외 타입, 다른 파일의 합성 어노테이션,
