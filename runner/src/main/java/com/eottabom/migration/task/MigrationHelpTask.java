@@ -46,7 +46,7 @@ public abstract class MigrationHelpTask extends DefaultTask {
 			결과는 대상 프로젝트의 .rewrite-migration/ (단계별 리포트 NN-*.md, 누적 patch, SUMMARY.md).
 			멈춘 뒤 고치고 같은 명령을 다시 실행하면 멈춘 단계부터 이어서 진행한다.
 			프로젝트 전용 레시피: 대상 프로젝트의 .rewrite/ 에 tags ["migration-stage:4.0", "migration-phase:before|after"]
-			자세한 내용: README.md, 옵션 원문: ./gradlew help --task migrationRun
+			자세한 내용: docs/usage.md, 옵션 원문: ./gradlew help --task migrationRun
 			""";
 
 	public MigrationHelpTask() {
