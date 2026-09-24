@@ -38,9 +38,6 @@ public final class Versions {
 		return parse(version).numbers.get(0);
 	}
 
-	private record Parsed(List<Integer> numbers, int rank, int qualifierNumber) {
-	}
-
 	private static Parsed parse(String version) {
 		String v = (version != null) ? version.trim() : "0";
 		Matcher m = NUMERIC_PREFIX.matcher(v);
@@ -76,6 +73,9 @@ public final class Versions {
 			default -> 5;
 		};
 		return new Parsed(numbers, rank, number);
+	}
+
+	private record Parsed(List<Integer> numbers, int rank, int qualifierNumber) {
 	}
 
 }

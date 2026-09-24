@@ -32,20 +32,6 @@ import org.w3c.dom.NodeList;
  */
 final class StageReport {
 
-	/**
-	 * @param compileOk 1 | 0 | skip (러너가 판단한 컴파일 결과)
-	 * @param buildOk 1 | 0 | skip
-	 * @param baselineBuildOk 0 이면 빌드 실패를 원본에서도 실패하던 기존 문제로 표시한다
-	 * @param knownIssues 러너가 playbook 에서 고른 알려진 이슈 (id, mode, title, detail, source, fix,
-	 * trigger)
-	 * @param projectRecipes 대상 프로젝트의 .rewrite/ 레시피 이름 (자동 보정 내역에 커스텀 보정으로 센다)
-	 */
-	record Input(String stage, Path projectDir, Path compileLog, Path rewriteLog, Path findPatch, Path versionsBefore,
-			Path versionsAfter, String compileOk, String buildOk, String baselineBuildOk,
-			List<Map<String, Object>> knownIssues, String guide, List<FailureHint> failureHints,
-			Set<String> projectRecipes) {
-	}
-
 	private static final Pattern WARNING = Pattern
 		.compile("^(/\\S+\\.java):(\\d+): warning: \\[(removal|deprecation)\\] (.*)$");
 
@@ -123,11 +109,6 @@ final class StageReport {
 			.sorted((a, b) -> b.getValue().size() - a.getValue().size())
 			.forEach((e) -> list.add(Map.of("message", e.getKey(), "locations", new ArrayList<>(e.getValue()))));
 		return list;
-	}
-
-	/** renamed / unsupported 는 "key|source" 로 중복을 없앤 {key, replacement, source} */
-	private record Tests(int total, List<Map<String, Object>> failures, Map<String, Map<String, Object>> renamed,
-			Map<String, Map<String, Object>> unsupported) {
 	}
 
 	private static Tests tests(Path projectDir, List<FailureHint> hints) {
@@ -252,12 +233,6 @@ final class StageReport {
 		return new ArrayList<>(manual);
 	}
 
-	private record Fixes(Map<String, Set<String>> byRecipe, Set<String> changed) {
-	}
-
-	private record RecipeNode(int indent, String name) {
-	}
-
 	/**
 	 * rewriteRun 로그의 "Changes have been made to &lt;파일&gt; by:" 아래 레시피 트리에서, 말단(실제로 바꾼)
 	 * 레시피를 가장 가까운 커스텀 보정 레시피에 귀속시킨다. upstream 은 파일 수만 센다.
@@ -318,9 +293,6 @@ final class StageReport {
 		return projectRecipes.contains(name) || (name.startsWith("com.eottabom.rewrite.")
 				&& !name.contains(".spring.upstream.") && !name.contains(".MigrateToSpringBoot_")
 				&& !name.contains(".SpringBootStep_") && !name.equals("com.eottabom.rewrite.CommonMigrationFixes"));
-	}
-
-	private record Deps(List<Object> changed, List<String> added, List<String> removed) {
 	}
 
 	private static Deps deps(Map<String, String> before, Map<String, String> after) {
@@ -607,6 +579,34 @@ final class StageReport {
 		catch (IOException ex) {
 			throw new UncheckedIOException(ex);
 		}
+	}
+
+	/**
+	 * @param compileOk 1 | 0 | skip (러너가 판단한 컴파일 결과)
+	 * @param buildOk 1 | 0 | skip
+	 * @param baselineBuildOk 0 이면 빌드 실패를 원본에서도 실패하던 기존 문제로 표시한다
+	 * @param knownIssues 러너가 playbook 에서 고른 알려진 이슈 (id, mode, title, detail, source, fix,
+	 * trigger)
+	 * @param projectRecipes 대상 프로젝트의 .rewrite/ 레시피 이름 (자동 보정 내역에 커스텀 보정으로 센다)
+	 */
+	record Input(String stage, Path projectDir, Path compileLog, Path rewriteLog, Path findPatch, Path versionsBefore,
+			Path versionsAfter, String compileOk, String buildOk, String baselineBuildOk,
+			List<Map<String, Object>> knownIssues, String guide, List<FailureHint> failureHints,
+			Set<String> projectRecipes) {
+	}
+
+	/** renamed / unsupported 는 "key|source" 로 중복을 없앤 {key, replacement, source} */
+	private record Tests(int total, List<Map<String, Object>> failures, Map<String, Map<String, Object>> renamed,
+			Map<String, Map<String, Object>> unsupported) {
+	}
+
+	private record Fixes(Map<String, Set<String>> byRecipe, Set<String> changed) {
+	}
+
+	private record RecipeNode(int indent, String name) {
+	}
+
+	private record Deps(List<Object> changed, List<String> added, List<String> removed) {
 	}
 
 }

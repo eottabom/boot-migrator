@@ -94,15 +94,6 @@ public record MigrationWorkspace(Path dir) {
 		return m.find() ? m.group(1) : "-";
 	}
 
-	// ── 재개 정보: 컴파일 실패로 멈춘 단계
-	// ───────────────────────────────────────────────────────────────────────────────
-
-	/**
-	 * @param reason compile(컴파일 실패) | build(테스트/빌드 실패)
-	 */
-	public record Resume(String stage, String tag, String previousTag, String reason) {
-	}
-
 	public Optional<Resume> readResume() {
 		Path file = file(".resume");
 		if (!Files.exists(file)) {
@@ -257,5 +248,14 @@ public record MigrationWorkspace(Path dir) {
 		catch (IOException ex) {
 			throw new UncheckedIOException(ex);
 		}
+	}
+
+	// ── 재개 정보: 컴파일 실패로 멈춘 단계
+	// ───────────────────────────────────────────────────────────────────────────────
+
+	/**
+	 * @param reason compile(컴파일 실패) | build(테스트/빌드 실패)
+	 */
+	public record Resume(String stage, String tag, String previousTag, String reason) {
 	}
 }

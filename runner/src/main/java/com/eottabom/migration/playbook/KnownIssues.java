@@ -10,33 +10,6 @@ import java.util.regex.Pattern;
 /** playbook/known-issues.yml: 알려진 이슈 레지스트리와 테스트 실패 힌트. */
 public record KnownIssues(List<Issue> issues, Map<String, String> guides, List<FailureHint> failureHints) {
 
-	public enum Mode {
-
-		/** 레시피가 고친다. 결과 확인용 */
-		AUTO_FIX,
-		/** 레시피가 바꿨거나 바꿀 수 있지만 사람이 확인해야 한다 */
-		REVIEW_REQUIRED,
-		/** 자동으로 바꾸지 않는다. 도메인/운영 판단 */
-		REPORT_ONLY
-
-	}
-
-	/**
-	 * stage 조건이면 stage (+ requires), 라이브러리 조건이면 dependency + crosses 또는 affected 를 쓴다.
-	 */
-	public record Issue(String id, Mode mode, String title, String detail, String source, String fix, String stage,
-			List<String> requires, String dependency, String crosses, List<String> affected) {
-	}
-
-	/**
-	 * @param trigger 라이브러리 조건으로 걸린 경우 "group:artifact 이전 → 이후", 단계 조건이면 null
-	 */
-	public record Match(Issue issue, String trigger) {
-	}
-
-	public record FailureHint(String pattern, String text) {
-	}
-
 	public static KnownIssues load(Path file) {
 		Map<String, Object> root = Yaml.load(file);
 		List<Issue> issues = new ArrayList<>();
@@ -145,5 +118,32 @@ public record KnownIssues(List<Issue> issues, Map<String, String> guides, List<F
 			regex.append((c == '*') ? ".*" : Pattern.quote(String.valueOf(c)));
 		}
 		return Pattern.compile(regex.toString());
+	}
+
+	public enum Mode {
+
+		/** 레시피가 고친다. 결과 확인용 */
+		AUTO_FIX,
+		/** 레시피가 바꿨거나 바꿀 수 있지만 사람이 확인해야 한다 */
+		REVIEW_REQUIRED,
+		/** 자동으로 바꾸지 않는다. 도메인/운영 판단 */
+		REPORT_ONLY
+
+	}
+
+	/**
+	 * stage 조건이면 stage (+ requires), 라이브러리 조건이면 dependency + crosses 또는 affected 를 쓴다.
+	 */
+	public record Issue(String id, Mode mode, String title, String detail, String source, String fix, String stage,
+			List<String> requires, String dependency, String crosses, List<String> affected) {
+	}
+
+	/**
+	 * @param trigger 라이브러리 조건으로 걸린 경우 "group:artifact 이전 → 이후", 단계 조건이면 null
+	 */
+	public record Match(Issue issue, String trigger) {
+	}
+
+	public record FailureHint(String pattern, String text) {
 	}
 }

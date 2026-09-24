@@ -11,41 +11,6 @@ import java.util.TreeMap;
 public record Compatibility(Map<String, BootLine> boot, List<Integer> lts, Map<Integer, JavaTarget> java,
 		String gradleUpgradeVersion, String gradleUpgradeRecipe) {
 
-	/**
-	 * @param gradle Gradle major → 그 major 에서 지원하는 최소 버전
-	 */
-	public record BootLine(String version, int javaMin, int javaMax, Map<Integer, String> gradle, String framework,
-			String springCloudTrain, String springCloudSince, String springCloudAws) {
-
-		public GradleSupport gradleSupport(String gradleVersion) {
-			int major = Versions.major(gradleVersion);
-			String min = this.gradle.get(major);
-			if (min != null) {
-				return (Versions.compare(gradleVersion, min) >= 0) ? GradleSupport.SUPPORTED : GradleSupport.TOO_OLD;
-			}
-			return (major < this.gradle.keySet().stream().min(Integer::compare).orElseThrow()) ? GradleSupport.TOO_OLD
-					: GradleSupport.NOT_LISTED;
-		}
-
-		/** 예) "7.6.4+ / 8.4+" */
-		public String gradleRange() {
-			return String.join(" / ", this.gradle.values().stream().map((v) -> v + "+").toList());
-		}
-	}
-
-	public enum GradleSupport {
-
-		SUPPORTED, TOO_OLD, NOT_LISTED
-
-	}
-
-	/**
-	 * @param gradleMin 이 JDK 위에서 Gradle 을 띄울 수 있는 최소 버전
-	 * @param upgradesGradle 레시피가 Gradle 도 함께 올린다 (따로 Gradle 단계를 넣지 않는다)
-	 */
-	public record JavaTarget(int version, String gradleMin, String recipe, boolean upgradesGradle) {
-	}
-
 	public static Compatibility load(Path file) {
 		Map<String, Object> root = Yaml.load(file);
 
@@ -101,5 +66,40 @@ public record Compatibility(Map<String, BootLine> boot, List<Integer> lts, Map<I
 							+ " | latest | auto | none");
 		}
 		return target;
+	}
+
+	/**
+	 * @param gradle Gradle major → 그 major 에서 지원하는 최소 버전
+	 */
+	public record BootLine(String version, int javaMin, int javaMax, Map<Integer, String> gradle, String framework,
+			String springCloudTrain, String springCloudSince, String springCloudAws) {
+
+		public GradleSupport gradleSupport(String gradleVersion) {
+			int major = Versions.major(gradleVersion);
+			String min = this.gradle.get(major);
+			if (min != null) {
+				return (Versions.compare(gradleVersion, min) >= 0) ? GradleSupport.SUPPORTED : GradleSupport.TOO_OLD;
+			}
+			return (major < this.gradle.keySet().stream().min(Integer::compare).orElseThrow()) ? GradleSupport.TOO_OLD
+					: GradleSupport.NOT_LISTED;
+		}
+
+		/** 예) "7.6.4+ / 8.4+" */
+		public String gradleRange() {
+			return String.join(" / ", this.gradle.values().stream().map((v) -> v + "+").toList());
+		}
+	}
+
+	public enum GradleSupport {
+
+		SUPPORTED, TOO_OLD, NOT_LISTED
+
+	}
+
+	/**
+	 * @param gradleMin 이 JDK 위에서 Gradle 을 띄울 수 있는 최소 버전
+	 * @param upgradesGradle 레시피가 Gradle 도 함께 올린다 (따로 Gradle 단계를 넣지 않는다)
+	 */
+	public record JavaTarget(int version, String gradleMin, String recipe, boolean upgradesGradle) {
 	}
 }

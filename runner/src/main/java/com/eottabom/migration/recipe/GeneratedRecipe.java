@@ -29,16 +29,6 @@ public final class GeneratedRecipe {
 
 	public static final String RELATIVE_PATH = ".rewrite/rewrite.generated.yml";
 
-	/**
-	 * @param name 활성화할 레시피 이름 (-Drewrite.activeRecipe)
-	 */
-	public record Generated(String name, Path file, List<String> before, List<String> after) {
-
-		public boolean hasProjectRecipes() {
-			return !this.before.isEmpty() || !this.after.isEmpty();
-		}
-	}
-
 	private GeneratedRecipe() {
 	}
 
@@ -81,6 +71,16 @@ public final class GeneratedRecipe {
 			throw new UncheckedIOException(ex);
 		}
 		return new Generated(name, file, before, after);
+	}
+
+	/**
+	 * @param name 활성화할 레시피 이름 (-Drewrite.activeRecipe)
+	 */
+	public record Generated(String name, Path file, List<String> before, List<String> after) {
+
+		public boolean hasProjectRecipes() {
+			return !this.before.isEmpty() || !this.after.isEmpty();
+		}
 	}
 
 }

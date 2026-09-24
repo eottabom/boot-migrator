@@ -55,15 +55,6 @@ public final class MigrationRunner {
 
 	private final KnownIssues knownIssues;
 
-	/**
-	 * @param rewriteInit init/rewrite.init.gradle
-	 * @param verifyInit init/verify.init.gradle
-	 * @param recipeLibs build/recipe-libs (레시피 jar + upstream 레시피 모듈)
-	 * @param playbookDir playbook/ (compatibility.yml, known-issues.yml)
-	 */
-	public record RunnerPaths(Path rewriteInit, Path verifyInit, Path recipeLibs, Path playbookDir) {
-	}
-
 	private final BuildTool.Factory buildTools;
 
 	/**
@@ -418,21 +409,6 @@ public final class MigrationRunner {
 		}
 	}
 
-	// ── 재개
-	// ─────────────────────────────────────────────────────────────────────────────────────────────────────────
-
-	/**
-	 * 재개 결과.
-	 *
-	 * @param active 재개했다 (남아 있는 변경은 이 마이그레이션의 변경이므로 작업 트리 검사를 하지 않는다)
-	 * @param retryFrom 멈춘 단계를 다시 시도하는 경우 그 단계 번호 - 1, 이어서 가는 경우 null
-	 * @param lastTag 마지막으로 통과한 단계의 태그
-	 */
-	record Resumed(boolean active, Integer retryFrom, String lastTag, String note) {
-		static final Resumed NONE = new Resumed(false, null, null, null);
-
-	}
-
 	/**
 	 * 멈춘 단계부터 이어서 한다. 컴파일 실패로 멈췄다면 컴파일을 다시 확인하고, 고쳐 두었으면 테스트/빌드 게이트까지 이어서 확인한다. 그대로면 그 단계
 	 * 전 상태로 되돌린다. 테스트/빌드 실패로 멈췄다면 게이트를 다시 확인한다. 통과해야 커밋하고 다음 단계로 간다.
@@ -486,43 +462,6 @@ public final class MigrationRunner {
 		}
 		ws.clearResume();
 		return new Resumed(true, null, r.tag(), "- 재개: " + r.stage() + " 단계를 고친 상태에서 검증을 통과하고 이어서 진행");
-	}
-
-	// ── 게이트
-	// ───────────────────────────────────────────────────────────────────────────────────────────────────────
-
-	/**
-	 * 게이트 결과.
-	 *
-	 * @param buildOk 1 | 0 | skip
-	 * @param failedTests build 게이트에서 실패한 테스트 수
-	 * @param newFailedTasks 원본에서는 실패하지 않던 태스크 중 이 단계에서 실패한 것 (원인을 모르는 실패도 포함)
-	 */
-	record GateResult(boolean compileOk, String buildOk, int failedTests, Set<String> newFailedTasks) {
-
-		static final GateResult SKIPPED = new GateResult(true, "skip", 0, Set.of());
-
-		boolean buildBlocking() {
-			return !this.newFailedTasks.isEmpty();
-		}
-
-		boolean passed() {
-			return this.compileOk && this.failedTests == 0 && !buildBlocking();
-		}
-
-		String describe() {
-			if (!this.compileOk) {
-				return "컴파일 실패";
-			}
-			String build = "빌드 실패 (새로 실패한 태스크 " + String.join(", ", this.newFailedTasks) + ")";
-			if (this.failedTests > 0 && buildBlocking()) {
-				return "테스트 " + this.failedTests + "개 실패, " + build;
-			}
-			if (this.failedTests > 0) {
-				return "테스트 " + this.failedTests + "개 실패";
-			}
-			return build;
-		}
 	}
 
 	/**
@@ -839,6 +778,67 @@ public final class MigrationRunner {
 
 	private static String orDefault(String value) {
 		return (value != null) ? value : "default";
+	}
+
+	/**
+	 * @param rewriteInit init/rewrite.init.gradle
+	 * @param verifyInit init/verify.init.gradle
+	 * @param recipeLibs build/recipe-libs (레시피 jar + upstream 레시피 모듈)
+	 * @param playbookDir playbook/ (compatibility.yml, known-issues.yml)
+	 */
+	public record RunnerPaths(Path rewriteInit, Path verifyInit, Path recipeLibs, Path playbookDir) {
+	}
+
+	// ── 재개
+	// ─────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+	/**
+	 * 재개 결과.
+	 *
+	 * @param active 재개했다 (남아 있는 변경은 이 마이그레이션의 변경이므로 작업 트리 검사를 하지 않는다)
+	 * @param retryFrom 멈춘 단계를 다시 시도하는 경우 그 단계 번호 - 1, 이어서 가는 경우 null
+	 * @param lastTag 마지막으로 통과한 단계의 태그
+	 */
+	record Resumed(boolean active, Integer retryFrom, String lastTag, String note) {
+		static final Resumed NONE = new Resumed(false, null, null, null);
+
+	}
+
+	// ── 게이트
+	// ───────────────────────────────────────────────────────────────────────────────────────────────────────
+
+	/**
+	 * 게이트 결과.
+	 *
+	 * @param buildOk 1 | 0 | skip
+	 * @param failedTests build 게이트에서 실패한 테스트 수
+	 * @param newFailedTasks 원본에서는 실패하지 않던 태스크 중 이 단계에서 실패한 것 (원인을 모르는 실패도 포함)
+	 */
+	record GateResult(boolean compileOk, String buildOk, int failedTests, Set<String> newFailedTasks) {
+
+		static final GateResult SKIPPED = new GateResult(true, "skip", 0, Set.of());
+
+		boolean buildBlocking() {
+			return !this.newFailedTasks.isEmpty();
+		}
+
+		boolean passed() {
+			return this.compileOk && this.failedTests == 0 && !buildBlocking();
+		}
+
+		String describe() {
+			if (!this.compileOk) {
+				return "컴파일 실패";
+			}
+			String build = "빌드 실패 (새로 실패한 태스크 " + String.join(", ", this.newFailedTasks) + ")";
+			if (this.failedTests > 0 && buildBlocking()) {
+				return "테스트 " + this.failedTests + "개 실패, " + build;
+			}
+			if (this.failedTests > 0) {
+				return "테스트 " + this.failedTests + "개 실패";
+			}
+			return build;
+		}
 	}
 
 }

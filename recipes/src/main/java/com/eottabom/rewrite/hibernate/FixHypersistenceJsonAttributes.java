@@ -58,18 +58,6 @@ public class FixHypersistenceJsonAttributes extends ScanningRecipe<FixHypersiste
 				+ "유령 UPDATE 를 막는다. @JdbcTypeCode(SqlTypes.JSON) 속성도 대상이다.";
 	}
 
-	public static class Accumulator {
-
-		/** 프로젝트 소스에 선언된 클래스 -> 그 클래스의 필드 타입들 */
-		final Map<String, Set<String>> fieldTypesByClass = new HashMap<>();
-
-		/** JSON 속성으로 직접 매핑된 타입들 */
-		final Set<String> roots = new HashSet<>();
-
-		Set<String> targets;
-
-	}
-
 	@Override
 	public Accumulator getInitialValue(ExecutionContext ctx) {
 		return new Accumulator();
@@ -221,6 +209,18 @@ public class FixHypersistenceJsonAttributes extends ScanningRecipe<FixHypersiste
 		else if (type instanceof JavaType.FullyQualified) {
 			into.add(((JavaType.FullyQualified) type).getFullyQualifiedName());
 		}
+	}
+
+	public static class Accumulator {
+
+		/** 프로젝트 소스에 선언된 클래스 -> 그 클래스의 필드 타입들 */
+		final Map<String, Set<String>> fieldTypesByClass = new HashMap<>();
+
+		/** JSON 속성으로 직접 매핑된 타입들 */
+		final Set<String> roots = new HashSet<>();
+
+		Set<String> targets;
+
 	}
 
 }

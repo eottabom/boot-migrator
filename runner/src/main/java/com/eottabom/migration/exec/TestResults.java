@@ -26,9 +26,6 @@ final class TestResults {
 	private static final Set<String> SKIP_DIRS = Set.of(".git", "node_modules", ".gradle", ".idea",
 			".rewrite-migration");
 
-	record Summary(int total, int failed) {
-	}
-
 	private TestResults() {
 	}
 
@@ -103,6 +100,9 @@ final class TestResults {
 	private static int attribute(String tag, String name) {
 		Matcher m = Pattern.compile(" " + name + "=\"(\\d+)\"").matcher(tag);
 		return m.find() ? Integer.parseInt(m.group(1)) : 0;
+	}
+
+	record Summary(int total, int failed) {
 	}
 
 }

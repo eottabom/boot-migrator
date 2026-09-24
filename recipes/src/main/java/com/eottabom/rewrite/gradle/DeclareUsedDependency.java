@@ -100,9 +100,6 @@ public class DeclareUsedDependency extends ScanningRecipe<DeclareUsedDependency.
 		return "import 하는 패키지의 의존성이 build.gradle 에 직접 선언돼 있지 않으면 implementation(테스트 전용이면 testImplementation)으로 추가한다.";
 	}
 
-	public record Accumulator(Map<JavaProject, Set<String>> sourceSetsUsing) {
-	}
-
 	@Override
 	public Accumulator getInitialValue(ExecutionContext ctx) {
 		return new Accumulator(new HashMap<>());
@@ -218,6 +215,9 @@ public class DeclareUsedDependency extends ScanningRecipe<DeclareUsedDependency.
 			return cursor.getParentOrThrow().getValue() instanceof JavaSourceFile;
 		}
 		return cursor.getParentOrThrow().firstEnclosing(J.MethodInvocation.class) == null;
+	}
+
+	public record Accumulator(Map<JavaProject, Set<String>> sourceSetsUsing) {
 	}
 
 }

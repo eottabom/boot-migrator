@@ -16,15 +16,6 @@ import java.util.function.Consumer;
  */
 final class FakeBuildTool implements BuildTool {
 
-	/**
-	 * @param failedTasks 로그에 남길 실패 태스크 (Gradle 의 "Execution failed for task" 형식)
-	 */
-	record BuildOutcome(boolean ok, int failedTests, List<String> failedTasks) {
-		static BuildOutcome pass() {
-			return new BuildOutcome(true, 0, List.of());
-		}
-	}
-
 	final Path projectDir;
 
 	final Deque<Consumer<Path>> rewrites = new ArrayDeque<>();
@@ -119,6 +110,15 @@ final class FakeBuildTool implements BuildTool {
 		}
 		catch (IOException ex) {
 			throw new UncheckedIOException(ex);
+		}
+	}
+
+	/**
+	 * @param failedTasks 로그에 남길 실패 태스크 (Gradle 의 "Execution failed for task" 형식)
+	 */
+	record BuildOutcome(boolean ok, int failedTests, List<String> failedTasks) {
+		static BuildOutcome pass() {
+			return new BuildOutcome(true, 0, List.of());
 		}
 	}
 

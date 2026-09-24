@@ -46,14 +46,6 @@ public class CopyJacksonAnnotationsToAccessors extends ScanningRecipe<CopyJackso
 
 	private static final Pattern IGNORES_CONFIG = Pattern.compile("(?m)^\\s*(\\*\\*/|/)?lombok\\.config\\s*$");
 
-	public static class Accumulator {
-
-		boolean usesLombokWithJackson;
-
-		boolean configExists;
-
-	}
-
 	@Override
 	public String getDisplayName() {
 		return "lombok.config: Jackson 어노테이션을 accessor 에 복사";
@@ -144,6 +136,14 @@ public class CopyJacksonAnnotationsToAccessors extends ScanningRecipe<CopyJackso
 			}
 		}
 		return lombok && jackson;
+	}
+
+	public static class Accumulator {
+
+		boolean usesLombokWithJackson;
+
+		boolean configExists;
+
 	}
 
 }

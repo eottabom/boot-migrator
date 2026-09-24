@@ -40,22 +40,6 @@ public record ProjectRecipes(List<Path> files, List<Map<String, Object>> documen
 
 	private static final String PHASE_TAG = "migration-phase:";
 
-	public enum Phase {
-
-		BEFORE, AFTER
-
-	}
-
-	/**
-	 * @param stages 붙일 단계 키. "*" 는 모든 단계
-	 */
-	public record ProjectRecipe(String name, Path file, Set<String> stages, Phase phase) {
-
-		public boolean appliesTo(String stageKey) {
-			return this.stages.contains("*") || this.stages.contains(stageKey);
-		}
-	}
-
 	public static ProjectRecipes none() {
 		return new ProjectRecipes(List.of(), List.of(), List.of());
 	}
@@ -141,6 +125,22 @@ public record ProjectRecipes(List<Path> files, List<Map<String, Object>> documen
 	private static void addIfFile(List<Path> files, Path file) {
 		if (Files.isRegularFile(file)) {
 			files.add(file);
+		}
+	}
+
+	public enum Phase {
+
+		BEFORE, AFTER
+
+	}
+
+	/**
+	 * @param stages 붙일 단계 키. "*" 는 모든 단계
+	 */
+	public record ProjectRecipe(String name, Path file, Set<String> stages, Phase phase) {
+
+		public boolean appliesTo(String stageKey) {
+			return this.stages.contains("*") || this.stages.contains(stageKey);
 		}
 	}
 }

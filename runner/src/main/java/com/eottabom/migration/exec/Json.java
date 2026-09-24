@@ -9,10 +9,6 @@ final class Json {
 	private Json() {
 	}
 
-	/** 이미 JSON 인 문자열을 그대로 넣는다 (리포트 스크립트가 만든 NN-*.report.json). */
-	record Raw(String json) {
-	}
-
 	static String write(Object value) {
 		StringBuilder out = new StringBuilder();
 		append(out, value);
@@ -74,6 +70,10 @@ final class Json {
 			}
 			out.append('"');
 		}
+	}
+
+	/** 이미 JSON 인 문자열을 그대로 넣는다 (리포트 스크립트가 만든 NN-*.report.json). */
+	record Raw(String json) {
 	}
 
 }
