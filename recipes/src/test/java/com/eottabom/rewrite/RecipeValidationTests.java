@@ -38,7 +38,7 @@ class RecipeValidationTests {
 						.allSatisfy((v) -> assertThat(v.isValid()).as(recipe.getName() + " -> " + v).isTrue())));
 	}
 
-	@ParameterizedTest
+	@ParameterizedTest(name = "[{index}] Boot {0} 단계 종합 레시피 로딩 검증")
 	@ValueSource(strings = { "3_0", "3_1", "3_2", "3_3", "3_4", "3_5", "4_0" })
 	void stageRecipesExist(String stage) {
 		Recipe recipe = ENV.activateRecipes("com.eottabom.rewrite.spring.MigrateToSpringBoot_" + stage);

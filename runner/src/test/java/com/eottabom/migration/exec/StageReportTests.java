@@ -30,22 +30,22 @@ class StageReportTests {
 
 	static Stream<Arguments> failures() {
 		return Stream.of(
-				Arguments.of("demo.app.OrderTest",
+				Arguments.of("단일 예외 및 실패 위치(소스 코드 줄번호) 추출", "demo.app.OrderTest",
 						"java.lang.AssertionError: expected 1\n\tat demo.app.OrderTest.saves(OrderTest.java:12)",
 						"OrderTest", "saves", "AssertionError", "expected 1", "OrderTest.java:12", null),
-				Arguments.of("demo.app.OrderTest$WhenPaid$Refund",
+				Arguments.of("중첩 예외(Caused by) 시 가장 안쪽(root cause) 예외 추출", "demo.app.OrderTest$WhenPaid$Refund",
 						"java.lang.IllegalStateException: outer\nCaused by: org.x.InnerException: root cause",
 						"OrderTest", "WhenPaid > Refund > saves", "InnerException", "root cause", null, null),
-				Arguments.of("demo.app.AsyncTest",
+				Arguments.of("알려진 문제 힌트(FailureHint)와 일치하는 예외 힌트 추출", "demo.app.AsyncTest",
 						"org.springframework.beans.factory.NoSuchBeanDefinitionException: No bean named 'taskExecutor' available",
 						"AsyncTest", "saves", "NoSuchBeanDefinitionException", "No bean named 'taskExecutor' available",
 						null, "applicationTaskExecutor 로 바꾼다"));
 	}
 
-	@ParameterizedTest
+	@ParameterizedTest(name = "[{index}] {0}")
 	@MethodSource("failures")
-	void extractsInnermostCauseLocationAndHint(String classname, String stack, String simpleClass, String test,
-			String exception, String message, String location, String hint) {
+	void extractsInnermostCauseLocationAndHint(String scenario, String classname, String stack, String simpleClass,
+			String test, String exception, String message, String location, String hint) {
 		Map<String, Object> failure = StageReport.testFailure(classname, "saves", "", stack, HINTS);
 
 		assertThat((String) failure.get("cls")).endsWith(simpleClass);
@@ -56,14 +56,14 @@ class StageReportTests {
 			.containsEntry("hint", hint);
 	}
 
-	@ParameterizedTest
+	@ParameterizedTest(name = "[{index}] {0} -> {1} ({2})")
 	@CsvSource({ "1.2.3, 2.0.0, major", "1.2.3, 1.3.0, minor", "1.2.3, 1.2.4, patch", "6.6.2.Final, 6.6.3.Final, patch",
 			"33.4.8-jre, 33.5.0-jre, minor" })
 	void classifiesVersionChange(String before, String after, String level) {
 		assertThat(StageReport.level(before, after)).isEqualTo(level);
 	}
 
-	@ParameterizedTest
+	@ParameterizedTest(name = "[{index}] 레시피: {0} -> 커스텀 fix={1}")
 	@CsvSource({ "com.eottabom.rewrite.gradle.DeclareUsedDependency, true",
 			"com.eottabom.rewrite.spring.SpringBootStep_3_4, false",
 			"com.eottabom.rewrite.spring.MigrateToSpringBoot_3_4, false",
