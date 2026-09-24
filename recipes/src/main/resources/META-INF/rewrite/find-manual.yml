@@ -78,3 +78,14 @@ recipeList:
       artifactIdPattern: "*"
   - org.openrewrite.java.search.FindTypes:
       fullyQualifiedTypeName: co.elastic.clients.elasticsearch.ElasticsearchClient
+
+  # 외부 재현 사례의 런타임/컴파일 호환성 검토 후보 (정의: runtime-migration-risks.yml)
+  - com.eottabom.rewrite.redis.FindRedisJsonSerializationCompatibilityRisk
+  - com.eottabom.rewrite.spring.FindCatchAllHandlerMasking404
+  - com.eottabom.rewrite.security.FindSecurityContextPersistenceGap
+  - com.eottabom.rewrite.security.FindSpaCsrfMigrationGap
+  - com.eottabom.rewrite.cache.FindAsyncCacheConfigurationGap
+  - com.eottabom.rewrite.spring.FindTransactionalEventListenerConfiguration
+  - com.eottabom.rewrite.spring.FindLateConditionalComponentScan
+  - com.eottabom.rewrite.httpclient.FindHttpHeadersMapUsage
+  - com.eottabom.rewrite.testing.FindTestListenerClassScopeAssumption

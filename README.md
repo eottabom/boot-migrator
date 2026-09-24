@@ -311,3 +311,28 @@ OpenRewrite 레시피는 소스를 LST(Lossless Semantic Tree, 타입 정보가 
 | OpenRewrite Gradle plugin | `init/rewrite.init.gradle` | 7.39.0 |
 
 두 버전은 같은 `rewrite-bom` 을 참조하는 조합으로 맞춘다.
+
+
+## 외부 사례 기반 마이그레이션 검토
+
+`runtime-migration-risks.yml` 의 검색 레시피 9개를 `FindManualMigrationItems` 에 연결했다.
+분석/preview 단계에서 후보 위치를 표시하고, 단계별 영향과 공식 출처는
+`playbook/known-issues.yml` 의 REPORT_ONLY 항목으로 제공한다. 소스를 자동 수정하지 않는다.
+
+| 단계 | 검토 대상 | 확인할 회귀 동작 |
+|---|---|---|
+| 3.0 | 수동 로그인 SecurityContext 저장 | 동일 세션의 다음 요청도 인증 유지 |
+| 3.0 | SPA CSRF | 최초 접근·로그인·로그아웃 후 POST |
+| 3.2 | 전역 예외 처리와 NoResourceFoundException | 없는 URL 은 404 응답 |
+| 3.2 | 비동기 캐시 | 캐시 적중·완료·오류 시 동작 |
+| 3.2 | 트랜잭션 이벤트 리스너 | 기동 및 commit/rollback 별 저장 |
+| 3.4 | 조건부 ComponentScan | 조건에 따른 컨텍스트 기동 |
+| 4.0 | Redis JSON serializer | 기존 데이터·타입 정보·null 값 호환 |
+| 4.0 | HttpHeaders / MultiValueMap | 타입 호환 및 헤더 대소문자 의미 |
+| 4.0 | TestExecutionListener | 최상위·중첩 테스트 초기화 |
+
+검색 결과는 결함 확정이 아니다. 일부 레시피는 파일 단위 조합을 검색하므로 서로 무관한 선언이
+같은 파일에 있으면 후보가 될 수 있다. 어노테이션 배열·생략된 예외 타입, 다른 파일의 합성 어노테이션,
+상속/외부 설정 및 별도 메서드의 저장 흐름을 완전히 분석하지 않는다. 스캔은 단계와 무관하게 후보를
+보여주며 단계별 적용 여부는 알려진 이슈 리포트에서 확인한다. upstream 적용 후에도 남는 사례를
+재현한 뒤 자동 보정으로 확장한다.
