@@ -32,7 +32,7 @@ public abstract class MigrationHelpTask extends DefaultTask {
 			  --gate=<값>                   build(기본: 컴파일 + 전체 테스트 + 패키징) | compile | none
 			                                테스트가 하나라도 깨지거나 이 단계에서 빌드가 깨지면 멈추고 커밋하지 않는다
 			  --commit                      게이트를 통과한 단계마다 git commit (작업 트리가 깨끗해야 함)
-			  --preview                     소스를 바꾸지 않고 다음 단계 patch 만 만든다 (Gradle 자체의 --dry-run 과 다름)
+			  --preview                     소스를 바꾸지 않고 단계별 patch 를 만든다 (git 이면 임시 worktree 에서 모든 단계)
 			  --allow-dirty                 커밋되지 않은 변경이 있어도 시작
 
 			migrationVerify

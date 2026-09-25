@@ -287,6 +287,11 @@ public final class MigrationRunner {
 
 		// 단계 번호는 지난 기록 뒤에 이어서 붙인다 (재개 시에는 다시 시도하는 단계 번호부터)
 		int order = (resumed.retryFrom() != null) ? resumed.retryFrom() : ws.stageReportCount();
+		if (request.dryRun() && project.git()) {
+			new StagePreview(this.paths, this.buildTools, this.inspector, this.console).run(projectDir, ws,
+					plan.stages(), order, projectRecipes, gradle.javaHome());
+			return;
+		}
 		String lastTag = resumed.lastTag();
 		for (Stage stage : plan.stages()) {
 			order++;
@@ -311,7 +316,7 @@ public final class MigrationRunner {
 				else {
 					this.console.line("   변경 없음");
 				}
-				this.console.line("   (preview 는 소스를 바꾸지 않으므로 다음 단계는 이 단계 적용 후에 확인할 수 있다)");
+				this.console.line("   (git 저장소가 아니라 첫 단계만 보여준다. git 저장소는 모든 단계를 임시 worktree 에서 미리 본다)");
 				return;
 			}
 

@@ -8,7 +8,7 @@ Spring Boot 프로젝트를 **명령 하나로** 최종 버전(Boot 4.1 + Java 2
 ./gradlew migrationRun     --project-path=~/workspace/my-api                      # 현재 버전 -> 4.1 (Java/Gradle 은 지원되면 유지)
 ./gradlew migrationRun     --project-path=~/workspace/my-api --spring-boot=3.5 --java=latest   # 목표 Boot 가 지원하는 최신 LTS 까지
 ./gradlew migrationRun     --project-path=~/workspace/my-api --commit             # 단계마다 git commit (기본은 커밋 안 함)
-./gradlew migrationRun     --project-path=~/workspace/my-api --preview            # 다음 단계에서 바뀔 내용만 확인 (소스 안 바뀜)
+./gradlew migrationRun     --project-path=~/workspace/my-api --preview            # 단계별로 바뀔 내용만 확인 (소스 안 바뀜)
 ./gradlew migrationVerify  --project-path=~/workspace/my-api                      # 현재 소스의 컴파일 + 전체 테스트
 ./gradlew migrationHelp                                                           # 태스크와 옵션 안내 (--help 는 Gradle 이 가로채서 쓸 수 없다)
 ```

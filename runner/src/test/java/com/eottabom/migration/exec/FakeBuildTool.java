@@ -18,18 +18,37 @@ final class FakeBuildTool implements BuildTool {
 
 	final Path projectDir;
 
-	final Deque<Consumer<Path>> rewrites = new ArrayDeque<>();
+	final Deque<Consumer<Path>> rewrites;
 
-	final Deque<Boolean> compiles = new ArrayDeque<>();
+	final Deque<Boolean> compiles;
 
-	final Deque<BuildOutcome> builds = new ArrayDeque<>();
+	final Deque<BuildOutcome> builds;
 
 	BuildOutcome baseline = BuildOutcome.pass();
 
-	final List<String> calls = new ArrayList<>();
+	final List<String> calls;
 
 	FakeBuildTool(Path projectDir) {
+		this(projectDir, new ArrayDeque<>(), new ArrayDeque<>(), new ArrayDeque<>(), new ArrayList<>());
+	}
+
+	private FakeBuildTool(Path projectDir, Deque<Consumer<Path>> rewrites, Deque<Boolean> compiles,
+			Deque<BuildOutcome> builds, List<String> calls) {
 		this.projectDir = projectDir;
+		this.rewrites = rewrites;
+		this.compiles = compiles;
+		this.builds = builds;
+		this.calls = calls;
+	}
+
+	/** 같은 결과 목록을 쓰면서 다른 디렉토리(preview 의 임시 worktree)에서 실행한다 */
+	FakeBuildTool at(Path dir) {
+		if (dir.equals(this.projectDir)) {
+			return this;
+		}
+		FakeBuildTool other = new FakeBuildTool(dir, this.rewrites, this.compiles, this.builds, this.calls);
+		other.baseline = this.baseline;
+		return other;
 	}
 
 	@Override

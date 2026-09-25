@@ -25,7 +25,7 @@ public abstract class MigrationRunTask extends MigrationPlanTask {
 
 	/** Gradle 자체의 --dry-run 과 겹치지 않도록 preview 라는 이름을 쓴다 */
 	@Internal
-	@Option(option = "preview", description = "rewriteDryRun 만. 소스를 바꾸지 않고 다음 단계 patch 만 만들고 끝난다")
+	@Option(option = "preview", description = "소스를 바꾸지 않고 단계별 patch 만 만든다. git 저장소면 임시 worktree 에서 모든 단계를 미리 본다")
 	public abstract Property<Boolean> getPreview();
 
 	@Internal

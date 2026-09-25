@@ -120,6 +120,34 @@ public record Git(Path dir) {
 		return Processes.run(this.dir, patch, List.of("git", "diff", "--binary", from, to));
 	}
 
+	/** HEAD 를 기준으로 분리된 worktree 를 만든다 (target 은 아직 없는 경로). */
+	public boolean addWorktree(Path target) {
+		return run("git", "worktree", "add", "--detach", "-q", target.toString(), "HEAD");
+	}
+
+	public void removeWorktree(Path target) {
+		run("git", "worktree", "remove", "--force", target.toString());
+		run("git", "worktree", "prune");
+	}
+
+	/**
+	 * 임시 worktree 전용. 빌드 산출물을 뺀 모든 변경(새 파일 포함)을 커밋하고 커밋 id 를 돌려준다. 사용자 저장소에서는 쓰지 않는다.
+	 */
+	public String commitAll(String message) {
+		// 무시된 경로(build 등)를 pathspec 에 적으면 git add 가 실패해서, 추적 중인 파일과 새 파일을 나눠 담는다
+		List<String> created = untracked().stream()
+			.filter((file) -> !file.startsWith("build/") && !file.contains("/build/"))
+			.toList();
+		if (!stage(created)) {
+			return null;
+		}
+		if (!run("git", "-c", "user.name=boot-migrator", "-c", "user.email=boot-migrator@localhost", "commit", "-q",
+				"--allow-empty", "--no-verify", "-m", message)) {
+			return null;
+		}
+		return head();
+	}
+
 	public String lastCommit() {
 		String out = Processes.capture(this.dir, "git", "log", "-1", "--format=%h %s");
 		return (out != null) ? out.trim() : "";

@@ -53,7 +53,22 @@ class MigrationRunnerFlowTests {
 		this.fake.rewrites.add((dir) -> replace("build.gradle", "3.4.0", "3.5.0"));
 		this.runner = new MigrationRunner(new MigrationRunner.RunnerPaths(this.project.resolve("rewrite.init.gradle"),
 				this.project.resolve("verify.init.gradle"), this.project.resolve("libs"), Path.of("../playbook")),
-				Logging.getLogger(MigrationRunnerFlowTests.class), (dir, javaHome) -> this.fake);
+				Logging.getLogger(MigrationRunnerFlowTests.class), (dir, javaHome) -> this.fake.at(dir));
+	}
+
+	@Test
+	void previewsEveryStageInTemporaryWorktree() throws IOException {
+		this.fake.rewrites.clear();
+		this.fake.rewrites.add((dir) -> replace(dir.resolve("build.gradle"), "3.3.5", "3.4.0"));
+		this.fake.rewrites.add((dir) -> replace(dir.resolve("build.gradle"), "3.4.0", "3.5.0"));
+
+		this.runner.run(new MigrationRequest(this.project, "3.5", "none", "build", false, true, false, false, false,
+				true, true));
+
+		assertThat(read("build.gradle")).contains("3.3.5");
+		assertThat(read(".rewrite-migration/01-boot-3.4.dry.patch")).contains("+", "3.4.0");
+		assertThat(read(".rewrite-migration/02-boot-3.5.dry.patch")).contains("-", "3.4.0", "3.5.0");
+		assertThat(git("worktree", "list").lines()).hasSize(1);
 	}
 
 	@Test
@@ -224,8 +239,12 @@ class MigrationRunnerFlowTests {
 	}
 
 	private void replace(String path, String from, String to) {
+		replace(this.project.resolve(path), from, to);
+	}
+
+	private static void replace(Path file, String from, String to) {
 		try {
-			write(path, read(path).replace(from, to));
+			FakeBuildTool.write(file, Files.readString(file).replace(from, to));
 		}
 		catch (IOException ex) {
 			throw new IllegalStateException(ex);

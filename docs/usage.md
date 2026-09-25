@@ -43,7 +43,7 @@
 | `--one-shot` | Plan, Run | | 단계별 게이트 없이 목표 레시피를 한 번에 |
 | `--upstream-only` | Plan, Run | | 커스텀 레시피 없이 upstream 만 (비교용) |
 | `--commit` | Run | 커밋 안 함 | 게이트를 통과한 단계마다 commit (작업 트리가 깨끗해야 함) |
-| `--preview` | Run | | 다음 단계 patch 만 만들고 끝 (Gradle 자체의 `--dry-run` 과 겹치지 않게 이름이 다르다) |
+| `--preview` | Run | | 소스를 바꾸지 않고 단계별 `NN-*.dry.patch` 를 만든다. git 저장소면 임시 worktree 에 단계를 차례로 적용해 모든 단계를 보여주고(컴파일, 테스트 없음, 커밋되지 않은 변경은 빠짐), 아니면 첫 단계만. Gradle 자체의 `--dry-run` 과 겹치지 않게 이름이 다르다 |
 | `--allow-dirty` | Run | | 커밋되지 않은 변경이 있어도 시작 (기본은 중단. 재개와 preview 는 검사하지 않음) |
 | `--gate=<값>` | Run, Verify | build | `compile` / `build` (전체 테스트 + 패키징, asciidoctor, checkstyle 등) / `none` |
 | `--keep-java-home` | 전부 | | JDK 자동 선택 끄기 |
