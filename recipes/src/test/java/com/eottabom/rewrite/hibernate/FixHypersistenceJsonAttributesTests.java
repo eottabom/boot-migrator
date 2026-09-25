@@ -14,7 +14,9 @@ class FixHypersistenceJsonAttributesTests implements RewriteTest {
 		spec.recipe(new FixHypersistenceJsonAttributes())
 			.parser(JavaParser.fromJavaVersion()
 				.dependsOn("package org.hibernate.annotations; public @interface Type { Class<?> value(); }",
-						"package io.hypersistence.utils.hibernate.type.json; public class JsonStringType {}"));
+						"package io.hypersistence.utils.hibernate.type.json; public class JsonStringType {}",
+						"package lombok; public @interface Getter {}",
+						"package lombok; public @interface EqualsAndHashCode {}"));
 	}
 
 	@Test
@@ -80,90 +82,81 @@ class FixHypersistenceJsonAttributesTests implements RewriteTest {
 
 	@Test
 	void addsEqualsToLombokValueObjects() {
-		rewriteRun((spec) -> spec.parser(JavaParser.fromJavaVersion()
-			.dependsOn("package org.hibernate.annotations; public @interface Type { Class<?> value(); }",
-					"package io.hypersistence.utils.hibernate.type.json; public class JsonStringType {}",
-					"package lombok; public @interface Getter {}",
-					"package lombok; public @interface EqualsAndHashCode {}")),
-				java("""
-						package com.example;
-						import io.hypersistence.utils.hibernate.type.json.JsonStringType;
-						import org.hibernate.annotations.Type;
-						import java.util.List;
-						public class Event {
-						    @Type(JsonStringType.class)
-						    private List<Item> items;
-						    @Type(JsonStringType.class)
-						    private Single single;
-						}
-						"""), java("""
-						package com.example;
-						import lombok.Getter;
-						@Getter
-						public class Item {
-						    private String code;
-						}
-						""", """
-						package com.example;
-						import lombok.EqualsAndHashCode;
-						import lombok.Getter;
+		rewriteRun(java("""
+				package com.example;
+				import io.hypersistence.utils.hibernate.type.json.JsonStringType;
+				import org.hibernate.annotations.Type;
+				import java.util.List;
+				public class Event {
+				    @Type(JsonStringType.class)
+				    private List<Item> items;
+				    @Type(JsonStringType.class)
+				    private Single single;
+				}
+				"""), java("""
+				package com.example;
+				import lombok.Getter;
+				@Getter
+				public class Item {
+				    private String code;
+				}
+				""", """
+				package com.example;
+				import lombok.EqualsAndHashCode;
+				import lombok.Getter;
 
-						import java.io.Serializable;
+				import java.io.Serializable;
 
-						@EqualsAndHashCode
-						@Getter
-						public class Item implements Serializable {
-						    private String code;
-						}
-						"""), java("""
-						package com.example;
-						import lombok.Getter;
-						@Getter
-						public class Single {
-						    private String code;
-						}
-						""", """
-						package com.example;
-						import lombok.EqualsAndHashCode;
-						import lombok.Getter;
+				@EqualsAndHashCode
+				@Getter
+				public class Item implements Serializable {
+				    private String code;
+				}
+				"""), java("""
+				package com.example;
+				import lombok.Getter;
+				@Getter
+				public class Single {
+				    private String code;
+				}
+				""", """
+				package com.example;
+				import lombok.EqualsAndHashCode;
+				import lombok.Getter;
 
-						import java.io.Serializable;
+				import java.io.Serializable;
 
-						@EqualsAndHashCode
-						@Getter
-						public class Single implements Serializable {
-						    private String code;
-						}
-						"""));
+				@EqualsAndHashCode
+				@Getter
+				public class Single implements Serializable {
+				    private String code;
+				}
+				"""));
 	}
 
 	@Test
 	void skipsEqualsWhenClassExtendsAnother() {
-		rewriteRun((spec) -> spec.parser(JavaParser.fromJavaVersion()
-			.dependsOn("package org.hibernate.annotations; public @interface Type { Class<?> value(); }",
-					"package io.hypersistence.utils.hibernate.type.json; public class JsonStringType {}",
-					"package lombok; public @interface Getter {}")),
-				java("""
-						package com.example;
-						import io.hypersistence.utils.hibernate.type.json.JsonStringType;
-						import org.hibernate.annotations.Type;
-						public class Holder {
-						    @Type(JsonStringType.class)
-						    private Child child;
-						}
-						"""), java("""
-						package com.example;
-						public class Base implements java.io.Serializable {
-						    private String common;
-						}
-						"""), java("""
-						package com.example;
-						import lombok.Getter;
-						@Getter
-						public class Child extends Base {
-						    private String code;
-						}
-						"""));
+		rewriteRun(java("""
+				package com.example;
+				import io.hypersistence.utils.hibernate.type.json.JsonStringType;
+				import org.hibernate.annotations.Type;
+				public class Holder {
+				    @Type(JsonStringType.class)
+				    private Child child;
+				}
+				"""), java("""
+				package com.example;
+				public class Base implements java.io.Serializable {
+				    private String common;
+				}
+				"""), java("""
+				package com.example;
+				import lombok.Getter;
+				@Getter
+				public class Child extends Base {
+				    private String code;
+				}
+				"""));
 	}
 
 }

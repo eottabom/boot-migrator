@@ -3,6 +3,7 @@ package com.eottabom.migration.exec;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.eottabom.migration.exec.FakeBuildTool.BuildOutcome;
@@ -38,19 +39,20 @@ class MigrationRunnerFlowTests {
 				"distributionUrl=https\\://services.gradle.org/distributions/gradle-8.14-bin.zip\n");
 		write("src/main/java/demo/App.java", "package demo;\nclass App {}\n");
 		git("init", "-q", "-b", "main");
-		// 러너의 커밋이 전역 git 설정 없이도 되도록 (CI)
+		// 러너의 커밋이 전역 git 설정 없이도 되도록
 		git("config", "user.email", "t@t");
 		git("config", "user.name", "t");
 		git("add", "-A");
 		commit("init");
 
 		this.fake = new FakeBuildTool(this.project);
-		// 3.4 단계는 Boot 버전을 올리고 새 파일(lombok.config)을 만든다, 3.5 단계는 버전만
+		// 3.4 단계는 Boot 버전을 올리고 새 파일(lombok.config)을 만든다, 3.5 단계는 버전만.
+		// dir 은 대상 프로젝트 또는 preview 의 임시 worktree
 		this.fake.rewrites.add((dir) -> {
-			replace("build.gradle", "3.3.5", "3.4.0");
-			write("lombok.config", "config.stopBubbling = true\n");
+			replace(dir.resolve("build.gradle"), "3.3.5", "3.4.0");
+			FakeBuildTool.write(dir.resolve("lombok.config"), "config.stopBubbling = true\n");
 		});
-		this.fake.rewrites.add((dir) -> replace("build.gradle", "3.4.0", "3.5.0"));
+		this.fake.rewrites.add((dir) -> replace(dir.resolve("build.gradle"), "3.4.0", "3.5.0"));
 		this.runner = new MigrationRunner(new MigrationRunner.RunnerPaths(this.project.resolve("rewrite.init.gradle"),
 				this.project.resolve("verify.init.gradle"), this.project.resolve("libs"), Path.of("../playbook")),
 				Logging.getLogger(MigrationRunnerFlowTests.class), (dir, javaHome) -> this.fake.at(dir));
@@ -58,16 +60,14 @@ class MigrationRunnerFlowTests {
 
 	@Test
 	void previewsEveryStageInTemporaryWorktree() throws IOException {
-		this.fake.rewrites.clear();
-		this.fake.rewrites.add((dir) -> replace(dir.resolve("build.gradle"), "3.3.5", "3.4.0"));
-		this.fake.rewrites.add((dir) -> replace(dir.resolve("build.gradle"), "3.4.0", "3.5.0"));
-
-		this.runner.run(new MigrationRequest(this.project, "3.5", "none", "build", false, true, false, false, false,
-				true, true));
+		this.runner.run(preview("3.5"));
 
 		assertThat(read("build.gradle")).contains("3.3.5");
 		assertThat(read(".rewrite-migration/01-boot-3.4.dry.patch")).contains("+", "3.4.0");
-		assertThat(read(".rewrite-migration/02-boot-3.5.dry.patch")).contains("-", "3.4.0", "3.5.0");
+		assertThat(read(".rewrite-migration/01-boot-3.4.dry.patch")).contains("lombok.config");
+		assertThat(read(".rewrite-migration/02-boot-3.5.dry.patch")).contains("-", "3.4.0", "3.5.0")
+			.doesNotContain("lombok.config");
+		assertThat(this.project.resolve("lombok.config")).doesNotExist();
 		assertThat(git("worktree", "list").lines()).hasSize(1);
 	}
 
@@ -167,7 +167,7 @@ class MigrationRunnerFlowTests {
 
 		// 재개 때 컴파일이 여전히 실패 → 되돌리고 3.4 를 다시 실행 (이번에는 레시피가 바뀌어 컴파일된다고 가정)
 		this.fake.compiles.add(false);
-		this.fake.rewrites.addFirst((dir) -> replace("build.gradle", "3.3.5", "3.4.1"));
+		this.fake.rewrites.addFirst((dir) -> replace(dir.resolve("build.gradle"), "3.3.5", "3.4.1"));
 		this.runner.run(request("3.4", false));
 
 		assertThat(read("build.gradle")).contains("3.4.1");
@@ -202,7 +202,16 @@ class MigrationRunnerFlowTests {
 	}
 
 	private MigrationRequest request(String target, boolean commit) {
-		return new MigrationRequest(this.project, target, "none", "build", commit, false, false, false, false, true,
+		return request(target, commit, false);
+	}
+
+	private MigrationRequest preview(String target) {
+		return request(target, false, true);
+	}
+
+	/** gate=build, java 유지, JAVA_HOME 그대로, 프로젝트 레시피 없음 */
+	private MigrationRequest request(String target, boolean commit, boolean preview) {
+		return new MigrationRequest(this.project, target, "none", "build", commit, preview, false, false, false, true,
 				true);
 	}
 
@@ -211,11 +220,11 @@ class MigrationRunnerFlowTests {
 	}
 
 	private void commit(String message) throws IOException {
-		git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", message);
+		git("commit", "-q", "-m", message);
 	}
 
 	private String git(String... args) throws IOException {
-		List<String> command = new java.util.ArrayList<>(List.of("git", "-c", "user.email=t@t", "-c", "user.name=t"));
+		List<String> command = new ArrayList<>(List.of("git", "-c", "user.email=t@t", "-c", "user.name=t"));
 		command.addAll(List.of(args));
 		Process process = new ProcessBuilder(command).directory(this.project.toFile())
 			.redirectErrorStream(true)
@@ -236,10 +245,6 @@ class MigrationRunnerFlowTests {
 
 	private String read(String path) throws IOException {
 		return Files.readString(this.project.resolve(path));
-	}
-
-	private void replace(String path, String from, String to) {
-		replace(this.project.resolve(path), from, to);
 	}
 
 	private static void replace(Path file, String from, String to) {
