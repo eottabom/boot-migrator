@@ -343,15 +343,8 @@ final class StageReport {
 		return versions;
 	}
 
-	@SuppressWarnings("unchecked")
 	private static String markdown(Input in, Map<String, Map<String, Set<String>>> warnings, Tests tests,
 			List<Map<String, Object>> manual, Fixes fixes, Deps deps) {
-		List<String> L = new ArrayList<>();
-		L.add("# Spring Boot " + in.stage() + " 마이그레이션 검증 리포트");
-		L.add("");
-		L.add("| 항목 | 결과 |");
-		L.add("|---|---|");
-		L.add("| 컴파일 | " + outcome(in.compile(), "❌ 실패") + " |");
 		List<Map<String, Object>> newFailures = tests.failures()
 			.stream()
 			.filter((f) -> !Boolean.TRUE.equals(f.get("existing")))
@@ -360,46 +353,75 @@ final class StageReport {
 			.stream()
 			.filter((f) -> Boolean.TRUE.equals(f.get("existing")))
 			.toList();
+		List<String> lines = new ArrayList<>();
+		summary(lines, in, warnings, tests, manual, fixes, newFailures, existingFailures);
+		fixes(lines, fixes);
+		newFailures(lines, newFailures);
+		existingFailures(lines, existingFailures);
+		properties(lines, tests);
+		warnings(lines, warnings);
+		dependencies(lines, deps);
+		knownIssues(lines, in);
+		manual(lines, manual);
+		return String.join("\n", lines);
+	}
+
+	private static void summary(List<String> lines, Input in, Map<String, Map<String, Set<String>>> warnings,
+			Tests tests, List<Map<String, Object>> manual, Fixes fixes, List<Map<String, Object>> newFailures,
+			List<Map<String, Object>> existingFailures) {
+		lines.add("# Spring Boot " + in.stage() + " 마이그레이션 검증 리포트");
+		lines.add("");
+		lines.add("| 항목 | 결과 |");
+		lines.add("|---|---|");
+		lines.add("| 컴파일 | " + outcome(in.compile(), "❌ 실패") + " |");
 		String existingNote = existingFailures.isEmpty() ? "" : " (원본에서도 실패하던 " + existingFailures.size() + "개 제외)";
-		L.add("| 테스트 | " + ((tests.total() == 0) ? "실행 안 함"
-				: !newFailures.isEmpty() ? "❌ " + newFailures.size() + " / " + tests.total() + " 실패" + existingNote
-						: "✅ " + (tests.total() - existingFailures.size()) + "개 통과" + existingNote)
-				+ " |");
+		lines.add(
+				"| 테스트 | "
+						+ ((tests.total() == 0) ? "실행 안 함"
+								: !newFailures.isEmpty()
+										? "❌ " + newFailures.size() + " / " + tests.total() + " 실패" + existingNote
+										: "✅ " + (tests.total() - existingFailures.size()) + "개 통과" + existingNote)
+						+ " |");
 		String buildFail = in.buildFailureExisting() ? "❌ 실패 (원본에서도 실패하던 태스크만 실패한 기존 문제, 00-baseline-build.log)"
 				: "❌ 실패 (테스트 외 태스크, 패키징이나 asciidoctor, checkstyle 등. test.log 참고)";
-		L.add("| 빌드 | " + outcome(in.build(), buildFail) + " |");
-		L.add("| 제거 예정 API 사용 ([removal]) | " + warnings.get("removal").size() + " 종류 |");
-		L.add("| deprecated API 사용 | " + warnings.get("deprecation").size() + " 종류 |");
-		L.add("| 설정 키 변경 (properties-migrator) | 이름 변경 " + tests.renamed().size() + " / 지원 중단 "
+		lines.add("| 빌드 | " + outcome(in.build(), buildFail) + " |");
+		lines.add("| 제거 예정 API 사용 ([removal]) | " + warnings.get("removal").size() + " 종류 |");
+		lines.add("| deprecated API 사용 | " + warnings.get("deprecation").size() + " 종류 |");
+		lines.add("| 설정 키 변경 (properties-migrator) | 이름 변경 " + tests.renamed().size() + " / 지원 중단 "
 				+ tests.unsupported().size() + " |");
-		L.add("| 수동 검토 대상 | " + manual.size() + " 곳 |");
+		lines.add("| 수동 검토 대상 | " + manual.size() + " 곳 |");
 		if (!in.knownIssues().isEmpty()) {
-			L.add("| 알려진 이슈 | 판단 " + countMode(in.knownIssues(), "REPORT_ONLY") + " / 확인 "
+			lines.add("| 알려진 이슈 | 판단 " + countMode(in.knownIssues(), "REPORT_ONLY") + " / 확인 "
 					+ countMode(in.knownIssues(), "REVIEW_REQUIRED") + " / 자동 보정 "
 					+ countMode(in.knownIssues(), "AUTO_FIX") + " |");
 		}
-		L.add("| 자동 변경 파일 | " + fixes.changed().size() + " 개 (커스텀 보정 레시피 " + fixes.byRecipe().size() + " 종) |");
-		L.add("");
+		lines.add("| 자동 변경 파일 | " + fixes.changed().size() + " 개 (커스텀 보정 레시피 " + fixes.byRecipe().size() + " 종) |");
+		lines.add("");
+	}
 
+	private static void fixes(List<String> lines, Fixes fixes) {
 		if (!fixes.byRecipe().isEmpty()) {
-			L.add("## 자동 보정 내역 (커스텀 레시피)");
-			L.add("이 단계에서 커스텀 보정 레시피가 바꾼 파일. 전체 변경은 같은 이름의 .patch 파일 참고.");
-			L.add("");
-			fixes.byRecipe().forEach((name, files) -> L.add("- **" + name + "** 로 바뀐 파일 " + joinCode(files, 5, "개")));
-			L.add("");
+			lines.add("## 자동 보정 내역 (커스텀 레시피)");
+			lines.add("이 단계에서 커스텀 보정 레시피가 바꾼 파일. 전체 변경은 같은 이름의 .patch 파일 참고.");
+			lines.add("");
+			fixes.byRecipe()
+				.forEach((name, files) -> lines.add("- **" + name + "** 로 바뀐 파일 " + joinCode(files, 5, "개")));
+			lines.add("");
 		}
+	}
 
+	private static void newFailures(List<String> lines, List<Map<String, Object>> newFailures) {
 		if (!newFailures.isEmpty()) {
 			Map<String, List<Map<String, Object>>> byClass = new LinkedHashMap<>();
 			newFailures.forEach((f) -> byClass.computeIfAbsent((String) f.get("cls"), (k) -> new ArrayList<>()).add(f));
-			L.add("## 실패한 테스트 (" + newFailures.size() + "건, " + byClass.size() + "개 클래스)");
-			L.add("원인은 스택트레이스의 가장 안쪽 예외(Caused by) 기준. 전체 스택은 각 모듈의 build/test-results 참고.");
-			L.add("");
+			lines.add("## 실패한 테스트 (" + newFailures.size() + "건, " + byClass.size() + "개 클래스)");
+			lines.add("원인은 스택트레이스의 가장 안쪽 예외(Caused by) 기준. 전체 스택은 각 모듈의 build/test-results 참고.");
+			lines.add("");
 			byClass.entrySet().stream().sorted((a, b) -> b.getValue().size() - a.getValue().size()).forEach((e) -> {
 				String cls = e.getKey();
-				L.add("### " + cls.substring(cls.lastIndexOf('.') + 1) + " (" + e.getValue().size() + "건)");
-				L.add("`" + cls + "`");
-				L.add("");
+				lines.add("### " + cls.substring(cls.lastIndexOf('.') + 1) + " (" + e.getValue().size() + "건)");
+				lines.add("`" + cls + "`");
+				lines.add("");
 				Map<String, List<Map<String, Object>>> byCause = new LinkedHashMap<>();
 				e.getValue()
 					.forEach((f) -> byCause
@@ -407,107 +429,119 @@ final class StageReport {
 						.add(f));
 				byCause.values().stream().sorted((a, b) -> b.size() - a.size()).forEach((same) -> {
 					Map<String, Object> first = same.get(0);
-					L.add("- **`" + first.get("exception") + "`** " + first.get("message") + " (" + same.size() + "건)");
+					lines.add("- **`" + first.get("exception") + "`** " + first.get("message") + " (" + same.size()
+							+ "건)");
 					if (first.get("location") != null) {
-						L.add("  - 위치 `" + first.get("location") + "`");
+						lines.add("  - 위치 `" + first.get("location") + "`");
 					}
 					if (first.get("hint") != null) {
-						L.add("  - " + first.get("hint"));
+						lines.add("  - " + first.get("hint"));
 					}
 					List<String> names = same.stream().map((f) -> (String) f.get("test")).toList();
-					L.add("  - 해당 테스트 " + String.join(" / ", names.subList(0, Math.min(5, names.size())))
+					lines.add("  - 해당 테스트 " + String.join(" / ", names.subList(0, Math.min(5, names.size())))
 							+ ((names.size() > 5) ? " 외 " + (names.size() - 5) + "건" : ""));
 				});
-				L.add("");
+				lines.add("");
 			});
 		}
+	}
 
+	private static void existingFailures(List<String> lines, List<Map<String, Object>> existingFailures) {
 		if (!existingFailures.isEmpty()) {
-			L.add("## 원본에서도 실패하던 테스트 (" + existingFailures.size() + "건)");
-			L.add("마이그레이션 전부터 실패하던 테스트라 단계를 막지 않는다. 목록은 00-baseline-failed-tests.txt.");
-			L.add("");
-			existingFailures.forEach((f) -> L.add("- `" + f.get("cls") + "` " + f.get("test")));
-			L.add("");
+			lines.add("## 원본에서도 실패하던 테스트 (" + existingFailures.size() + "건)");
+			lines.add("마이그레이션 전부터 실패하던 테스트라 단계를 막지 않는다. 목록은 00-baseline-failed-tests.txt.");
+			lines.add("");
+			existingFailures.forEach((f) -> lines.add("- `" + f.get("cls") + "` " + f.get("test")));
+			lines.add("");
 		}
+	}
 
-		L.add("## 설정 키 변경 (spring-boot-properties-migrator)");
+	private static void properties(List<String> lines, Tests tests) {
+		lines.add("## 설정 키 변경 (spring-boot-properties-migrator)");
 		if (!tests.renamed().isEmpty() || !tests.unsupported().isEmpty()) {
-			L.add("테스트 중 로딩된 설정에서 발견됨. 저장소 밖(외부 설정 저장소)의 키가 나오면 그쪽을 고쳐야 한다.");
-			L.add("");
+			lines.add("테스트 중 로딩된 설정에서 발견됨. 저장소 밖(외부 설정 저장소)의 키가 나오면 그쪽을 고쳐야 한다.");
+			lines.add("");
 			if (!tests.renamed().isEmpty()) {
-				L.add("### 이름 변경됨 (지금은 임시로 자동 매핑 중)");
+				lines.add("### 이름 변경됨 (지금은 임시로 자동 매핑 중)");
 				tests.renamed()
 					.values()
-					.forEach((p) -> L.add("- `" + p.get("key") + "`"
+					.forEach((p) -> lines.add("- `" + p.get("key") + "`"
 							+ ((p.get("replacement") != null) ? " → `" + p.get("replacement") + "`" : "") + " ("
 							+ p.get("source") + ")"));
-				L.add("");
+				lines.add("");
 			}
 			if (!tests.unsupported().isEmpty()) {
-				L.add("### 지원 중단됨 (값이 무시됨)");
+				lines.add("### 지원 중단됨 (값이 무시됨)");
 				tests.unsupported()
 					.values()
-					.forEach((p) -> L.add("- `" + p.get("key") + "` (" + p.get("source") + ")"));
-				L.add("");
+					.forEach((p) -> lines.add("- `" + p.get("key") + "` (" + p.get("source") + ")"));
+				lines.add("");
 			}
 		}
 		else {
-			L.add("테스트 로그에서 발견된 것 없음. 테스트 프로파일은 외부 설정 저장소를 끄는 경우가 많으니 개발/스테이징 배포 후");
-			L.add("기동 로그에서 `The use of configuration keys that` 를 검색해서 다시 확인한다.");
-			L.add("");
+			lines.add("테스트 로그에서 발견된 것 없음. 테스트 프로파일은 외부 설정 저장소를 끄는 경우가 많으니 개발/스테이징 배포 후");
+			lines.add("기동 로그에서 `The use of configuration keys that` 를 검색해서 다시 확인한다.");
+			lines.add("");
 		}
+	}
 
+	private static void warnings(List<String> lines, Map<String, Map<String, Set<String>>> warnings) {
 		for (String[] sec : new String[][] {
 				{ "removal", "제거 예정 API 사용 ([removal])", "다음 단계로 올리면 컴파일이 깨질 수 있는 곳. 다음 단계 전에 먼저 정리한다." },
 				{ "deprecation", "deprecated API 사용", "당장 문제는 없지만 이후 버전에서 제거될 수 있다." } }) {
 			Map<String, Set<String>> w = warnings.get(sec[0]);
 			if (!w.isEmpty()) {
-				L.add("## " + sec[1]);
-				L.add(sec[2]);
-				L.add("");
+				lines.add("## " + sec[1]);
+				lines.add(sec[2]);
+				lines.add("");
 				w.entrySet().stream().sorted((a, b) -> b.getValue().size() - a.getValue().size()).forEach((e) -> {
 					List<String> locs = new ArrayList<>(e.getValue());
-					L.add("- **" + e.getKey() + "** " + locs.size() + "곳 ("
+					lines.add("- **" + e.getKey() + "** " + locs.size() + "곳 ("
 							+ String.join(", ", locs.subList(0, Math.min(3, locs.size())))
 							+ ((locs.size() > 3) ? " …" : "") + ")");
 				});
-				L.add("");
+				lines.add("");
 			}
 		}
+	}
 
+	@SuppressWarnings("unchecked")
+	private static void dependencies(List<String> lines, Deps deps) {
 		if (!deps.changed().isEmpty() || !deps.added().isEmpty() || !deps.removed().isEmpty()) {
-			L.add("## 의존성 버전 변경 (transitive 포함, 전 모듈)");
-			L.add("변경 " + deps.changed().size() + "개 / 추가 " + deps.added().size() + "개 / 제거 " + deps.removed().size()
-					+ "개. 라이브러리 버그는 여기서 나오므로 major/minor 변경을 먼저 확인한다.");
-			L.add("");
+			lines.add("## 의존성 버전 변경 (transitive 포함, 전 모듈)");
+			lines.add("변경 " + deps.changed().size() + "개 / 추가 " + deps.added().size() + "개 / 제거 "
+					+ deps.removed().size() + "개. 라이브러리 버그는 여기서 나오므로 major/minor 변경을 먼저 확인한다.");
+			lines.add("");
 			List<Map<String, Object>> important = deps.changed()
 				.stream()
 				.map((o) -> (Map<String, Object>) o)
 				.filter((r) -> !"patch".equals(r.get("level")))
 				.toList();
 			if (!important.isEmpty()) {
-				L.add("### major / minor 변경");
-				L.add("| 라이브러리 | 이전 | 이후 | 구분 |");
-				L.add("|---|---|---|---|");
-				important.forEach((r) -> L.add("| `" + r.get("name") + "` | " + r.get("before") + " | " + r.get("after")
-						+ " | " + r.get("level") + " |"));
-				L.add("");
+				lines.add("### major / minor 변경");
+				lines.add("| 라이브러리 | 이전 | 이후 | 구분 |");
+				lines.add("|---|---|---|---|");
+				important.forEach((r) -> lines.add("| `" + r.get("name") + "` | " + r.get("before") + " | "
+						+ r.get("after") + " | " + r.get("level") + " |"));
+				lines.add("");
 			}
 			if (!deps.added().isEmpty()) {
-				L.add("추가된 의존성 " + joinCode(deps.added(), 30, "개"));
-				L.add("");
+				lines.add("추가된 의존성 " + joinCode(deps.added(), 30, "개"));
+				lines.add("");
 			}
 			if (!deps.removed().isEmpty()) {
-				L.add("제거된 의존성 " + joinCode(deps.removed(), 30, "개"));
-				L.add("");
+				lines.add("제거된 의존성 " + joinCode(deps.removed(), 30, "개"));
+				lines.add("");
 			}
 		}
+	}
 
+	private static void knownIssues(List<String> lines, Input in) {
 		if (!in.knownIssues().isEmpty()) {
-			L.add("## 알려진 이슈 (" + in.stage() + ")");
-			L.add("컴파일/테스트가 통과해도 확인할 항목. playbook/known-issues.yml 기준"
+			lines.add("## 알려진 이슈 (" + in.stage() + ")");
+			lines.add("컴파일/테스트가 통과해도 확인할 항목. playbook/known-issues.yml 기준"
 					+ ((in.guide() != null) ? " (원문 " + in.guide() + ")" : ""));
-			L.add("");
+			lines.add("");
 			for (String[] sec : new String[][] { { "REPORT_ONLY", "사람이 판단 (자동으로 바꾸지 않음)" },
 					{ "REVIEW_REQUIRED", "레시피가 바꿨지만 확인 필요" }, { "AUTO_FIX", "레시피가 보정 (결과만 확인)" } }) {
 				List<Map<String, Object>> items = in.knownIssues()
@@ -515,29 +549,30 @@ final class StageReport {
 					.filter((i) -> sec[0].equals(i.get("mode")))
 					.toList();
 				if (!items.isEmpty()) {
-					L.add("### " + sec[1]);
+					lines.add("### " + sec[1]);
 					for (Map<String, Object> i : items) {
-						String box = sec[0].equals("AUTO_FIX") ? "-" : "- [ ]";
 						String trigger = (i.get("trigger") != null) ? " (" + i.get("trigger") + ")" : "";
 						String link = (i.get("source") != null) ? " [원문](" + i.get("source") + ")" : "";
-						L.add(box + " **" + i.get("title") + "**" + trigger);
+						lines.add("- **" + i.get("title") + "**" + trigger);
 						if (i.get("detail") != null || !link.isEmpty()) {
-							L.add("  " + ((i.get("detail") != null) ? i.get("detail") : "") + link);
+							lines.add("  " + ((i.get("detail") != null) ? i.get("detail") : "") + link);
 						}
 					}
-					L.add("");
+					lines.add("");
 				}
 			}
 		}
+	}
 
+	private static void manual(List<String> lines, List<Map<String, Object>> manual) {
 		if (!manual.isEmpty()) {
-			L.add("## 수동 검토 대상 (FindManualMigrationItems)");
-			L.add("레시피가 자동으로 바꾸지 않는 것. 항목별 이유는 find-manual.yml 주석 참고.");
-			L.add("");
-			manual.forEach((m) -> L.add("- `" + m.get("file") + "` 의 `" + truncate((String) m.get("code"), 120) + "`"));
-			L.add("");
+			lines.add("## 수동 검토 대상 (FindManualMigrationItems)");
+			lines.add("레시피가 자동으로 바꾸지 않는 것. 항목별 이유는 find-manual.yml 주석 참고.");
+			lines.add("");
+			manual.forEach(
+					(m) -> lines.add("- `" + m.get("file") + "` 의 `" + truncate((String) m.get("code"), 120) + "`"));
+			lines.add("");
 		}
-		return String.join("\n", L);
 	}
 
 	private static long countMode(List<Map<String, Object>> issues, String mode) {
