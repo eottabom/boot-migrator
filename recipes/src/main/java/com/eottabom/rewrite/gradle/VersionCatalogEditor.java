@@ -286,6 +286,59 @@ final class VersionCatalogEditor {
 		return m.find() ? m.group(1) : null;
 	}
 
+	/** [libraries] 의 모듈(group:artifact) 과 alias */
+	static Map<String, String> libraryAliases(String toml) {
+		Map<String, String> aliases = new LinkedHashMap<>();
+		new VersionCatalogEditor(toml, null).parse()
+			.entries()
+			.stream()
+			.filter((entry) -> !entry.plugin())
+			.forEach((entry) -> aliases.putIfAbsent(entry.group() + ":" + entry.artifact(), entry.alias()));
+		return aliases;
+	}
+
+	/**
+	 * [libraries] 끝에 항목을 더한다. 같은 모듈이 이미 있으면 건너뛴다.
+	 * @param libraries alias 와 좌표 (group:artifact 또는 group:artifact:version)
+	 */
+	static String addLibraries(String toml, Map<String, String> libraries) {
+		Map<String, String> existing = libraryAliases(toml);
+		List<String> added = new ArrayList<>();
+		libraries.forEach((alias, coordinates) -> {
+			String[] gav = coordinates.split(":");
+			if (!existing.containsKey(gav[0] + ":" + gav[1])) {
+				added.add(alias + " = { module = \"" + gav[0] + ":" + gav[1] + "\""
+						+ ((gav.length > 2) ? ", version = \"" + gav[2] + "\"" : "") + " }");
+			}
+		});
+		if (added.isEmpty()) {
+			return toml;
+		}
+		List<String> lines = new ArrayList<>(Arrays.asList(toml.split("\n", -1)));
+		int section = -1;
+		for (int i = 0; i < lines.size(); i++) {
+			Matcher m = SECTION.matcher(lines.get(i));
+			if (m.matches() && "libraries".equals(m.group(1))) {
+				section = i;
+			}
+		}
+		if (section < 0) {
+			int end = lines.get(lines.size() - 1).isEmpty() ? lines.size() - 1 : lines.size();
+			lines.addAll(end, List.of("", "[libraries]"));
+			lines.addAll(end + 2, added);
+			return String.join("\n", lines);
+		}
+		// 섹션의 마지막 항목 바로 뒤 (다음 섹션 앞의 빈 줄과 주석은 그대로 둔다)
+		int last = section;
+		for (int i = section + 1; i < lines.size() && !SECTION.matcher(lines.get(i)).matches(); i++) {
+			if (KEY_VALUE.matcher(lines.get(i)).matches() && !lines.get(i).trim().startsWith("#")) {
+				last = i;
+			}
+		}
+		lines.addAll(last + 1, added);
+		return String.join("\n", lines);
+	}
+
 	/**
 	 * upstream 의 버전 변경 레시피 하나를 catalog 에 옮긴 규칙.
 	 * <ul>

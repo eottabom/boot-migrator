@@ -46,6 +46,8 @@ recipeList:
   - com.eottabom.rewrite.spring.RemoveSpuriousJaxbApi
   # upstream 의존성 레시피가 중첩 빌드의 settings 스크립트에 dependencies 블록을 넣는 문제 보정 (의존성 레시피들 뒤에 둔다)
   - com.eottabom.rewrite.gradle.RemoveDependenciesFromSettingsScript
+  # 위 레시피와 단계 레시피가 문자열로 추가한 의존성을 catalog 항목으로 옮긴다 (catalog 를 쓰는 프로젝트만, 마지막에 둔다)
+  - com.eottabom.rewrite.gradle.DeclareAddedDependenciesInVersionCatalog
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: com.eottabom.rewrite.gradle.DeclareUsedTransitiveDependencies

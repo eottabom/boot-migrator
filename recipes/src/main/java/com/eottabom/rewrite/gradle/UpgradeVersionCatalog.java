@@ -1,6 +1,5 @@
 package com.eottabom.rewrite.gradle;
 
-import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -22,9 +21,6 @@ import org.openrewrite.maven.tree.GroupArtifactVersion;
 import org.openrewrite.semver.ExactVersion;
 import org.openrewrite.semver.LatestRelease;
 import org.openrewrite.semver.Semver;
-import org.openrewrite.text.PlainText;
-import org.openrewrite.toml.TomlParser;
-import org.openrewrite.toml.tree.Toml;
 
 /**
  * upstream 의 의존성/플러그인 버전 변경을 Gradle version catalog 에도 적용한다.
@@ -94,32 +90,13 @@ public class UpgradeVersionCatalog extends ScanningRecipe<UpgradeVersionCatalog.
 		return new TreeVisitor<Tree, ExecutionContext>() {
 			@Override
 			public Tree visit(Tree tree, ExecutionContext ctx) {
-				if (!(tree instanceof SourceFile source) || !isCatalog(source.getSourcePath())
-						|| !(tree instanceof PlainText || tree instanceof Toml.Document)) {
+				if (!(tree instanceof SourceFile source) || !VersionCatalogSource.isCatalog(source)) {
 					return tree;
 				}
-				String before = source.printAll();
-				String after = VersionCatalogEditor.apply(before, parsed, resolver(acc, ctx), acc.plugins);
-				if (after.equals(before)) {
-					return tree;
-				}
-				if (tree instanceof PlainText text) {
-					return text.withText(after);
-				}
-				Optional<SourceFile> reparsed = new TomlParser().parse(ctx, after).findFirst();
-				if (reparsed.isEmpty()) {
-					return tree;
-				}
-				SourceFile toml = reparsed.get().withSourcePath(source.getSourcePath());
-				return toml.withId(source.getId()).withMarkers(source.getMarkers());
+				return VersionCatalogSource.withText(source,
+						VersionCatalogEditor.apply(source.printAll(), parsed, resolver(acc, ctx), acc.plugins), ctx);
 			}
 		};
-	}
-
-	static boolean isCatalog(Path path) {
-		Path parent = path.getParent();
-		return parent != null && "gradle".equals(parent.getFileName().toString())
-				&& path.getFileName().toString().endsWith(".versions.toml");
 	}
 
 	private VersionCatalogEditor.Resolver resolver(Accumulator acc, ExecutionContext ctx) {

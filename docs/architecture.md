@@ -149,6 +149,7 @@ init/verify.init.gradle               컴파일 경고 옵션, 테스트 fail-fa
 | `elasticsearch/Rest5ClientCallbacksToConsumer` | (4.0) `setHttpClientConfigCallback` / `setRequestConfigCallback` 람다 끝의 `return builder;` 제거 (`return builder.setX(..)` 는 호출만 남김) | `Rest5ClientBuilder` 의 콜백은 `Consumer` 라 값을 돌려주면 컴파일 에러 |
 | `lombok/CopyJacksonAnnotationsToAccessors` | 루트 `lombok.config` 에 `lombok.copyJacksonAnnotationsToAccessors = true` (없으면 만들고, 있으면 한 줄 추가, 키가 이미 있으면 그대로). 루트 `.gitignore` 가 `lombok.config` 를 무시하면 `!/lombok.config` 를 추가해 커밋되게 한다. Lombok 과 Jackson 어노테이션을 함께 쓰는 프로젝트만 | Lombok 1.18.40 부터 필드의 `@JsonProperty` 를 getter 에 복사하지 않는다([lombok#3978](https://github.com/projectlombok/lombok/issues/3978)). `@JsonProperty("isShow") boolean isShow` 가 JSON 에 `isShow` 와 `show` 로 두 번 나간다. 실측, REST Docs 테스트 실패(3.4, freefair 플러그인 업그레이드로 새 Lombok 적용). 예전 freefair 가 만들던 파일 때문에 `lombok.config` 를 무시하던 프로젝트가 있었다 |
 | `gradle/UpgradeVersionCatalog` | upstream 이 빌드 스크립트에 하는 버전 업그레이드와 좌표 변경을 `gradle/*.versions.toml` 에 적용. 버전 키를 다른 항목과 같이 쓰면 새 키를 만들어 나머지는 그대로 둔다 | upstream 은 catalog 를 바꾸지 않는다. 실측, catalog 를 쓰는 프로젝트의 Boot 버전이 올라가지 않음 |
+| `gradle/DeclareAddedDependenciesInVersionCatalog` | 레시피가 이번 실행에서 문자열로 추가한 의존성을 `libs.versions.toml` 항목과 `libs.` 접근자로 바꾼다. 원본에 있던 문자열 선언은 그대로 둔다 | upstream 과 커스텀 레시피는 `"group:artifact"` 문자열로 추가해 catalog 프로젝트에서 선언 방식이 섞인다. 빌드 스크립트를 바꾼 다음 사이클에 catalog 를 고친다 |
 | `gradle/UpgradeJacocoToolVersion` | `jacoco { toolVersion = "x" }` 를 지정 버전 이상으로 (Java 단계) | upstream `UpgradeJaCoCo` 는 의존성만 올림. 구버전 JaCoCo 는 새 Java 클래스 파일을 못 읽음 |
 
 ### yml 레시피 (`common.yml`)
