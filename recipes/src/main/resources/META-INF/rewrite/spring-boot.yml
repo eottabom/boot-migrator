@@ -237,6 +237,12 @@ recipeList:
       groupId: org.springframework.retry
       artifactId: spring-retry
       version: 2.0.x
+  # RestTemplateBuilder 는 spring-boot-restclient 모듈로 옮겨졌고 spring-boot-resttestclient 는 이 모듈을 가져오지 않는다.
+  # TestRestTemplate 만 선언한 테스트는 컴파일은 되고 실행 때 ClassNotFoundException 이 난다. upstream 이 같은 실행 안에서 옮기기 전 패키지도 적는다
+  - com.eottabom.rewrite.gradle.DeclareUsedDependency:
+      packageName: org.springframework.boot.restclient, org.springframework.boot.resttestclient, org.springframework.boot.web.client, org.springframework.boot.test.web.client
+      groupId: org.springframework.boot
+      artifactId: spring-boot-restclient
   - com.eottabom.rewrite.spring.Boot4RestDocsModule
   - com.eottabom.rewrite.spring.Boot4TestStartersForMainSources
   # Boot 4 에서 MockitoTestExecutionListener 가 제거돼 Spring 테스트(@DataJpaTest 등) 안의 @Mock/@InjectMocks 가 더 이상 자동 초기화되지 않는다

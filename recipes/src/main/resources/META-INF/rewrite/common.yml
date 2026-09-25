@@ -79,6 +79,12 @@ recipeList:
       artifactId: guava
       version: 33.x
       versionPattern: -jre
+  # Boot 4 에서 TestRestTemplate(spring-boot-resttestclient) 은 RestTemplateBuilder(spring-boot-restclient) 를 가져오지 않는다.
+  # 이미 Boot 4 인 프로젝트도 다음 단계에서 맞춰지도록 공통 보정에 둔다. 두 패키지는 Boot 4 에만 있어서 3.x 단계에는 영향이 없다
+  - com.eottabom.rewrite.gradle.DeclareUsedDependency:
+      packageName: org.springframework.boot.restclient, org.springframework.boot.resttestclient
+      groupId: org.springframework.boot
+      artifactId: spring-boot-restclient
   # org.aspectj 는 넣지 않는다: Boot 3 은 spring-boot-starter-aop, Boot 4 는 spring-boot-starter-aspectj 로 artifact 가 달라서
   # 공통 보정에서 추가하면 Boot 4 단계에서 없는 artifact 를 다시 넣게 된다 (upstream 이 이름을 바꿔준다)
 

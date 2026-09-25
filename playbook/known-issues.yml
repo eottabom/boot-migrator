@@ -833,7 +833,7 @@ failureHints:
   - pattern: "(NoSuchBeanDefinitionException|UnsatisfiedDependencyException).*TestRestTemplate"
     text: "Boot 4 에서는 @AutoConfigureTestRestTemplate 과 spring-boot-resttestclient 가 필요하다"
   - pattern: "(ClassNotFoundException|NoClassDefFoundError).*org\\.springframework\\.boot\\.(restclient|resttestclient|test\\.web\\.client)"
-    text: "Boot 4 에서 RestTemplateBuilder / TestRestTemplate 은 spring-boot-restclient, spring-boot-resttestclient 모듈로 분리됐다. 테스트에 spring-boot-resttestclient 를 추가하고 @AutoConfigureTestRestTemplate 을 붙인다"
+    text: "Boot 4 에서 RestTemplateBuilder / TestRestTemplate 은 spring-boot-restclient, spring-boot-resttestclient 모듈로 분리됐다. resttestclient 는 restclient 를 가져오지 않으므로 둘 다 선언하고(레시피가 선언한다) @AutoConfigureTestRestTemplate 을 붙인다"
   - pattern: "SnippetException.*not documented"
     text: "REST Docs 응답에 문서에 없는 필드가 생겼다. Lombok 1.18.40 의 @JsonProperty 복사 중단(lombok.config 레시피가 보정), Jackson 직렬화 변경 확인"
   - pattern: "UnnecessaryStubbingException"
