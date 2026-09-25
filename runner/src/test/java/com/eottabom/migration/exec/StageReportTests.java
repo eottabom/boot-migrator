@@ -120,8 +120,8 @@ class StageReportTests {
 			.of(Map.of("id", "x", "mode", "REPORT_ONLY", "title", "제목", "detail", "설명"));
 
 		StageReport.write(
-				new StageReport.Input("3.4", this.project, log, rewrite, find, before, after, "1", "1", "1", issues,
-						"https://guide", HINTS, Set.of(), Set.of()),
+				new StageReport.Input("3.4", this.project, log, rewrite, find, before, after, Outcome.PASSED,
+						Outcome.PASSED, false, issues, "https://guide", HINTS, Set.of(), Set.of()),
 				this.project.resolve("out.md"), this.project.resolve("out.json"));
 
 		String md = Files.readString(this.project.resolve("out.md"));
@@ -149,8 +149,8 @@ class StageReportTests {
 		Path none = this.project.resolve("missing");
 
 		StageReport.write(
-				new StageReport.Input("4.1", this.project, none, none, none, none, none, "1", "1", "1", List.of(), null,
-						HINTS, Set.of(), Set.of("demo.AppTest#boom")),
+				new StageReport.Input("4.1", this.project, none, none, none, none, none, Outcome.PASSED, Outcome.PASSED,
+						false, List.of(), null, HINTS, Set.of(), Set.of("demo.AppTest#boom")),
 				this.project.resolve("out.md"), this.project.resolve("out.json"));
 
 		assertThat(Files.readString(this.project.resolve("out.md")))

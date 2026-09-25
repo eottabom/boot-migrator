@@ -48,7 +48,7 @@ final class HtmlReport {
 			stage.put("report", json.isBlank() ? null : new Json.Raw(json));
 			stage.put("patch",
 					truncated ? patch.substring(0, patch.lastIndexOf("\ndiff --git", MAX_PATCH_CHARS) + 1) : patch);
-			stage.put("patchTruncated", truncated ? "1" : null);
+			stage.put("patchTruncated", truncated);
 			stages.add(stage);
 		}
 		Map<String, Object> data = new LinkedHashMap<>();

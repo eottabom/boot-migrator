@@ -119,7 +119,7 @@ footer { color: var(--muted); font-size: 12.5px; margin-top: 32px; }
     if (!r) return 'warn';
     if (r.compile === 'fail') return 'fail';
     if ((r.tests.failures || []).some(f => !f.existing)) return 'fail';
-    if (r.build === '0' && r.baselineBuild !== '0') return 'fail';
+    if (r.build === 'fail' && !r.buildFailureExisting) return 'fail';
     return 'ok';
   }
 
@@ -198,8 +198,8 @@ footer { color: var(--muted); font-size: 12.5px; margin-top: 32px; }
     const pills = $('div', { class: 'pills' },
       $('span', { class: 'pill ' + (r.compile === 'fail' ? 'fail' : r.compile === 'ok' ? 'ok' : '') }, '컴파일 ' + ({ ok: '통과', fail: '실패', skip: '실행 안 함' }[r.compile])),
       $('span', { class: 'pill ' + (failures.length ? 'fail' : r.tests.total ? 'ok' : '') }, r.tests.total ? ('테스트 ' + (r.tests.total - failures.length - existing.length) + '/' + r.tests.total + ' 통과' + (existing.length ? ', 기존 실패 ' + existing.length : '')) : '테스트 실행 안 함'),
-      $('span', { class: 'pill ' + (r.build === '1' ? 'ok' : r.build === '0' ? (r.baselineBuild === '0' ? 'warn' : 'fail') : '') },
-        '빌드 ' + (r.build === '1' ? '통과' : r.build === '0' ? (r.baselineBuild === '0' ? '실패 (원본에서도 실패)' : '실패') : '실행 안 함')),
+      $('span', { class: 'pill ' + (r.build === 'ok' ? 'ok' : r.build === 'fail' ? (r.buildFailureExisting ? 'warn' : 'fail') : '') },
+        '빌드 ' + (r.build === 'ok' ? '통과' : r.build === 'fail' ? (r.buildFailureExisting ? '실패 (원본에서도 실패)' : '실패') : '실행 안 함')),
       $('span', { class: 'pill info' }, '바뀐 파일 ' + (r.changedFiles || []).length));
     main.append($('h2', null, 'Spring Boot ' + s.name), pills);
 
@@ -207,7 +207,7 @@ footer { color: var(--muted); font-size: 12.5px; margin-top: 32px; }
     const blockers = [];
     const actions = blockers;
     if (r.compile === 'fail') actions.push(entry('FAIL', '컴파일 실패', '에러는 ' + s.tag + '.compile.log 에 있다. 고친 뒤 같은 명령을 다시 실행하면 이어서 진행한다.', null, true));
-    if (r.build === '0' && r.baselineBuild !== '0') actions.push(entry('FAIL', '빌드 실패 (테스트 외의 패키징, 플러그인, 검사)', '로그는 ' + s.tag + '.test.log 에 있다.', null, true));
+    if (r.build === 'fail' && !r.buildFailureExisting) actions.push(entry('FAIL', '빌드 실패 (테스트 외의 패키징, 플러그인, 검사)', '로그는 ' + s.tag + '.test.log 에 있다.', null, true));
     const byCause = {};
     for (const f of failures) (byCause[f.cls + '|' + f.exception + '|' + f.message] ||= []).push(f);
     for (const [key, list] of Object.entries(byCause)) {

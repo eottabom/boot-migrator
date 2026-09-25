@@ -466,7 +466,7 @@ public final class MigrationRunner {
 			gradle.runQuietly(verifyArgs("migrationResolvedVersions", "-PmigrationVersionsOut=" + stageVersions));
 		}
 		if (!compileOk || !gate.equals("build")) {
-			return new GateResult(compileOk, "skip", 0, Set.of());
+			return new GateResult(compileOk, Outcome.SKIPPED, 0, Set.of());
 		}
 		step("[" + stageName + "] build (전체 테스트 + 패키징, properties-migrator 경고 수집)");
 		return runBuild(gradle, ws, tag, List.of("build", "--continue"));
@@ -509,7 +509,7 @@ public final class MigrationRunner {
 				this.logger.lifecycle("   빌드 실패: 원본에서도 실패하던 태스크만 실패했다 ({})", ws.file("00-baseline-build.log"));
 			}
 		}
-		return new GateResult(true, built ? "1" : "0", failedTests.size(), newFailures);
+		return new GateResult(true, Outcome.of(built), failedTests.size(), newFailures);
 	}
 
 	/** --continue 로 돌린 빌드 로그에서 실패한 태스크 경로를 모은다. */
@@ -556,15 +556,15 @@ public final class MigrationRunner {
 			String tag, Path previousVersions, GateResult gate, String gateOption) {
 		Map<String, Object> issues = Files.exists(ws.file(tag + ".issues.json"))
 				? new Yaml().load(MigrationWorkspace.read(ws.file(tag + ".issues.json"))) : Map.of();
-		String compile = gateOption.equals("none") ? "skip" : gate.compileOk() ? "1" : "0";
+		Outcome compile = gateOption.equals("none") ? Outcome.SKIPPED : Outcome.of(gate.compileOk());
 		// 원본에서도 실패하던 태스크만 실패했으면 기존 문제로 표시한다
-		String buildFailureIsNew = (gate.buildOk().equals("0") && !gate.buildBlocking()) ? "0" : "1";
+		boolean buildFailureExisting = gate.build() == Outcome.FAILED && !gate.buildBlocking();
 		List<Map<String, Object>> matchedIssues = (List<Map<String, Object>>) issues.getOrDefault("issues", List.of());
 		Set<String> projectRecipeNames = Set
 			.copyOf(projectRecipes.recipes().stream().map(ProjectRecipe::name).toList());
 		StageReport.Input input = new StageReport.Input(stageName, ws.dir().getParent(), ws.file(tag + ".compile.log"),
 				ws.file(tag + ".rewrite.log"), ws.file("00-scan.find.patch"), previousVersions,
-				ws.file(tag + ".versions.txt"), compile, gate.buildOk(), buildFailureIsNew, matchedIssues,
+				ws.file(tag + ".versions.txt"), compile, gate.build(), buildFailureExisting, matchedIssues,
 				(String) issues.get("guide"), this.knownIssues.failureHints(), projectRecipeNames,
 				ws.baselineFailedTests());
 		StageReport.write(input, ws.file(tag + ".md"), ws.file(tag + ".report.json"));
@@ -804,13 +804,13 @@ public final class MigrationRunner {
 	/**
 	 * 게이트 결과.
 	 *
-	 * @param buildOk 1 | 0 | skip
+	 * @param build build 게이트 결과 (테스트 실패는 failedTests 로 따로 센다)
 	 * @param failedTests build 게이트에서 실패한 테스트 수
 	 * @param newFailedTasks 원본에서는 실패하지 않던 태스크 중 이 단계에서 실패한 것 (원인을 모르는 실패도 포함)
 	 */
-	record GateResult(boolean compileOk, String buildOk, int failedTests, Set<String> newFailedTasks) {
+	record GateResult(boolean compileOk, Outcome build, int failedTests, Set<String> newFailedTasks) {
 
-		static final GateResult SKIPPED = new GateResult(true, "skip", 0, Set.of());
+		static final GateResult SKIPPED = new GateResult(true, Outcome.SKIPPED, 0, Set.of());
 
 		boolean buildBlocking() {
 			return !this.newFailedTasks.isEmpty();

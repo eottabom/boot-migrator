@@ -57,15 +57,14 @@ final class StageReport {
 		List<Map<String, Object>> manual = manual(in.findPatch());
 		Fixes fixes = fixes(in.rewriteLog(), in.projectRecipes());
 		Deps deps = deps(readVersions(in.versionsBefore()), readVersions(in.versionsAfter()));
-		boolean compileFailed = "0".equals(in.compileOk());
 
-		writeFile(markdown, markdown(in, warnings, tests, manual, fixes, deps, compileFailed));
+		writeFile(markdown, markdown(in, warnings, tests, manual, fixes, deps));
 
 		Map<String, Object> data = new LinkedHashMap<>();
 		data.put("stage", in.stage());
-		data.put("compile", "skip".equals(in.compileOk()) ? "skip" : compileFailed ? "fail" : "ok");
-		data.put("build", in.buildOk());
-		data.put("baselineBuild", in.baselineBuildOk());
+		data.put("compile", in.compile().json());
+		data.put("build", in.build().json());
+		data.put("buildFailureExisting", in.buildFailureExisting());
 		data.put("tests", Map.of("total", tests.total(), "failures", tests.failures()));
 		data.put("warnings", Map.of("removal", warningList(warnings.get("removal")), "deprecation",
 				warningList(warnings.get("deprecation"))));
@@ -346,13 +345,13 @@ final class StageReport {
 
 	@SuppressWarnings("unchecked")
 	private static String markdown(Input in, Map<String, Map<String, Set<String>>> warnings, Tests tests,
-			List<Map<String, Object>> manual, Fixes fixes, Deps deps, boolean compileFailed) {
+			List<Map<String, Object>> manual, Fixes fixes, Deps deps) {
 		List<String> L = new ArrayList<>();
 		L.add("# Spring Boot " + in.stage() + " 마이그레이션 검증 리포트");
 		L.add("");
 		L.add("| 항목 | 결과 |");
 		L.add("|---|---|");
-		L.add("| 컴파일 | " + ("skip".equals(in.compileOk()) ? "실행 안 함" : compileFailed ? "❌ 실패" : "✅ 통과") + " |");
+		L.add("| 컴파일 | " + outcome(in.compile(), "❌ 실패") + " |");
 		List<Map<String, Object>> newFailures = tests.failures()
 			.stream()
 			.filter((f) -> !Boolean.TRUE.equals(f.get("existing")))
@@ -366,9 +365,9 @@ final class StageReport {
 				: !newFailures.isEmpty() ? "❌ " + newFailures.size() + " / " + tests.total() + " 실패" + existingNote
 						: "✅ " + (tests.total() - existingFailures.size()) + "개 통과" + existingNote)
 				+ " |");
-		String buildFail = "0".equals(in.baselineBuildOk()) ? "❌ 실패 (원본에서도 실패하던 태스크만 실패한 기존 문제, 00-baseline-build.log)"
+		String buildFail = in.buildFailureExisting() ? "❌ 실패 (원본에서도 실패하던 태스크만 실패한 기존 문제, 00-baseline-build.log)"
 				: "❌ 실패 (테스트 외 태스크, 패키징이나 asciidoctor, checkstyle 등. test.log 참고)";
-		L.add("| 빌드 | " + ("1".equals(in.buildOk()) ? "✅ 통과" : "0".equals(in.buildOk()) ? buildFail : "실행 안 함") + " |");
+		L.add("| 빌드 | " + outcome(in.build(), buildFail) + " |");
 		L.add("| 제거 예정 API 사용 ([removal]) | " + warnings.get("removal").size() + " 종류 |");
 		L.add("| deprecated API 사용 | " + warnings.get("deprecation").size() + " 종류 |");
 		L.add("| 설정 키 변경 (properties-migrator) | 이름 변경 " + tests.renamed().size() + " / 지원 중단 "
@@ -567,6 +566,14 @@ final class StageReport {
 		return v.matches("\\d+") ? Integer.parseInt(v) : 0;
 	}
 
+	private static String outcome(Outcome outcome, String failed) {
+		return switch (outcome) {
+			case PASSED -> "✅ 통과";
+			case FAILED -> failed;
+			case SKIPPED -> "실행 안 함";
+		};
+	}
+
 	private static void writeFile(Path file, String content) {
 		try {
 			Files.createDirectories(file.getParent());
@@ -578,15 +585,13 @@ final class StageReport {
 	}
 
 	/**
-	 * @param compileOk 1 | 0 | skip (러너가 판단한 컴파일 결과)
-	 * @param buildOk 1 | 0 | skip
-	 * @param baselineBuildOk 0 이면 빌드 실패를 원본에서도 실패하던 기존 문제로 표시한다
+	 * @param buildFailureExisting 빌드 실패가 원본에서도 실패하던 태스크 때문이다 (기존 문제로 표시)
 	 * @param knownIssues 러너가 playbook 에서 고른 알려진 이슈 (id, mode, title, detail, source, fix,
 	 * trigger)
 	 * @param projectRecipes 대상 프로젝트의 .rewrite/ 레시피 이름 (자동 보정 내역에 커스텀 보정으로 센다)
 	 */
 	record Input(String stage, Path projectDir, Path compileLog, Path rewriteLog, Path findPatch, Path versionsBefore,
-			Path versionsAfter, String compileOk, String buildOk, String baselineBuildOk,
+			Path versionsAfter, Outcome compile, Outcome build, boolean buildFailureExisting,
 			List<Map<String, Object>> knownIssues, String guide, List<FailureHint> failureHints,
 			Set<String> projectRecipes, Set<String> baselineFailedTests) {
 	}
