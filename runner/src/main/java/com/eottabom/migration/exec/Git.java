@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /** 대상 프로젝트의 git 조작. */
@@ -88,7 +89,7 @@ public record Git(Path dir) {
 	 * tree 를 비교하면 그 단계에서만 바뀐 diff 가 나온다.
 	 */
 	public String snapshotTree(Collection<String> created, Path tempIndex) {
-		java.util.Map<String, String> env = java.util.Map.of("GIT_INDEX_FILE", tempIndex.toString());
+		Map<String, String> env = Map.of("GIT_INDEX_FILE", tempIndex.toString());
 		try {
 			Files.deleteIfExists(tempIndex);
 		}

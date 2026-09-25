@@ -2,6 +2,7 @@ package com.eottabom.migration.playbook;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,7 +24,7 @@ public record KnownIssues(List<Issue> issues, Map<String, String> guides, List<F
 			validate(issue);
 			issues.add(issue);
 		}
-		Map<String, String> guides = new java.util.LinkedHashMap<>();
+		Map<String, String> guides = new LinkedHashMap<>();
 		Yaml.map(root.get("guides")).forEach((k, v) -> guides.put(k, Yaml.string(v)));
 		List<FailureHint> hints = new ArrayList<>();
 		for (Object item : Yaml.list(root.get("failureHints"))) {

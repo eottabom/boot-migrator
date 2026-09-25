@@ -13,6 +13,7 @@ import org.openrewrite.groovy.GroovyIsoVisitor;
 import org.openrewrite.groovy.tree.G;
 import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
+import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.Space;
 import org.openrewrite.java.tree.Statement;
 
@@ -142,7 +143,7 @@ public class EnsureQuerydslAptJakartaApis extends Recipe {
 			quote = "'";
 		}
 		J.Literal literal = new J.Literal(Tree.randomId(), first.getPrefix(), first.getMarkers(), notation,
-				quote + notation + quote, null, org.openrewrite.java.tree.JavaType.Primitive.String);
+				quote + notation + quote, null, JavaType.Primitive.String);
 		List<Expression> args = new ArrayList<>();
 		args.add(literal);
 		return apt.withId(Tree.randomId()).withArguments(args);

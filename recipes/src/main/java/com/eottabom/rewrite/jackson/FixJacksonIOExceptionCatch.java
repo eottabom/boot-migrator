@@ -16,6 +16,7 @@ import org.openrewrite.java.tree.JRightPadded;
 import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.NameTree;
 import org.openrewrite.java.tree.Space;
+import org.openrewrite.java.tree.TypeTree;
 import org.openrewrite.java.tree.TypeUtils;
 import org.openrewrite.marker.Markers;
 
@@ -111,8 +112,7 @@ public class FixJacksonIOExceptionCatch extends Recipe {
 					}
 					J.VariableDeclarations updated;
 					if (rest.size() == 1) {
-						updated = param.withTypeExpression(
-								(org.openrewrite.java.tree.TypeTree) rest.get(0).withPrefix(multi.getPrefix()));
+						updated = param.withTypeExpression((TypeTree) rest.get(0).withPrefix(multi.getPrefix()));
 					}
 					else {
 						List<JRightPadded<NameTree>> padded = new ArrayList<>();

@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.eottabom.migration.exec.MigrationWorkspace.Resume;
 import com.eottabom.migration.inspect.JdkLocator;
@@ -34,6 +37,7 @@ import com.eottabom.migration.recipe.ProjectRecipes.Phase;
 import com.eottabom.migration.recipe.ProjectRecipes.ProjectRecipe;
 import org.gradle.api.GradleException;
 import org.gradle.api.logging.Logger;
+import org.yaml.snakeyaml.Yaml;
 
 /**
  * 단계 루프: 현재 버전의 다음 단계부터 목표까지 단계마다 rewriteRun → compile → build → 리포트 → (commit).
@@ -334,8 +338,7 @@ public final class MigrationRunner {
 			Path stageVersions = ws.file(tag + ".versions.txt");
 			GateResult gate = runGate(gradle, ws, tag, request.gate(), stage.name(), stageVersions);
 			writeJson(ws.file(tag + ".issues.json"), issuesJson(stage, previousVersions, stageVersions));
-			reportStage(gradle, ws, projectName, projectRecipes, stage.name(), tag, previousVersions, gate,
-					request.gate());
+			reportStage(ws, projectName, projectRecipes, stage.name(), tag, previousVersions, gate, request.gate());
 
 			// 이 단계에서만 바뀐 diff (HTML 리포트의 변경 파일 보기). 누적 변경은 아래 .patch
 			String treeAfter = (treeBefore != null) ? git.snapshotTree(ws.createdFiles(), ws.file(".index-tmp")) : null;
@@ -429,8 +432,7 @@ public final class MigrationRunner {
 		GateResult gate = runResumeGate(gradle, ws, r.tag(), request.gate());
 		Path previousVersions = (r.previousTag() != null && Files.exists(ws.file(r.previousTag() + ".versions.txt")))
 				? ws.file(r.previousTag() + ".versions.txt") : ws.file("00-versions.txt");
-		reportStage(gradle, ws, projectName, projectRecipes, r.stage(), r.tag(), previousVersions, gate,
-				request.gate());
+		reportStage(ws, projectName, projectRecipes, r.stage(), r.tag(), previousVersions, gate, request.gate());
 		HtmlReport.write(ws, projectName, ws.startBoot().orElse(null),
 				this.inspector.bootVersion(ws.dir().getParent()));
 		if (!gate.passed()) {
@@ -493,7 +495,7 @@ public final class MigrationRunner {
 		existing -= failedTests.size();
 		this.logger.lifecycle("   테스트 {}개, 실패 {}개{}", tests.total(), failedTests.size(),
 				(existing > 0) ? " (원본에서도 실패하던 " + existing + "개 제외)" : "");
-		Set<String> newFailures = new java.util.TreeSet<>();
+		Set<String> newFailures = new TreeSet<>();
 		if (!built) {
 			Set<String> failed = failedTasks(log);
 			if (failed.isEmpty()) {
@@ -512,9 +514,8 @@ public final class MigrationRunner {
 
 	/** --continue 로 돌린 빌드 로그에서 실패한 태스크 경로를 모은다. */
 	static Set<String> failedTasks(Path log) {
-		Set<String> tasks = new java.util.TreeSet<>();
-		java.util.regex.Matcher m = java.util.regex.Pattern.compile("Execution failed for task '([^']+)'")
-			.matcher(MigrationWorkspace.read(log));
+		Set<String> tasks = new TreeSet<>();
+		Matcher m = Pattern.compile("Execution failed for task '([^']+)'").matcher(MigrationWorkspace.read(log));
 		while (m.find()) {
 			tasks.add(m.group(1));
 		}
@@ -551,19 +552,22 @@ public final class MigrationRunner {
 
 	/** 단계 리포트(md, json)를 만들고 HTML 리포트를 갱신한다. */
 	@SuppressWarnings("unchecked")
-	private void reportStage(BuildTool gradle, MigrationWorkspace ws, String projectName, ProjectRecipes projectRecipes,
-			String stageName, String tag, Path previousVersions, GateResult gate, String gateOption) {
+	private void reportStage(MigrationWorkspace ws, String projectName, ProjectRecipes projectRecipes, String stageName,
+			String tag, Path previousVersions, GateResult gate, String gateOption) {
 		Map<String, Object> issues = Files.exists(ws.file(tag + ".issues.json"))
-				? new org.yaml.snakeyaml.Yaml().load(MigrationWorkspace.read(ws.file(tag + ".issues.json"))) : Map.of();
-		StageReport.write(new StageReport.Input(stageName, ws.dir().getParent(), ws.file(tag + ".compile.log"),
+				? new Yaml().load(MigrationWorkspace.read(ws.file(tag + ".issues.json"))) : Map.of();
+		String compile = gateOption.equals("none") ? "skip" : gate.compileOk() ? "1" : "0";
+		// 원본에서도 실패하던 태스크만 실패했으면 기존 문제로 표시한다
+		String buildFailureIsNew = (gate.buildOk().equals("0") && !gate.buildBlocking()) ? "0" : "1";
+		List<Map<String, Object>> matchedIssues = (List<Map<String, Object>>) issues.getOrDefault("issues", List.of());
+		Set<String> projectRecipeNames = Set
+			.copyOf(projectRecipes.recipes().stream().map(ProjectRecipe::name).toList());
+		StageReport.Input input = new StageReport.Input(stageName, ws.dir().getParent(), ws.file(tag + ".compile.log"),
 				ws.file(tag + ".rewrite.log"), ws.file("00-scan.find.patch"), previousVersions,
-				ws.file(tag + ".versions.txt"), gateOption.equals("none") ? "skip" : gate.compileOk() ? "1" : "0",
-				gate.buildOk(), (// 원본에서도 실패하던 태스크만 실패했으면 기존 문제로 표시한다
-				gate.buildOk().equals("0") && !gate.buildBlocking()) ? "0" : "1",
-				(List<Map<String, Object>>) issues.getOrDefault("issues", List.of()), (String) issues.get("guide"),
-				this.knownIssues.failureHints(),
-				Set.copyOf(projectRecipes.recipes().stream().map(ProjectRecipe::name).toList()),
-				ws.baselineFailedTests()), ws.file(tag + ".md"), ws.file(tag + ".report.json"));
+				ws.file(tag + ".versions.txt"), compile, gate.buildOk(), buildFailureIsNew, matchedIssues,
+				(String) issues.get("guide"), this.knownIssues.failureHints(), projectRecipeNames,
+				ws.baselineFailedTests());
+		StageReport.write(input, ws.file(tag + ".md"), ws.file(tag + ".report.json"));
 		ws.reportHead(tag).forEach(this.logger::lifecycle);
 		Path html = HtmlReport.write(ws, projectName, ws.startBoot().orElse(null),
 				this.inspector.bootVersion(ws.dir().getParent()));
@@ -574,7 +578,7 @@ public final class MigrationRunner {
 	/** 추적 중인 파일의 변경과 레시피가 만든 파일만 커밋한다. */
 	private void commitStage(Git git, MigrationWorkspace ws, String stageName, String detail, String tag) {
 		if (git.commit(ws.createdFiles(), "chore: Spring Boot " + stageName + " 마이그레이션 " + detail,
-				"리포트: " + MigrationWorkspace.DIR_NAME + "/" + tag + ".md")) {
+				"- 리포트는 " + MigrationWorkspace.DIR_NAME + "/" + tag + ".md")) {
 			this.logger.lifecycle("   commit: {}", git.lastCommit());
 		}
 		else {

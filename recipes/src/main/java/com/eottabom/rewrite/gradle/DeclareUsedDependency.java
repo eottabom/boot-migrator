@@ -1,5 +1,6 @@
 package com.eottabom.rewrite.gradle;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -107,7 +108,7 @@ public class DeclareUsedDependency extends ScanningRecipe<DeclareUsedDependency.
 
 	@Override
 	public TreeVisitor<?, ExecutionContext> getScanner(Accumulator acc) {
-		List<String> prefixes = new java.util.ArrayList<>();
+		List<String> prefixes = new ArrayList<>();
 		for (String p : this.packageName.split(",")) {
 			if (!p.trim().isEmpty()) {
 				prefixes.add(p.trim() + ".");
@@ -179,7 +180,7 @@ public class DeclareUsedDependency extends ScanningRecipe<DeclareUsedDependency.
 
 	/** 이 소스셋에서 이미 보이는 선언으로 인정하는 configuration 들 */
 	private static List<String> coveringConfigurations(String sourceSet, Set<String> using) {
-		List<String> c = new java.util.ArrayList<>(Arrays.asList("api", "compileOnlyApi"));
+		List<String> c = new ArrayList<>(Arrays.asList("api", "compileOnlyApi"));
 		if ("main".equals(sourceSet)) {
 			c.addAll(Arrays.asList("implementation", "compileOnly"));
 		}

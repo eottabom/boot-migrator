@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.io.Writer;
+import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -40,8 +41,7 @@ public record TargetGradle(Path projectDir, String javaHome, String jvmArgs, Log
 	 */
 	static String defaultJvmArgs() {
 		long totalMb = 8192;
-		if (java.lang.management.ManagementFactory
-			.getOperatingSystemMXBean() instanceof com.sun.management.OperatingSystemMXBean os) {
+		if (ManagementFactory.getOperatingSystemMXBean() instanceof com.sun.management.OperatingSystemMXBean os) {
 			totalMb = os.getTotalMemorySize() / (1024 * 1024);
 		}
 		long heapMb = Math.max(1024, Math.min(6144, totalMb / 2));

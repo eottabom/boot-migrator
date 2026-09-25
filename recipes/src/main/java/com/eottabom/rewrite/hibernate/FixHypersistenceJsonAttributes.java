@@ -17,6 +17,7 @@ import org.openrewrite.java.ImplementInterface;
 import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.java.JavaTemplate;
+import org.openrewrite.java.tree.Expression;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.TypeUtils;
@@ -180,7 +181,7 @@ public class FixHypersistenceJsonAttributes extends ScanningRecipe<FixHypersiste
 		if (!TypeUtils.isOfClassType(annotation.getType(), HIBERNATE_TYPE)) {
 			return false;
 		}
-		for (org.openrewrite.java.tree.Expression arg : annotation.getArguments()) {
+		for (Expression arg : annotation.getArguments()) {
 			// @Type(JsonType.class) / @Type(value = JsonStringType.class)
 			J target = (arg instanceof J.Assignment) ? ((J.Assignment) arg).getAssignment() : arg;
 			if (target instanceof J.FieldAccess
