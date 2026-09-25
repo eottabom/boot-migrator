@@ -43,6 +43,9 @@ final class VersionCatalogEditor {
 
 	private final Resolver resolver;
 
+	/** lines 를 고친 횟수 */
+	private int edits;
+
 	private VersionCatalogEditor(String toml, Resolver resolver) {
 		this.lines = new ArrayList<>(Arrays.asList(toml.split("\n", -1)));
 		this.resolver = resolver;
@@ -63,9 +66,14 @@ final class VersionCatalogEditor {
 
 	private void apply(Rule rule) {
 		Map<String, String> resolvedKeys = new HashMap<>();
-		// 항목 수는 그대로고 줄 번호만 밀릴 수 있어서 항목마다 다시 읽는다
-		for (int i = 0; i < parse().entries().size(); i++) {
-			Catalog catalog = parse();
+		Catalog catalog = parse();
+		int parsedAt = this.edits;
+		// 항목 수는 그대로고 줄 번호와 값만 바뀌어서, 고친 뒤에만 다시 읽는다
+		for (int i = 0; i < catalog.entries().size(); i++) {
+			if (parsedAt != this.edits) {
+				catalog = parse();
+				parsedAt = this.edits;
+			}
 			Entry entry = catalog.entries().get(i);
 			if (!rule.matches(entry)) {
 				continue;
@@ -124,9 +132,9 @@ final class VersionCatalogEditor {
 			// 같은 버전 키를 쓰는 다른 항목(ex. jackson-annotations)은 이전 버전에 남아야 한다
 			String key = catalog.newKey(entry.alias());
 			int at = catalog.versions().get(entry.ref()) + 1;
-			this.lines.add(at, key + " = \"" + target + "\"");
+			this.edit().add(at, key + " = \"" + target + "\"");
 			int line = (at <= entry.line()) ? entry.line() + 1 : entry.line();
-			this.lines.set(line, replaceGroup(this.lines.get(line), VERSION_REF, entry.ref(), key));
+			this.edit().set(line, replaceGroup(this.lines.get(line), VERSION_REF, entry.ref(), key));
 		}
 	}
 
@@ -136,17 +144,18 @@ final class VersionCatalogEditor {
 		Matcher m = KEY_VALUE.matcher(text);
 		m.matches();
 		int start = m.start(2);
-		this.lines.set(line, text.substring(0, start)
-				+ text.substring(start).replaceFirst("\"[^\"]*\"", Matcher.quoteReplacement("\"" + version + "\"")));
+		this.edit()
+			.set(line, text.substring(0, start) + text.substring(start)
+				.replaceFirst("\"[^\"]*\"", Matcher.quoteReplacement("\"" + version + "\"")));
 	}
 
 	private void setInlineVersion(Entry entry, String current, String version) {
 		String text = this.lines.get(entry.line());
 		if (entry.notation()) {
-			this.lines.set(entry.line(), text.replace(":" + current + "\"", ":" + version + "\""));
+			this.edit().set(entry.line(), text.replace(":" + current + "\"", ":" + version + "\""));
 		}
 		else {
-			this.lines.set(entry.line(), replaceGroup(text, VERSION, current, version));
+			this.edit().set(entry.line(), replaceGroup(text, VERSION, current, version));
 		}
 	}
 
@@ -161,7 +170,7 @@ final class VersionCatalogEditor {
 		else {
 			text = replaceGroup(replaceGroup(text, GROUP, entry.group(), group), NAME, entry.artifact(), artifact);
 		}
-		this.lines.set(entry.line(), text);
+		this.edit().set(entry.line(), text);
 	}
 
 	private static String replaceGroup(String text, Pattern pattern, String from, String to) {
@@ -172,6 +181,11 @@ final class VersionCatalogEditor {
 			}
 		}
 		return text;
+	}
+
+	private List<String> edit() {
+		this.edits++;
+		return this.lines;
 	}
 
 	private Catalog parse() {
