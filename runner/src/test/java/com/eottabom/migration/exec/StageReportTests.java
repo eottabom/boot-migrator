@@ -121,7 +121,7 @@ class StageReportTests {
 
 		StageReport.write(
 				new StageReport.Input("3.4", this.project, log, rewrite, find, before, after, "1", "1", "1", issues,
-						"https://guide", HINTS, Set.of()),
+						"https://guide", HINTS, Set.of(), Set.of()),
 				this.project.resolve("out.md"), this.project.resolve("out.json"));
 
 		String md = Files.readString(this.project.resolve("out.md"));
@@ -135,6 +135,27 @@ class StageReportTests {
 		assertThat((Map<String, Object>) json.get("tests")).containsEntry("total", 2);
 		assertThat((List<Object>) json.get("changedFiles")).containsExactly("build.gradle");
 		assertThat(json).containsEntry("compile", "ok").containsEntry("guide", "https://guide");
+	}
+
+	@Test
+	void separatesTestsThatAlreadyFailedBeforeMigration() throws IOException {
+		write("build/test-results/test/TEST-demo.AppTest.xml",
+				"""
+						<testsuite name="demo.AppTest" tests="2" failures="1" errors="0">
+						  <testcase classname="demo.AppTest" name="ok"/>
+						  <testcase classname="demo.AppTest" name="boom"><failure message="x">java.lang.IllegalStateException: boom</failure></testcase>
+						</testsuite>
+						""");
+		Path none = this.project.resolve("missing");
+
+		StageReport.write(
+				new StageReport.Input("4.1", this.project, none, none, none, none, none, "1", "1", "1", List.of(), null,
+						HINTS, Set.of(), Set.of("demo.AppTest#boom")),
+				this.project.resolve("out.md"), this.project.resolve("out.json"));
+
+		assertThat(Files.readString(this.project.resolve("out.md")))
+			.contains("✅ 1개 통과 (원본에서도 실패하던 1개 제외)", "## 원본에서도 실패하던 테스트 (1건)", "- `demo.AppTest` boom")
+			.doesNotContain("## 실패한 테스트");
 	}
 
 	private Path write(String path, String content) throws IOException {

@@ -11,8 +11,17 @@ import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 /**
  * 대상 프로젝트의 build/test-results 집계. verify.init.gradle 이 ignoreFailures 를 켜므로 build 성공만으로는
@@ -77,8 +86,7 @@ final class TestResults {
 				@Override
 				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
 					String name = file.getFileName().toString();
-					if (name.startsWith("TEST-") && name.endsWith(".xml")
-							&& file.toString().contains("/build/test-results/")
+					if (name.startsWith("TEST-") && name.endsWith(".xml") && isUnderTestResults(file)
 							&& (since == null || attrs.lastModifiedTime().compareTo(since) > 0)) {
 						found.add(file);
 					}
@@ -95,6 +103,63 @@ final class TestResults {
 			throw new UncheckedIOException(ex);
 		}
 		return found;
+	}
+
+	/** 실패하거나 에러가 난 테스트의 id (클래스#메서드) */
+	static Set<String> failedTests(Path projectDir) {
+		Set<String> failed = new TreeSet<>();
+		DocumentBuilder parser = xmlParser();
+		for (Path xml : files(projectDir, null)) {
+			try {
+				NodeList cases = parser.parse(xml.toFile()).getElementsByTagName("testcase");
+				for (int i = 0; i < cases.getLength(); i++) {
+					Element tc = (Element) cases.item(i);
+					if (firstChild(tc, "failure") != null || firstChild(tc, "error") != null) {
+						failed.add(id(tc));
+					}
+				}
+			}
+			catch (Exception ex) {
+				// 쓰다 만 결과 파일은 건너뛴다
+			}
+		}
+		return failed;
+	}
+
+	static String id(Element testcase) {
+		return testcase.getAttribute("classname") + "#" + testcase.getAttribute("name");
+	}
+
+	static Element firstChild(Element parent, String tag) {
+		for (Node n = parent.getFirstChild(); n != null; n = n.getNextSibling()) {
+			if (n instanceof Element e && e.getTagName().equals(tag)) {
+				return e;
+			}
+		}
+		return null;
+	}
+
+	static DocumentBuilder xmlParser() {
+		try {
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+			factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+			factory.setExpandEntityReferences(false);
+			return factory.newDocumentBuilder();
+		}
+		catch (Exception ex) {
+			throw new IllegalStateException(ex);
+		}
+	}
+
+	private static boolean isUnderTestResults(Path file) {
+		for (Path p = file.getParent(); p != null && p.getParent() != null; p = p.getParent()) {
+			if ("test-results".equals(p.getFileName().toString())
+					&& "build".equals(p.getParent().getFileName().toString())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static int attribute(String tag, String name) {

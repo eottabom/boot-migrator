@@ -16,14 +16,11 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 import com.eottabom.migration.playbook.KnownIssues.FailureHint;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
@@ -56,7 +53,7 @@ final class StageReport {
 	static void write(Input in, Path markdown, Path json) {
 		String root = in.projectDir().toAbsolutePath() + "/";
 		Map<String, Map<String, Set<String>>> warnings = warnings(in.compileLog(), root);
-		Tests tests = tests(in.projectDir(), in.failureHints());
+		Tests tests = tests(in.projectDir(), in.failureHints(), in.baselineFailedTests());
 		List<Map<String, Object>> manual = manual(in.findPatch());
 		Fixes fixes = fixes(in.rewriteLog(), in.projectRecipes());
 		Deps deps = deps(readVersions(in.versionsBefore()), readVersions(in.versionsAfter()));
@@ -111,12 +108,12 @@ final class StageReport {
 		return list;
 	}
 
-	private static Tests tests(Path projectDir, List<FailureHint> hints) {
+	private static Tests tests(Path projectDir, List<FailureHint> hints, Set<String> baselineFailedTests) {
 		int total = 0;
 		List<Map<String, Object>> failures = new ArrayList<>();
 		Map<String, Map<String, Object>> renamed = new LinkedHashMap<>();
 		Map<String, Map<String, Object>> unsupported = new LinkedHashMap<>();
-		DocumentBuilder parser = xmlParser();
+		DocumentBuilder parser = TestResults.xmlParser();
 		for (Path xml : TestResults.files(projectDir, null)) {
 			Document doc;
 			try {
@@ -130,16 +127,20 @@ final class StageReport {
 			NodeList cases = suite.getElementsByTagName("testcase");
 			for (int i = 0; i < cases.getLength(); i++) {
 				Element tc = (Element) cases.item(i);
-				Element failure = firstChild(tc, "failure");
+				Element failure = TestResults.firstChild(tc, "failure");
 				if (failure == null) {
-					failure = firstChild(tc, "error");
+					failure = TestResults.firstChild(tc, "error");
 				}
 				if (failure != null) {
-					failures.add(testFailure(tc.getAttribute("classname"), tc.getAttribute("name"),
-							failure.getAttribute("message"), failure.getTextContent(), hints));
+					Map<String, Object> f = testFailure(tc.getAttribute("classname"), tc.getAttribute("name"),
+							failure.getAttribute("message"), failure.getTextContent(), hints);
+					if (baselineFailedTests.contains(TestResults.id(tc))) {
+						f.put("existing", true);
+					}
+					failures.add(f);
 				}
 			}
-			Element out = firstChild(suite, "system-out");
+			Element out = TestResults.firstChild(suite, "system-out");
 			if (out != null) {
 				propertiesMigrator(out.getTextContent(), renamed, unsupported);
 			}
@@ -352,8 +353,18 @@ final class StageReport {
 		L.add("| 항목 | 결과 |");
 		L.add("|---|---|");
 		L.add("| 컴파일 | " + ("skip".equals(in.compileOk()) ? "실행 안 함" : compileFailed ? "❌ 실패" : "✅ 통과") + " |");
-		L.add("| 테스트 | " + ((tests.total() == 0) ? "실행 안 함" : !tests.failures().isEmpty()
-				? "❌ " + tests.failures().size() + " / " + tests.total() + " 실패" : "✅ " + tests.total() + "개 통과")
+		List<Map<String, Object>> newFailures = tests.failures()
+			.stream()
+			.filter((f) -> !Boolean.TRUE.equals(f.get("existing")))
+			.toList();
+		List<Map<String, Object>> existingFailures = tests.failures()
+			.stream()
+			.filter((f) -> Boolean.TRUE.equals(f.get("existing")))
+			.toList();
+		String existingNote = existingFailures.isEmpty() ? "" : " (원본에서도 실패하던 " + existingFailures.size() + "개 제외)";
+		L.add("| 테스트 | " + ((tests.total() == 0) ? "실행 안 함"
+				: !newFailures.isEmpty() ? "❌ " + newFailures.size() + " / " + tests.total() + " 실패" + existingNote
+						: "✅ " + (tests.total() - existingFailures.size()) + "개 통과" + existingNote)
 				+ " |");
 		String buildFail = "0".equals(in.baselineBuildOk()) ? "❌ 실패 (원본에서도 실패하던 태스크만 실패한 기존 문제, 00-baseline-build.log)"
 				: "❌ 실패 (테스트 외 태스크, 패키징이나 asciidoctor, checkstyle 등. test.log 참고)";
@@ -379,11 +390,10 @@ final class StageReport {
 			L.add("");
 		}
 
-		if (!tests.failures().isEmpty()) {
+		if (!newFailures.isEmpty()) {
 			Map<String, List<Map<String, Object>>> byClass = new LinkedHashMap<>();
-			tests.failures()
-				.forEach((f) -> byClass.computeIfAbsent((String) f.get("cls"), (k) -> new ArrayList<>()).add(f));
-			L.add("## 실패한 테스트 (" + tests.failures().size() + "건, " + byClass.size() + "개 클래스)");
+			newFailures.forEach((f) -> byClass.computeIfAbsent((String) f.get("cls"), (k) -> new ArrayList<>()).add(f));
+			L.add("## 실패한 테스트 (" + newFailures.size() + "건, " + byClass.size() + "개 클래스)");
 			L.add("원인은 스택트레이스의 가장 안쪽 예외(Caused by) 기준. 전체 스택은 각 모듈의 build/test-results 참고.");
 			L.add("");
 			byClass.entrySet().stream().sorted((a, b) -> b.getValue().size() - a.getValue().size()).forEach((e) -> {
@@ -411,6 +421,14 @@ final class StageReport {
 				});
 				L.add("");
 			});
+		}
+
+		if (!existingFailures.isEmpty()) {
+			L.add("## 원본에서도 실패하던 테스트 (" + existingFailures.size() + "건)");
+			L.add("마이그레이션 전부터 실패하던 테스트라 단계를 막지 않는다. 목록은 00-baseline-failed-tests.txt.");
+			L.add("");
+			existingFailures.forEach((f) -> L.add("- `" + f.get("cls") + "` " + f.get("test")));
+			L.add("");
 		}
 
 		L.add("## 설정 키 변경 (spring-boot-properties-migrator)");
@@ -549,28 +567,6 @@ final class StageReport {
 		return v.matches("\\d+") ? Integer.parseInt(v) : 0;
 	}
 
-	private static Element firstChild(Element parent, String tag) {
-		for (Node n = parent.getFirstChild(); n != null; n = n.getNextSibling()) {
-			if (n instanceof Element e && e.getTagName().equals(tag)) {
-				return e;
-			}
-		}
-		return null;
-	}
-
-	private static DocumentBuilder xmlParser() {
-		try {
-			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-			factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-			factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-			factory.setExpandEntityReferences(false);
-			return factory.newDocumentBuilder();
-		}
-		catch (Exception ex) {
-			throw new IllegalStateException(ex);
-		}
-	}
-
 	private static void writeFile(Path file, String content) {
 		try {
 			Files.createDirectories(file.getParent());
@@ -592,7 +588,7 @@ final class StageReport {
 	record Input(String stage, Path projectDir, Path compileLog, Path rewriteLog, Path findPatch, Path versionsBefore,
 			Path versionsAfter, String compileOk, String buildOk, String baselineBuildOk,
 			List<Map<String, Object>> knownIssues, String guide, List<FailureHint> failureHints,
-			Set<String> projectRecipes) {
+			Set<String> projectRecipes, Set<String> baselineFailedTests) {
 	}
 
 	/** renamed / unsupported 는 "key|source" 로 중복을 없앤 {key, replacement, source} */

@@ -81,7 +81,8 @@ class MigrationRunnerFlowTests {
 		write("src/main/java/demo/Fix.java", "package demo;\nclass Fix {}\n");
 		this.runner.run(request("3.5", true));
 
-		assertThat(this.fake.count("clean build --continue")).isEqualTo(1);
+		// 원본 빌드 1번과 재개 게이트 1번
+		assertThat(this.fake.count("clean build --continue")).isEqualTo(2);
 		assertThat(migrationCommits()).hasSize(2);
 		assertThat(git("show", "--name-only", "--format=", "HEAD~1")).contains("Fix.java", "lombok.config");
 		assertThat(git("log", "--name-only", "--format=")).doesNotContain("test-output.log");
@@ -120,6 +121,19 @@ class MigrationRunnerFlowTests {
 			.hasMessageContaining(":app:checkstyleMain")
 			.hasMessageNotContaining(":app:bootJar,");
 		assertThat(migrationCommits()).hasSize(1);
+	}
+
+	@Test
+	void passesTestsThatAlreadyFailedButStopsOnNewTestFailures() throws IOException {
+		this.fake.baseline = new BuildOutcome(true, 2, List.of());
+		this.fake.builds.add(new BuildOutcome(true, 2, List.of()));
+		this.fake.builds.add(new BuildOutcome(true, 3, List.of()));
+
+		assertThatThrownBy(() -> this.runner.run(request("3.5", true))).hasMessageContaining("[3.5]")
+			.hasMessageContaining("테스트 1개 실패");
+		assertThat(migrationCommits()).hasSize(1);
+		assertThat(read(".rewrite-migration/00-baseline-failed-tests.txt")).contains("demo.AppTest#t0",
+				"demo.AppTest#t1");
 	}
 
 	@Test

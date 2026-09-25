@@ -266,7 +266,7 @@ public final class MigrationRunner {
 			this.logger.lifecycle("   의존성 {}개 → {}", MigrationWorkspace.countMatches(previousVersions, "."),
 					previousVersions);
 		}
-		// 원본 빌드: 원본에서도 실패하던 태스크는 단계의 빌드 실패로 보지 않는다. 재개했다면 처음 실행 때 저장한 목록을 쓴다
+		// 원본 빌드: 원본에서도 실패하던 태스크와 테스트는 단계의 실패로 보지 않는다. 재개했다면 처음 실행 때 저장한 목록을 쓴다
 		if (request.gate().equals("build") && !request.dryRun() && !resumed.active()) {
 			baselineBuild(gradle, ws, projectName);
 		}
@@ -487,7 +487,12 @@ public final class MigrationRunner {
 		Path log = ws.file(tag + ".test.log");
 		boolean built = gradle.run(log, verifyArgs(args.toArray(String[]::new)));
 		TestResults.Summary tests = TestResults.collect(ws.dir().getParent());
-		this.logger.lifecycle("   테스트 {}개, 실패 {}개", tests.total(), tests.failed());
+		Set<String> failedTests = TestResults.failedTests(ws.dir().getParent());
+		int existing = failedTests.size();
+		failedTests.removeAll(ws.baselineFailedTests());
+		existing -= failedTests.size();
+		this.logger.lifecycle("   테스트 {}개, 실패 {}개{}", tests.total(), failedTests.size(),
+				(existing > 0) ? " (원본에서도 실패하던 " + existing + "개 제외)" : "");
 		Set<String> newFailures = new java.util.TreeSet<>();
 		if (!built) {
 			Set<String> failed = failedTasks(log);
@@ -502,7 +507,7 @@ public final class MigrationRunner {
 				this.logger.lifecycle("   빌드 실패: 원본에서도 실패하던 태스크만 실패했다 ({})", ws.file("00-baseline-build.log"));
 			}
 		}
-		return new GateResult(true, built ? "1" : "0", tests.failed(), newFailures);
+		return new GateResult(true, built ? "1" : "0", failedTests.size(), newFailures);
 	}
 
 	/** --continue 로 돌린 빌드 로그에서 실패한 태스크 경로를 모은다. */
@@ -517,23 +522,31 @@ public final class MigrationRunner {
 	}
 
 	/**
-	 * 원본 빌드(테스트 제외)를 한 번 돌려 원래부터 실패하던 태스크를 저장한다. 원본에서 컴파일이 깨지면 OpenRewrite 가 레시피를 실행할 수
-	 * 없으므로 멈춘다.
+	 * 원본 빌드를 한 번 돌려 원래부터 실패하던 태스크와 테스트를 저장한다. 테스트는 ignoreFailures 로 끝까지 돌린다. 원본에서 컴파일이
+	 * 깨지면 OpenRewrite 가 레시피를 실행할 수 없으므로 멈춘다.
 	 */
 	private void baselineBuild(BuildTool gradle, MigrationWorkspace ws, String projectName) {
 		Path log = ws.file("00-baseline-build.log");
-		if (gradle.run(log, List.of("build", "-x", "test", "--continue"))) {
-			ws.writeBaselineFailedTasks(Set.of());
-			return;
-		}
-		if (MigrationWorkspace.countMatches(log,
+		boolean built = gradle.run(log, verifyArgs("clean", "build", "--continue"));
+		if (!built && MigrationWorkspace.countMatches(log,
 				"Execution failed for task '[^']*:compile(Test)?(Java|Groovy|Kotlin)'") > 0) {
 			throw failure("현재 소스가 컴파일되지 않는다. 컴파일 에러를 고친 뒤 다시 실행한다 → " + log);
 		}
-		Set<String> failed = failedTasks(log);
-		ws.writeBaselineFailedTasks(failed);
-		this.logger.lifecycle("   원본 빌드에서도 실패하는 태스크 (기존 문제, 컴파일은 통과) {} → {}", failed, log);
-		ws.appendSummary(projectName, "- 원본 빌드에서도 실패하는 태스크 (기존 문제, 마이그레이션 무관) " + failed + ", 00-baseline-build.log\n");
+		Set<String> failedTasks = built ? Set.of() : failedTasks(log);
+		Set<String> failedTests = TestResults.failedTests(ws.dir().getParent());
+		ws.writeBaselineFailedTasks(failedTasks);
+		ws.writeBaselineFailedTests(failedTests);
+		if (!failedTasks.isEmpty()) {
+			this.logger.lifecycle("   원본 빌드에서도 실패하는 태스크 (기존 문제, 컴파일은 통과) {} → {}", failedTasks, log);
+			ws.appendSummary(projectName,
+					"- 원본 빌드에서도 실패하는 태스크 (기존 문제, 마이그레이션 무관) " + failedTasks + ", 00-baseline-build.log\n");
+		}
+		if (!failedTests.isEmpty()) {
+			this.logger.lifecycle("   원본에서도 실패하는 테스트 {}개 (단계를 막지 않는다) → {}", failedTests.size(),
+					ws.file("00-baseline-failed-tests.txt"));
+			ws.appendSummary(projectName,
+					"- 원본에서도 실패하는 테스트 " + failedTests.size() + "개 (기존 문제, 단계를 막지 않는다), 00-baseline-failed-tests.txt\n");
+		}
 	}
 
 	/** 단계 리포트(md, json)를 만들고 HTML 리포트를 갱신한다. */
@@ -549,8 +562,8 @@ public final class MigrationRunner {
 				gate.buildOk().equals("0") && !gate.buildBlocking()) ? "0" : "1",
 				(List<Map<String, Object>>) issues.getOrDefault("issues", List.of()), (String) issues.get("guide"),
 				this.knownIssues.failureHints(),
-				Set.copyOf(projectRecipes.recipes().stream().map(ProjectRecipe::name).toList())), ws.file(tag + ".md"),
-				ws.file(tag + ".report.json"));
+				Set.copyOf(projectRecipes.recipes().stream().map(ProjectRecipe::name).toList()),
+				ws.baselineFailedTests()), ws.file(tag + ".md"), ws.file(tag + ".report.json"));
 		ws.reportHead(tag).forEach(this.logger::lifecycle);
 		Path html = HtmlReport.write(ws, projectName, ws.startBoot().orElse(null),
 				this.inspector.bootVersion(ws.dir().getParent()));

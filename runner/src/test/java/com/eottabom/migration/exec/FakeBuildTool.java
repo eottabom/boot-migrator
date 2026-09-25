@@ -61,7 +61,7 @@ final class FakeBuildTool implements BuildTool {
 			.findFirst()
 			.ifPresent((a) -> write(Path.of(a.substring(a.indexOf('=') + 1)),
 					"org.springframework.boot:spring-boot=3.4.0\n"));
-		if (args.contains("-x") && args.contains("build")) {
+		if (log != null && log.getFileName().toString().startsWith("00-baseline")) {
 			return finish(log, this.baseline);
 		}
 		if (args.contains("compileJava")) {

@@ -118,7 +118,7 @@ footer { color: var(--muted); font-size: 12.5px; margin-top: 32px; }
   function status(r) {
     if (!r) return 'warn';
     if (r.compile === 'fail') return 'fail';
-    if ((r.tests.failures || []).length) return 'fail';
+    if ((r.tests.failures || []).some(f => !f.existing)) return 'fail';
     if (r.build === '0' && r.baselineBuild !== '0') return 'fail';
     return 'ok';
   }
@@ -193,10 +193,11 @@ footer { color: var(--muted); font-size: 12.5px; margin-top: 32px; }
       main.append(card(s.name, null, '이 단계의 구조화된 리포트가 없다. ' + s.tag + '.md 를 본다.'));
       return;
     }
-    const failures = r.tests.failures || [];
+    const failures = (r.tests.failures || []).filter(f => !f.existing);
+    const existing = (r.tests.failures || []).filter(f => f.existing);
     const pills = $('div', { class: 'pills' },
       $('span', { class: 'pill ' + (r.compile === 'fail' ? 'fail' : r.compile === 'ok' ? 'ok' : '') }, '컴파일 ' + ({ ok: '통과', fail: '실패', skip: '실행 안 함' }[r.compile])),
-      $('span', { class: 'pill ' + (failures.length ? 'fail' : r.tests.total ? 'ok' : '') }, r.tests.total ? ('테스트 ' + (r.tests.total - failures.length) + '/' + r.tests.total + ' 통과') : '테스트 실행 안 함'),
+      $('span', { class: 'pill ' + (failures.length ? 'fail' : r.tests.total ? 'ok' : '') }, r.tests.total ? ('테스트 ' + (r.tests.total - failures.length - existing.length) + '/' + r.tests.total + ' 통과' + (existing.length ? ', 기존 실패 ' + existing.length : '')) : '테스트 실행 안 함'),
       $('span', { class: 'pill ' + (r.build === '1' ? 'ok' : r.build === '0' ? (r.baselineBuild === '0' ? 'warn' : 'fail') : '') },
         '빌드 ' + (r.build === '1' ? '통과' : r.build === '0' ? (r.baselineBuild === '0' ? '실패 (원본에서도 실패)' : '실패') : '실행 안 함')),
       $('span', { class: 'pill info' }, '바뀐 파일 ' + (r.changedFiles || []).length));
@@ -216,6 +217,11 @@ footer { color: var(--muted); font-size: 12.5px; margin-top: 32px; }
         list.length + '건 (' + list.slice(0, 5).map(x => x.test).join(' / ') + (list.length > 5 ? ' …' : '') + ')' + (f.location ? ', 위치 ' + f.location : ''), true));
     }
     const checks = [];
+    if (existing.length) {
+      checks.push(entry('REPORT_ONLY', '원본에서도 실패하던 테스트 ' + existing.length + '건',
+        '마이그레이션 전부터 실패하던 테스트라 단계를 막지 않는다. 목록은 00-baseline-failed-tests.txt 에 있다.',
+        existing.slice(0, 5).map(x => x.cls.split('.').pop() + ' ' + x.test).join(' / ') + (existing.length > 5 ? ' …' : '')));
+    }
     for (const i of (r.knownIssues || []).filter(i => i.mode !== 'AUTO_FIX')) {
       checks.push(entry(i.mode, i.title,
         $('div', null, rich(i.detail || ''), i.trigger ? $('div', { class: 'meta' }, rich(i.trigger)) : null),

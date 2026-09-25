@@ -146,7 +146,7 @@ public record MigrationWorkspace(Path dir) {
 		}
 	}
 
-	/** 원본 빌드(테스트 제외)에서 실패한 태스크. 저장된 적이 없으면 빈 집합 (원본 빌드가 통과했다고 본다) */
+	/** 원본 빌드에서 실패한 태스크. 저장된 적이 없으면 빈 집합 (원본 빌드가 통과했다고 본다) */
 	public Set<String> baselineFailedTasks() {
 		return new LinkedHashSet<>(
 				read(file("00-baseline-failed-tasks.txt")).lines().filter((l) -> !l.isBlank()).toList());
@@ -154,6 +154,16 @@ public record MigrationWorkspace(Path dir) {
 
 	public void writeBaselineFailedTasks(Collection<String> tasks) {
 		write(file("00-baseline-failed-tasks.txt"), String.join("\n", tasks));
+	}
+
+	/** 원본 빌드에서 실패한 테스트 id (클래스#메서드). 단계에서는 여기 없는 실패만 막는다 */
+	public Set<String> baselineFailedTests() {
+		return new LinkedHashSet<>(
+				read(file("00-baseline-failed-tests.txt")).lines().filter((l) -> !l.isBlank()).toList());
+	}
+
+	public void writeBaselineFailedTests(Collection<String> tests) {
+		write(file("00-baseline-failed-tests.txt"), String.join("\n", tests));
 	}
 
 	/** 멈출 때 있던 추적 안 된 파일 (실패한 빌드가 남긴 것 포함). 재개 때는 그 뒤에 생긴 파일만 사용자가 고치며 만든 파일로 본다 */
