@@ -173,7 +173,7 @@ public final class MigrationRunner {
 			TestResults.Summary tests = TestResults.collect(projectDir);
 			this.logger.lifecycle("   테스트 {}개, 실패 {}개", tests.total(), tests.failed());
 			if (!built) {
-				throw failure("빌드 실패 (테스트 외: 패키징/플러그인/검사) → " + buildLog);
+				throw failure("테스트 외 태스크(패키징, 플러그인, 검사)에서 빌드 실패 → " + buildLog);
 			}
 			if (tests.failed() > 0) {
 				throw failure("테스트 실패 " + tests.failed() + "개 → " + projectDir.resolve("build/reports/tests"));
@@ -238,24 +238,21 @@ public final class MigrationRunner {
 
 		StringBuilder header = new StringBuilder().append("## ")
 			.append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")))
-			.append(" 실행\n\n")
-			.append("- 시작: Boot ")
+			.append(" 실행\n\n| 시작 | 목표 | 단계 |\n|---|---|---|\n| Boot ")
 			.append(project.bootVersion())
 			.append(" / Gradle ")
 			.append(orQ(project.gradleVersion()))
 			.append(" / Java ")
 			.append(orQ(project.javaVersion()))
-			.append('\n')
-			.append("- 목표: Boot ")
+			.append(" | Boot ")
 			.append(plan.targetBoot())
 			.append((plan.targetJava() == null) ? "" : " / Java " + plan.targetJava())
 			.append(" (")
 			.append(opts)
-			.append(")\n")
-			.append("- 단계: ")
+			.append(") | ")
 			.append(plan.stageNames())
-			.append('\n');
-		plan.notes().forEach((n) -> header.append("- 참고: ").append(n).append('\n'));
+			.append(" |\n\n");
+		plan.notes().forEach((n) -> header.append("- ").append(n).append('\n'));
 		if (resumed.note() != null) {
 			header.append(resumed.note()).append('\n');
 		}
@@ -283,7 +280,7 @@ public final class MigrationRunner {
 		else {
 			// 스캔은 수동 검토 대상 위치를 표시하는 용도라 실패해도 마이그레이션은 계속한다
 			fail("스캔 실패 (수동 검토 대상 표시만 빠지고 계속 진행한다) → " + ws.file("00-scan.log"));
-			ws.appendSummary(projectName, "- 스캔 실패: 수동 검토 대상 표시 없음 (00-scan.log)\n");
+			ws.appendSummary(projectName, "- 스캔이 실패해서 수동 검토 대상 표시가 없다 (00-scan.log)\n");
 		}
 		ws.appendSummary(projectName,
 				"\n| 단계 | 컴파일 | 테스트 | 빌드 | 자동 보정 | 수동 검토 | 알려진 이슈 | 리포트 |\n|---|---|---|---|---|---|---|---|\n");
@@ -359,7 +356,7 @@ public final class MigrationRunner {
 			if (!gate.passed()) {
 				// 깨진 상태로 다음 단계로 가거나 커밋하지 않는다. 같은 명령을 다시 실행하면 이 단계부터 이어서 한다
 				ws.appendSummary(projectName,
-						"\n결과: " + stage.name() + " 단계 " + gate.describe() + "로 중단 (" + tag + ".md)\n\n");
+						"\n" + stage.name() + " 단계에서 " + gate.describe() + "로 중단했다 (" + tag + ".md)\n\n");
 				if (project.git()) {
 					ws.writeResume(new Resume(stage.name(), tag, lastTag, gate.compileOk() ? "build" : "compile"));
 					ws.recordUntrackedAtStop(git.untracked());
@@ -381,7 +378,7 @@ public final class MigrationRunner {
 		}
 
 		String finalBoot = this.inspector.bootVersion(projectDir);
-		ws.appendSummary(projectName, "\n결과: 완료, Boot " + project.bootVersion() + " → " + finalBoot + "\n\n");
+		ws.appendSummary(projectName, "\nBoot " + project.bootVersion() + " → " + finalBoot + " 완료\n\n");
 		step("완료: Boot " + project.bootVersion() + " → " + finalBoot);
 		this.logger.lifecycle("   리포트      : {}", ws.file(HtmlReport.FILE_NAME).toUri());
 		this.logger.lifecycle("   기록        : {}", ws.file("SUMMARY.md"));
@@ -415,7 +412,7 @@ public final class MigrationRunner {
 					this.logger.lifecycle("   {} 단계 전 상태로 되돌렸다. {} 단계부터 다시 시도한다", r.stage(), r.stage());
 					ws.clearResume();
 					return new Resumed(true, Integer.parseInt(r.tag().substring(0, 2)) - 1, r.previousTag(),
-							"- 재개: " + r.stage() + " 단계 전 상태로 되돌리고 다시 시도");
+							"- 재개해서 " + r.stage() + " 단계 전 상태로 되돌리고 다시 시도했다");
 				}
 				// 되돌리는 명령은 출력하지 않는다 (복사해서 실행하다 작업 내용을 지우는 일이 없도록)
 				throw failure(r.stage() + " 단계 전 상태로 되돌리지 못했다 (실패 이후 소스가 바뀌었다). 컴파일 에러를 고친 뒤 다시 실행한다");
@@ -447,7 +444,7 @@ public final class MigrationRunner {
 			commitStage(git, ws, r.stage(), "(재개, 수정 포함)", r.tag());
 		}
 		ws.clearResume();
-		return new Resumed(true, null, r.tag(), "- 재개: " + r.stage() + " 단계를 고친 상태에서 검증을 통과하고 이어서 진행");
+		return new Resumed(true, null, r.tag(), "- 재개해서 " + r.stage() + " 단계를 고친 상태로 검증을 통과하고 이어서 진행했다");
 	}
 
 	/**

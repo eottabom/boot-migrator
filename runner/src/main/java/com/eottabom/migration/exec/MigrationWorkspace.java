@@ -61,7 +61,7 @@ public record MigrationWorkspace(Path dir) {
 		Path summary = file("SUMMARY.md");
 		try {
 			if (!Files.exists(summary)) {
-				Files.writeString(summary, "# 마이그레이션 기록: " + projectName + "\n\n");
+				Files.writeString(summary, "# " + projectName + " 마이그레이션 기록\n\n");
 			}
 			Files.writeString(summary, text, StandardOpenOption.APPEND);
 		}

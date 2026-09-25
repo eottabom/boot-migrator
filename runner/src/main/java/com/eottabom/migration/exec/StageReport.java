@@ -356,7 +356,7 @@ final class StageReport {
 				? "❌ " + tests.failures().size() + " / " + tests.total() + " 실패" : "✅ " + tests.total() + "개 통과")
 				+ " |");
 		String buildFail = "0".equals(in.baselineBuildOk()) ? "❌ 실패 (원본에서도 실패하던 태스크만 실패한 기존 문제, 00-baseline-build.log)"
-				: "❌ 실패 (테스트 외: 패키징/asciidoctor/checkstyle 등, test.log 참고)";
+				: "❌ 실패 (테스트 외 태스크, 패키징이나 asciidoctor, checkstyle 등. test.log 참고)";
 		L.add("| 빌드 | " + ("1".equals(in.buildOk()) ? "✅ 통과" : "0".equals(in.buildOk()) ? buildFail : "실행 안 함") + " |");
 		L.add("| 제거 예정 API 사용 ([removal]) | " + warnings.get("removal").size() + " 종류 |");
 		L.add("| deprecated API 사용 | " + warnings.get("deprecation").size() + " 종류 |");
