@@ -1,6 +1,10 @@
 package com.eottabom.rewrite.testing;
 
-import org.junit.jupiter.api.Test;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
@@ -30,11 +34,11 @@ class FindSpyStubbingThroughCachingProxyTests implements RewriteTest {
 						"package org.springframework.cache.annotation; public @interface Cacheable { String[] value() default {}; }",
 						"package org.springframework.test.context.bean.override.mockito; public @interface MockitoSpyBean {}",
 						"package com.example; public interface Catalog { String find(String id); }", """
-								package org.mockito;
-								public class BDDMockito {
-								    public static <T> T given(T call) { return call; }
-								    public static BDDMockito willReturn(Object value) { return null; }
-								}
+												package org.mockito;
+												public class BDDMockito {
+												    public static <T> T given(T call) { return call; }
+												    public static BDDMockito willReturn(Object value) { return null; }
+												}
 								""",
 						"""
 								package org.springframework.test.util;
@@ -42,9 +46,18 @@ class FindSpyStubbingThroughCachingProxyTests implements RewriteTest {
 								"""));
 	}
 
-	@Test
-	void marksSpyOfCachedBeanStubbedThroughProxy() {
-		rewriteRun(java(SERVICE), java("""
+	@ParameterizedTest(name = "[{index}] {0}")
+	@MethodSource("scenarios")
+	void marksSpyStubbedThroughCachingProxy(String scenario, String before, String after) {
+		rewriteRun(java(SERVICE), (after != null) ? java(before, after) : java(before));
+	}
+
+	// @formatter:off
+	static Stream<Arguments> scenarios() {
+		return Stream.of(
+			Arguments.of(
+				"캐시 빈의 spy 를 프록시로 stubbing 하면 필드를 표시",
+				"""
 				import com.example.Catalog;
 				import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
@@ -58,7 +71,8 @@ class FindSpyStubbingThroughCachingProxyTests implements RewriteTest {
 				        given(catalog.find("1"));
 				    }
 				}
-				""", """
+				""",
+				"""
 				import com.example.Catalog;
 				import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
@@ -72,12 +86,11 @@ class FindSpyStubbingThroughCachingProxyTests implements RewriteTest {
 				        given(catalog.find("1"));
 				    }
 				}
-				"""));
-	}
-
-	@Test
-	void skipsFileThatUnwrapsSpyWithAopTestUtils() {
-		rewriteRun(java(SERVICE), java("""
+				"""
+			),
+			Arguments.of(
+				"AopTestUtils 로 spy 를 꺼내면 그대로",
+				"""
 				import com.example.ProductService;
 				import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 				import org.springframework.test.util.AopTestUtils;
@@ -93,7 +106,11 @@ class FindSpyStubbingThroughCachingProxyTests implements RewriteTest {
 				        given(spy.find("1"));
 				    }
 				}
-				"""));
+				""",
+				null
+			)
+		);
 	}
+	// @formatter:on
 
 }
