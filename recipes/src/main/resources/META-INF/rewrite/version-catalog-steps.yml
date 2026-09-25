@@ -3,7 +3,7 @@
 type: specs.openrewrite.org/v1beta/recipe
 name: com.eottabom.rewrite.gradle.catalog.VersionCatalog_3_0
 displayName: version catalog 정렬 (3_0)
-description: com.eottabom.rewrite.spring.SpringBootStep_3_0 의 의존성/플러그인 버전 변경을 gradle/*.versions.toml 에 적용한다.
+description: com.eottabom.rewrite.spring.SpringBootStep_3_0 의 의존성/플러그인 버전 변경을 gradle/*.versions.toml 에 적용한다. upstream 조건(precondition) 안의 규칙 13개는 catalog 에서 조건을 판단할 수 없어 뺐다.
 recipeList:
 - com.eottabom.rewrite.gradle.UpgradeVersionCatalog:
     rules:
@@ -39,17 +39,6 @@ recipeList:
     - dependency org.springframework:* 5.3.x
     - dependency org.springframework.security:* 5.3.x
     - dependency org.hibernate:hibernate-search-orm 5.11.x
-    - dependency com.github.tomakehurst:wiremock* 2.x
-    - dependency com.squareup.okhttp3:mockwebserver 4.X
-    - change com.squareup.okhttp3:mockwebserver *:mockwebserver3 5.x
-    - change org.mockito:mockito-all *:mockito-core
-    - dependency net.bytebuddy:byte-buddy* 1.11.13
-    - dependency org.mockito:* 4.x
-    - dependency net.bytebuddy:byte-buddy* 1.12.19
-    - change xmlunit:xmlunit org.xmlunit:xmlunit-legacy 2.x
-    - change org.jboss.arquillian.junit:arquillian-junit-container org.jboss.arquillian.junit5:arquillian-junit5-container x
-    - change org.jboss.byteman:byteman-bmunit org.jboss.byteman:byteman-bmunit5 x
-    - change com.github.database-rider:rider-spring *:rider-junit5 1.x
     - dependency org.springframework.boot:* 2.4.x
     - dependency org.springframework.boot:spring-boot-dependencies 2.4.x
     - plugin org.springframework.boot 2.4.x
@@ -58,7 +47,6 @@ recipeList:
     - dependency org.springframework.boot:spring-boot-dependencies 2.5.x
     - plugin org.springframework.boot 2.5.x
     - plugin io.spring.dependency-management 1.0.x
-    - dependency org.spockframework:* 2.0-groovy-3.0
     - change mysql:mysql-connector-java com.mysql:mysql-connector-j 8.0.x
     - dependency org.mybatis.spring.boot:* 2.2.0
     - dependency org.springframework.boot:* 2.6.x
@@ -348,7 +336,6 @@ recipeList:
     - change com.alibaba:fastjson com.alibaba.fastjson2:fastjson2 2.x
     - dependency org.springframework.kafka:spring-kafka 3.0.x
     - dependency org.springframework.integration:* 6.0.x
-    - dependency org.apache.httpcomponents:httpclient 4.5.x
     - dependency org.springframework.data:* 3.0.x
     - change org.thymeleaf:thymeleaf-spring5 *:thymeleaf-spring6 3.1.x
     - change org.thymeleaf.extras:thymeleaf-extras-springsecurity5 *:thymeleaf-extras-springsecurity6 3.1.x
@@ -565,7 +552,7 @@ recipeList:
 type: specs.openrewrite.org/v1beta/recipe
 name: com.eottabom.rewrite.gradle.catalog.VersionCatalog_4_0
 displayName: version catalog 정렬 (4_0)
-description: com.eottabom.rewrite.spring.SpringBootStep_4_0 의 의존성/플러그인 버전 변경을 gradle/*.versions.toml 에 적용한다.
+description: com.eottabom.rewrite.spring.SpringBootStep_4_0 의 의존성/플러그인 버전 변경을 gradle/*.versions.toml 에 적용한다. upstream 조건(precondition) 안의 규칙 15개는 catalog 에서 조건을 판단할 수 없어 뺐다.
 recipeList:
 - com.eottabom.rewrite.gradle.UpgradeVersionCatalog:
     rules:
@@ -575,20 +562,6 @@ recipeList:
     - dependency org.springframework.cloud:* 5.0.x
     - dependency org.springframework.cloud:spring-cloud-dependencies 2025.1.x
     - dependency org.springframework:* 7.0.x
-    - dependency org.junit:junit-bom 5.13.x
-    - dependency org.junit.jupiter:* 5.13.x
-    - dependency org.junit.platform:* 1.13.x
-    - dependency org.junit.vintage:* 5.13.x
-    - dependency org.junit:junit-bom 5.14.x
-    - dependency org.junit.jupiter:* 5.14.x
-    - dependency org.junit.platform:* 1.14.x
-    - dependency org.junit.vintage:* 5.14.x
-    - dependency org.junit:junit-bom 6.x
-    - dependency org.junit.jupiter:junit-jupiter* 6.x
-    - change com.github.tomakehurst:wiremock org.wiremock:wiremock 3.x
-    - change com.github.tomakehurst:wiremock-jre8 org.wiremock:wiremock 3.x
-    - change com.github.tomakehurst:wiremock-standalone org.wiremock:wiremock-standalone 3.x
-    - change com.github.tomakehurst:wiremock-jre8-standalone org.wiremock:wiremock-standalone 3.x
     - change org.codehaus.jackson:jackson-core-asl com.fasterxml.jackson.core:jackson-core 2.x
     - change org.codehaus.jackson:jackson-mapper-asl com.fasterxml.jackson.core:jackson-databind 2.x
     - change com.fasterxml.jackson.core:jackson-core tools.jackson.core:jackson-core 3.1.x
@@ -699,12 +672,12 @@ recipeList:
     - change org.flywaydb:flyway-core org.springframework.boot:spring-boot-starter-flyway 4.0.x
     - change org.springframework.kafka:spring-kafka org.springframework.boot:spring-boot-starter-kafka 4.0.x
     - change org.springframework.security:spring-security-test org.springframework.boot:spring-boot-starter-security-test 4.0.x
-    - change org.springframework.boot:spring-boot-starter-oauth2-authorization-server *:spring-boot-starter-security-oauth2-authorization-server
-    - change org.springframework.boot:spring-boot-starter-oauth2-client *:spring-boot-starter-security-oauth2-client
-    - change org.springframework.boot:spring-boot-starter-oauth2-resource-server *:spring-boot-starter-security-oauth2-resource-server
-    - change org.springframework.boot:spring-boot-starter-web *:spring-boot-starter-webmvc
-    - change org.springframework.boot:spring-boot-starter-web-services *:spring-boot-starter-webservices
-    - change org.springframework.boot:spring-boot-starter-aop *:spring-boot-starter-aspectj
+    - change org.springframework.boot:spring-boot-starter-oauth2-authorization-server *:spring-boot-starter-security-oauth2-authorization-server when-plugin io.spring.dependency-management
+    - change org.springframework.boot:spring-boot-starter-oauth2-client *:spring-boot-starter-security-oauth2-client when-plugin io.spring.dependency-management
+    - change org.springframework.boot:spring-boot-starter-oauth2-resource-server *:spring-boot-starter-security-oauth2-resource-server when-plugin io.spring.dependency-management
+    - change org.springframework.boot:spring-boot-starter-web *:spring-boot-starter-webmvc when-plugin io.spring.dependency-management
+    - change org.springframework.boot:spring-boot-starter-web-services *:spring-boot-starter-webservices when-plugin io.spring.dependency-management
+    - change org.springframework.boot:spring-boot-starter-aop *:spring-boot-starter-aspectj when-plugin io.spring.dependency-management
     - change org.springframework.boot:spring-boot-starter-oauth2-authorization-server *:spring-boot-starter-security-oauth2-authorization-server 4.0.x
     - change org.springframework.boot:spring-boot-starter-oauth2-client *:spring-boot-starter-security-oauth2-client 4.0.x
     - change org.springframework.boot:spring-boot-starter-oauth2-resource-server *:spring-boot-starter-security-oauth2-resource-server 4.0.x
@@ -715,7 +688,6 @@ recipeList:
     - dependency io.github.wimdeblauwe:error-handling-spring-boot-starter 5.0.x
     - change org.jobrunr:jobrunr-spring-boot-3-starter *:jobrunr-spring-boot-4-starter 8.x
     - dependency org.jobrunr:* 8.x
-    - dependency org.apache.httpcomponents:httpclient 4.5.x
     - dependency io.awspring.cloud:* 4.0.x
     - dependency net.logstash.logback:logstash-logback-encoder 9.x
     - dependency org.projectlombok:lombok 1.18.x
@@ -834,7 +806,7 @@ recipeList:
 type: specs.openrewrite.org/v1beta/recipe
 name: com.eottabom.rewrite.gradle.catalog.VersionCatalog_Java25
 displayName: version catalog 정렬 (Java25)
-description: com.eottabom.rewrite.java.UpgradeToJava25 의 의존성/플러그인 버전 변경을 gradle/*.versions.toml 에 적용한다.
+description: com.eottabom.rewrite.java.UpgradeToJava25 의 의존성/플러그인 버전 변경을 gradle/*.versions.toml 에 적용한다. upstream 조건(precondition) 안의 규칙 2개는 catalog 에서 조건을 판단할 수 없어 뺐다.
 recipeList:
 - com.eottabom.rewrite.gradle.UpgradeVersionCatalog:
     rules:
@@ -927,8 +899,6 @@ recipeList:
     - dependency com.google.guava:guava 29.0 -jre
     - dependency net.bytebuddy:byte-buddy 1.14.11
     - dependency org.modelmapper:modelmapper 3.2.x
-    - dependency org.jetbrains.kotlin:* 2.3.x
-    - plugin org.jetbrains.kotlin.* 2.3.x
     - dependency net.bytebuddy:byte-buddy* 1.17.x
     - dependency org.mockito:mockito-* 5.17.x
     - plugin io.freefair.* 9.x

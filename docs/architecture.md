@@ -35,6 +35,8 @@ rewrite-recipe-bom 을 올리면 `UpstreamStepsUpToDateTests` 가 깨지고, `./
 `gradle/*.versions.toml` 은 건드리지 않는다. catalog 로 Boot 플러그인 버전을 관리하는 프로젝트는 레시피가 돌아도 Boot 버전이 그대로다.
 `VersionCatalogStepsGenerator` 가 단계 레시피 트리 전체에서 이 세 종류의 레시피를 모아 `version-catalog-steps.yml` 의 규칙으로 옮기고,
 `UpgradeVersionCatalog` 가 같은 규칙을 catalog 에 적용한다. 버전은 upstream 과 같은 방식(`DependencyVersionSelector`)으로 대상 프로젝트의 저장소에서 고른다.
+upstream 조건(precondition) 안의 규칙은 catalog 에서 판단할 수 없으면 뺀다. 조건이 `ModuleHasPlugin` 하나뿐이면
+규칙에 `when-plugin <id>` 를 붙여 넘기고, catalog 레시피가 Gradle 모델의 플러그인 목록으로 판단한다 (Boot 4 스타터 이름 변경 등).
 이 파일도 `syncUpstreamSteps` 가 함께 만들고 `UpstreamStepsUpToDateTests` 가 검사한다. 단계 레시피를 고친 뒤에도 다시 만든다.
 
 ## 파일 구성

@@ -1,8 +1,10 @@
 package com.eottabom.rewrite.gradle;
 
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Option;
@@ -78,6 +80,7 @@ public class UpgradeVersionCatalog extends ScanningRecipe<UpgradeVersionCatalog.
 						acc.project = project.get();
 						acc.projectDepth = source.getSourcePath().getNameCount();
 					}
+					project.ifPresent((p) -> p.getPlugins().forEach((plugin) -> acc.plugins.add(plugin.getId())));
 					source.getMarkers().findFirst(GradleSettings.class).ifPresent((s) -> acc.settings = s);
 				}
 				return tree;
@@ -96,7 +99,7 @@ public class UpgradeVersionCatalog extends ScanningRecipe<UpgradeVersionCatalog.
 					return tree;
 				}
 				String before = source.printAll();
-				String after = VersionCatalogEditor.apply(before, parsed, resolver(acc, ctx));
+				String after = VersionCatalogEditor.apply(before, parsed, resolver(acc, ctx), acc.plugins);
 				if (after.equals(before)) {
 					return tree;
 				}
@@ -156,6 +159,8 @@ public class UpgradeVersionCatalog extends ScanningRecipe<UpgradeVersionCatalog.
 		int projectDepth;
 
 		GradleSettings settings;
+
+		final Set<String> plugins = new HashSet<>();
 
 	}
 

@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.openrewrite.Recipe;
+import org.openrewrite.config.DeclarativeRecipe;
 import org.openrewrite.config.Environment;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -54,14 +55,20 @@ public final class VersionCatalogStepsGenerator {
 		List<Object> docs = new ArrayList<>();
 		for (Map.Entry<String, String> stage : STAGES.entrySet()) {
 			Set<String> rules = new LinkedHashSet<>();
-			new Walker(env, rules).walk(env.activateRecipes(stage.getValue()));
+			Set<String> conditional = new LinkedHashSet<>();
+			new Walker(env, rules, conditional, new int[] { 0 }, new String[1])
+				.walk(env.activateRecipes(stage.getValue()));
+			conditional.removeAll(rules);
 			Map<String, Object> options = new LinkedHashMap<>();
 			options.put("rules", new ArrayList<>(rules));
 			Map<String, Object> doc = new LinkedHashMap<>();
 			doc.put("type", "specs.openrewrite.org/v1beta/recipe");
 			doc.put("name", PREFIX + stage.getKey());
 			doc.put("displayName", "version catalog 정렬 (" + stage.getKey() + ")");
-			doc.put("description", stage.getValue() + " 의 의존성/플러그인 버전 변경을 gradle/*.versions.toml 에 적용한다.");
+			doc.put("description",
+					stage.getValue() + " 의 의존성/플러그인 버전 변경을 gradle/*.versions.toml 에 적용한다."
+							+ (conditional.isEmpty() ? "" : " upstream 조건(precondition) 안의 규칙 " + conditional.size()
+									+ "개는 catalog 에서 조건을 판단할 수 없어 뺐다."));
 			doc.put("recipeList", List.of(Map.of("com.eottabom.rewrite.gradle.UpgradeVersionCatalog", options)));
 			docs.add(doc);
 		}
@@ -73,7 +80,12 @@ public final class VersionCatalogStepsGenerator {
 				+ new Yaml(options).dumpAll(docs.iterator());
 	}
 
-	private record Walker(Environment env, Set<String> rules) {
+	/**
+	 * @param conditional upstream 조건 안에 있어서 뺀 규칙
+	 * @param depth 지나온 조건부 레시피 수 (0 이면 조건 밖)
+	 * @param plugin 지나온 ModuleHasPlugin 조건의 플러그인 id. catalog 레시피가 Gradle 모델로 판단한다
+	 */
+	private record Walker(Environment env, Set<String> rules, Set<String> conditional, int[] depth, String[] plugin) {
 
 		void walk(Recipe recipe) {
 			Recipe r = unwrap(recipe);
@@ -83,9 +95,30 @@ public final class VersionCatalogStepsGenerator {
 			}
 			String rule = rule(r);
 			if (rule != null) {
-				this.rules.add(rule);
+				String withCondition = (this.plugin[0] != null) ? rule + " when-plugin " + this.plugin[0] : rule;
+				((this.depth[0] == 0) ? this.rules : this.conditional).add(withCondition);
 				return;
 			}
+			String requiredPlugin = requiredPlugin(r);
+			if (requiredPlugin != null && this.plugin[0] == null) {
+				this.plugin[0] = requiredPlugin;
+				walkChildren(r);
+				this.plugin[0] = null;
+				return;
+			}
+			// ModuleHasDependency, DoesNotUseType 같은 조건은 빌드 파일과 소스 기준이라 catalog 에서는 판단할 수
+			// 없다
+			if (hasPreconditions(r)) {
+				this.depth[0]++;
+				walkChildren(r);
+				this.depth[0]--;
+				return;
+			}
+			walkChildren(r);
+		}
+
+		private void walkChildren(Recipe r) {
+			String name = r.getName();
 			if (name.startsWith(UpstreamStepsGenerator.STEP_PREFIX)) {
 				String version = name.substring(UpstreamStepsGenerator.STEP_PREFIX.length()).replace('_', '.');
 				String upstream = UpstreamStepsGenerator.upstreamOf(version);
@@ -98,6 +131,33 @@ public final class VersionCatalogStepsGenerator {
 				return;
 			}
 			r.getRecipeList().forEach(this::walk);
+		}
+
+		private static boolean hasPreconditions(Recipe r) {
+			return !preconditions(r).isEmpty();
+		}
+
+		/** 조건이 ModuleHasPlugin(pluginId) 하나뿐이면 그 플러그인 id */
+		private static String requiredPlugin(Recipe r) {
+			List<Recipe> preconditions = preconditions(r);
+			if (preconditions.size() != 1
+					|| !"org.openrewrite.gradle.search.ModuleHasPlugin".equals(preconditions.get(0).getName())
+					|| field(preconditions.get(0), "pluginClass") != null) {
+				return null;
+			}
+			return (String) field(preconditions.get(0), "pluginId");
+		}
+
+		/** Singleton 을 뺀 조건 */
+		@SuppressWarnings("unchecked")
+		private static List<Recipe> preconditions(Recipe r) {
+			if (!(r instanceof DeclarativeRecipe)) {
+				return List.of();
+			}
+			return ((List<Recipe>) field(r, "preconditions")).stream()
+				.map(Walker::unwrap)
+				.filter((p) -> !"org.openrewrite.Singleton".equals(p.getName()))
+				.toList();
 		}
 
 		private static Recipe unwrap(Recipe recipe) {

@@ -1,6 +1,7 @@
 package com.eottabom.rewrite.gradle;
 
 import java.util.Arrays;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.params.ParameterizedTest;
@@ -24,7 +25,8 @@ class VersionCatalogEditorTests {
 	@MethodSource("scenarios")
 	void appliesRules(String scenario, String rules, String before, String after) {
 		assertThat(VersionCatalogEditor.apply(before,
-				Arrays.stream(rules.split(";")).map(VersionCatalogEditor.Rule::parse).toList(), RESOLVER))
+				Arrays.stream(rules.split(";")).map(VersionCatalogEditor.Rule::parse).toList(), RESOLVER,
+				Set.of("io.spring.dependency-management")))
 			.isEqualTo(after);
 	}
 
@@ -138,6 +140,21 @@ class VersionCatalogEditorTests {
 				wiremock = "3.9.0"
 				[libraries]
 				wiremock = { module = "org.wiremock:wiremock", version.ref = "wiremock" }
+				"""
+			),
+			Arguments.of(
+				"플러그인 조건은 그 플러그인이 있을 때만 적용한다",
+				"change org.springframework.boot:spring-boot-starter-web *:spring-boot-starter-webmvc when-plugin io.spring.dependency-management;"
+						+ "change org.springframework.boot:spring-boot-starter-aop *:spring-boot-starter-aspectj when-plugin com.example.other",
+				"""
+				[libraries]
+				web = { module = "org.springframework.boot:spring-boot-starter-web" }
+				aop = { module = "org.springframework.boot:spring-boot-starter-aop" }
+				""",
+				"""
+				[libraries]
+				web = { module = "org.springframework.boot:spring-boot-starter-webmvc" }
+				aop = { module = "org.springframework.boot:spring-boot-starter-aop" }
 				"""
 			),
 			Arguments.of(

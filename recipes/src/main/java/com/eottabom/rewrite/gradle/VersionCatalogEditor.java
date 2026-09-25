@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,10 +48,15 @@ final class VersionCatalogEditor {
 		this.resolver = resolver;
 	}
 
-	static String apply(String toml, List<Rule> rules, Resolver resolver) {
+	/**
+	 * @param plugins 대상 프로젝트 모듈이 적용한 플러그인 id. 플러그인 조건이 붙은 규칙은 그 플러그인이 있을 때만 적용한다
+	 */
+	static String apply(String toml, List<Rule> rules, Resolver resolver, Set<String> plugins) {
 		VersionCatalogEditor editor = new VersionCatalogEditor(toml, resolver);
 		for (Rule rule : rules) {
-			editor.apply(rule);
+			if (rule.requiredPlugin() == null || plugins.contains(rule.requiredPlugin())) {
+				editor.apply(rule);
+			}
 		}
 		return String.join("\n", editor.lines);
 	}
@@ -274,24 +280,34 @@ final class VersionCatalogEditor {
 	 * <li>{@code change <group>:<artifact> <newGroup>:<newArtifact> [<newVersion> [<versionPattern>]]}
 	 * ({@code *} 는 그대로 둔다)</li>
 	 * </ul>
-	 * 좌표는 glob 을 쓸 수 있다.
+	 * 좌표는 glob 을 쓸 수 있다. 끝에 {@code when-plugin <id>} 가 붙으면 그 플러그인을 적용한 모듈이 있을 때만 적용한다
+	 * (upstream 의 ModuleHasPlugin 조건).
 	 */
 	record Rule(Kind kind, String group, String artifact, String newGroup, String newArtifact, String newVersion,
-			String versionPattern) {
+			String versionPattern, String requiredPlugin) {
+
+		private static final String WHEN_PLUGIN = " when-plugin ";
 
 		static Rule parse(String rule) {
-			String[] t = rule.trim().split("\\s+");
+			String body = rule.trim();
+			String requiredPlugin = null;
+			int when = body.indexOf(WHEN_PLUGIN);
+			if (when >= 0) {
+				requiredPlugin = body.substring(when + WHEN_PLUGIN.length()).trim();
+				body = body.substring(0, when);
+			}
+			String[] t = body.split("\\s+");
 			Kind kind = Kind.valueOf(t[0].toUpperCase());
 			return switch (kind) {
 				case DEPENDENCY -> {
 					String[] ga = t[1].split(":");
-					yield new Rule(kind, ga[0], ga[1], null, null, t[2], arg(t, 3));
+					yield new Rule(kind, ga[0], ga[1], null, null, t[2], arg(t, 3), requiredPlugin);
 				}
-				case PLUGIN -> new Rule(kind, t[1], null, null, null, t[2], arg(t, 3));
+				case PLUGIN -> new Rule(kind, t[1], null, null, null, t[2], arg(t, 3), requiredPlugin);
 				case CHANGE -> {
 					String[] ga = t[1].split(":");
 					String[] target = t[2].split(":");
-					yield new Rule(kind, ga[0], ga[1], target[0], target[1], arg(t, 3), arg(t, 4));
+					yield new Rule(kind, ga[0], ga[1], target[0], target[1], arg(t, 3), arg(t, 4), requiredPlugin);
 				}
 			};
 		}
