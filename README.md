@@ -15,7 +15,7 @@ Spring Boot 프로젝트를 **명령 하나로** 최종 버전(Boot 4.1 + Java 2
 
 JDK(17 / 21 / 25)와 대상 프로젝트의 Gradle wrapper 만 있으면 된다. 이 저장소를 clone 해서 바로 쓴다 (배포, ~/.m2 설치, 별도 도구 없음).
 
-이 저장소의 Gradle(8.14)은 JDK 25 로는 뜨지 않는다. `JAVA_HOME` 을 JDK 17 또는 21 로 두고 실행한다 (레시피 컴파일은 toolchain 이 JDK 25 로 한다).
+이 저장소는 Gradle 9.4 라서 `JAVA_HOME` 이 JDK 17 이상(25 포함)이면 된다 (레시피 컴파일은 toolchain 이 JDK 25 로 한다).
 대상 프로젝트는 별도 프로세스로 자기 Gradle wrapper 로 실행하고, JDK 는 대상 프로젝트가 선언한 toolchain 버전으로 고른다 (`--keep-java-home` 으로 끔).
 
 **필요한 만큼만 바꾼다.** Spring Boot 를 기준으로 삼고, Java 와 Gradle 은 목표 Boot 가 지원하면 그대로 둔다.
